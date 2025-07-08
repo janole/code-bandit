@@ -141,27 +141,7 @@ async function work(props: WorkProps)
             }
         }
 
-        writeFileSync("temp.json", JSON.stringify(messages, null, 2));
-
-        stream = await llmWithTools.stream(messages);
-
-        aiMessage = undefined;
-
-        for await (const chunk of stream)
-        {
-            aiMessage = aiMessage !== undefined ? concat(aiMessage, chunk) : chunk;
-            send([...messages, aiMessage]);
-
-            // // @ts-expect-error
-            // process.stdout.write(chunk.content);
-        }
-
-        aiMessage && messages.push(aiMessage);
-
-        if (aiMessage?.tool_calls)
-        {
-            console.error("RECURSIVE TOOL CALL ...");
-        }
+        return work({ workDir, send, messages });
     }
 
     return messages;

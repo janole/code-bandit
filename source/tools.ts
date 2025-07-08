@@ -7,22 +7,30 @@ import path from "path";
 export default function createTools(basePath: string)
 {
     const listDirectory = tool(
-        ({ directory }: { directory: string }): string[] =>
+        ({ directory }: { directory: string }): string =>
         {
-            if (!basePath) return ["ERROR: no basePath configured!"];
+            try
+            {
+                if (!basePath) return "ERROR: no basePath configured!";
 
-            const combinedPath = path.join(basePath, directory, "*");
+                const combinedPath = path.join(basePath, directory, "*");
 
-            const files = glob.globSync(combinedPath, {
-                dot: true,
-                onlyFiles: false,
-                objectMode: true,
-                stats: true,
-            });
+                const files = glob.globSync(combinedPath, {
+                    dot: true,
+                    onlyFiles: false,
+                    objectMode: true,
+                    stats: true,
+                });
 
-            return files
-                .filter(f => f.dirent.isDirectory() || f.dirent.isFile())
-                .map((f) => `${f.dirent.isDirectory() ? "[DIR]  " : "[FILE] "} ${f.name} ${f.stats?.size}`);
+                return files
+                    .filter(f => f.dirent.isDirectory() || f.dirent.isFile())
+                    .map((f) => `${f.dirent.isDirectory() ? "[DIR]  " : "[FILE] "} ${f.name} ${f.stats?.size}`)
+                    .join("\n");
+            }
+            catch (error: any)
+            {
+                return "ERROR: " + error.message;
+            }
         },
         {
             name: "listDirectory",
@@ -36,11 +44,18 @@ export default function createTools(basePath: string)
     const readFile = tool(
         ({ fileName, maxLength }: { fileName: string, maxLength?: number }): string =>
         {
-            if (!basePath) return "ERROR: no basePath configured!";
+            try
+            {
+                if (!basePath) return "ERROR: no basePath configured!";
 
-            const combinedPath = path.join(basePath, fileName);
+                const combinedPath = path.join(basePath, fileName);
 
-            return readFileSync(combinedPath).toString().slice(0, maxLength);
+                return readFileSync(combinedPath).toString().slice(0, maxLength);
+            }
+            catch (error: any)
+            {
+                return "ERROR: " + error.message;
+            }
         },
         {
             name: "readFile",
@@ -55,13 +70,21 @@ export default function createTools(basePath: string)
     const writeFile = tool(
         ({ fileName, fileData }: { fileName: string, fileData: string }): string =>
         {
-            if (!basePath) return "ERROR: no basePath configured!";
+            try
+            {
+                if (!basePath) return "ERROR: no basePath configured!";
 
-            const combinedPath = path.join(basePath, fileName);
+                const combinedPath = path.join(basePath, fileName);
 
-            writeFileSync(combinedPath, fileData);
+                writeFileSync(combinedPath, fileData);
 
-            return `${fileName} created`;
+                return `${fileName} created`;
+            }
+            catch (error: any)
+            {
+                return "ERROR: " + error.message;
+            }
+
         },
         {
             name: "writeFile",

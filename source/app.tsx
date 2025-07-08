@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Box, Newline, Text } from 'ink';
+import React, { memo, useState } from 'react';
+import { Box, Newline, Static, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import { TMessage, work } from './work.js';
 import { HumanMessage, ToolMessage } from '@langchain/core/messages';
@@ -18,7 +18,7 @@ function Message(props: MessageProps)
 	const type = msg.getType();
 
 	return (
-		<Box paddingBottom={1} width="100%">
+		<Box flexDirection="column" paddingBottom={1} width="100%">
 			{["ai", "generic", "human"].includes(type) && msg.text.length > 0 &&
 				<Text color={type === "human" ? "green" : "black"}>
 					{msg.text}
@@ -45,6 +45,8 @@ function Message(props: MessageProps)
 		</Box>
 	);
 }
+
+const MemoMessage = memo(Message);
 
 interface ChatAppProps
 {
@@ -87,13 +89,18 @@ const ChatApp = (props: ChatAppProps) =>
 	const terminalSize = useTerminalSize();
 
 	return (
-		<Box flexDirection="column" width={terminalSize.columns - 2} paddingBottom={1}>
+		<Box flexDirection="column" width={terminalSize.columns - 1} paddingBottom={1}>
 
 			{/* Messages Area */}
 			<Box flexDirection="column" paddingX={1} width="100%">
-				{chatHistory.map((msg, index) => (
-					<Message key={msg.id ?? index} msg={msg} />
-				))}
+				<Static items={chatHistory.slice(0, -1)}>
+					{(message, index) => (
+						<MemoMessage key={message.id ?? index} msg={message} />
+					)}
+				</Static>
+				{!!chatHistory[chatHistory.length - 1] &&
+					<Message msg={chatHistory[chatHistory.length - 1] as TMessage} />
+				}
 			</Box>
 
 			{/* Input Field */}

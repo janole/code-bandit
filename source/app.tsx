@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Box, Newline, Text } from 'ink';
+import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import { TMessage, work } from './work.js';
 import { HumanMessage, ToolMessage } from '@langchain/core/messages';
+import useTerminalSize from './useTerminalSize.js';
 
 const ChatApp = (props: { workDir: string }) =>
 {

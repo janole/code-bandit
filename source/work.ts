@@ -69,8 +69,6 @@ async function work(props: WorkProps)
     const llm = chatService.getLLM(provider, model);
     const llmWithTools = llm.bindTools?.(Object.values(tools)) ?? llm;
 
-    console.log("WORK", messages);
-
     return workInternal({ llmWithTools, tools, messages, send });
 }
 

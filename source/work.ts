@@ -1,119 +1,92 @@
 import { AIMessageChunk, BaseMessage } from "@langchain/core/messages";
-import { tool } from "@langchain/core/tools";
 import { concat } from "@langchain/core/utils/stream";
+import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { ChatOpenAI } from "@langchain/openai";
-// import { ChatOllama } from "@langchain/ollama";
-import { z } from "zod";
-import path from "path";
-import glob from "fast-glob";
-import { readFileSync, writeFileSync } from "fs";
-
-// const llm = new ChatOllama({
-//     model: "qwen2.5:3b-instruct-q4_K_M",
-//     // temperature: 0,
-//     // maxRetries: 2,
-// });
-
-const llm = new ChatOpenAI({
-    model: "gpt-4.1-mini",
-});
-
-let basePath: string | undefined = undefined; // "/Users/ole/projekte/ChatBandit/main";
-
-const listDirectory = tool(
-    ({ directory }: { directory: string }): string[] =>
-    {
-        if (!basePath) return ["ERROR: no basePath configured!"];
-
-        const combinedPath = path.join(basePath, directory, "*");
-
-        // console.log({ combinedPath });
-
-        const files = glob.globSync(combinedPath, {
-            dot: true,
-            onlyFiles: false,
-            objectMode: true,
-            stats: true,
-        });
-
-        return files
-            .filter(f => f.dirent.isDirectory() || f.dirent.isFile())
-            .map((f) => `${f.dirent.isDirectory() ? "[DIR]  " : "[FILE] "} ${f.name} ${f.stats?.size}`);
-    },
-    {
-        name: "listDirectory",
-        description: "List the contents of a directory",
-        schema: z.object({
-            directory: z.string(),
-        }),
-    },
-);
-
-const readFile = tool(
-    ({ fileName, maxLength }: { fileName: string, maxLength?: number }): string =>
-    {
-        if (!basePath) return "ERROR: no basePath configured!";
-
-        const combinedPath = path.join(basePath, fileName);
-
-        return readFileSync(combinedPath).toString().slice(0, maxLength);
-    },
-    {
-        name: "readFile",
-        description: "Read a file.",
-        schema: z.object({
-            fileName: z.string().describe("The name of the file to read. Use absolute paths."),
-            maxLength: z.number().optional().describe("Optionally read only [maxLength] bytes of the file."),
-        }),
-    },
-);
-
-const writeFile = tool(
-    ({ fileName, fileData }: { fileName: string, fileData: string }): string =>
-    {
-        if (!basePath) return "ERROR: no basePath configured!";
-
-        const combinedPath = path.join(basePath, fileName);
-
-        writeFileSync(combinedPath, fileData);
-
-        return `${fileName} created`;
-    },
-    {
-        name: "writeFile",
-        description: "Create or overwrite a file.",
-        schema: z.object({
-            fileName: z.string().describe("The name of the file to write. Use absolute paths."),
-            fileData: z.string().describe("The data to be written to the file."),
-        }),
-    },
-);
-
-const tools = {
-    [listDirectory.name]: listDirectory,
-    [readFile.name]: readFile,
-    [writeFile.name]: writeFile,
-};
-
-const llmWithTools = llm.bindTools(Object.values(tools));
+import { ChatOllama } from "@langchain/ollama";
+import createTools from "./tools.js";
+import { Runnable } from "@langchain/core/runnables";
+import { DynamicStructuredTool } from "langchain/tools";
 
 export type TMessage = BaseMessage;
+
+class ChatService
+{
+    current?: {
+        llm: BaseChatModel;
+        provider: "ollama" | "openai",
+        model: string;
+    };
+
+    getLLM(provider: "ollama" | "openai", model: string): BaseChatModel
+    {
+        if (this.current && this.current.provider === provider && this.current.model === model)
+        {
+            return this.current.llm;
+        }
+
+        let llm: BaseChatModel;
+
+        if (provider === "ollama")
+        {
+            llm = new ChatOllama({ model });
+        }
+        else if (provider === "openai")
+        {
+            llm = new ChatOpenAI({ model });
+        }
+        else
+        {
+            throw new Error(`Unknown provider ${provider}`);
+        }
+
+        this.current = {
+            llm,
+            provider,
+            model,
+        };
+
+        return this.current.llm;
+    }
+}
+
+const chatService = new ChatService();
 
 interface WorkProps
 {
     workDir: string;
+    provider: "ollama" | "openai";
+    model: string;
     messages: TMessage[];
     send: (messages: TMessage[]) => void;
 }
 
 async function work(props: WorkProps)
 {
-    const { workDir, send } = props;
+    const { workDir, provider, model, messages, send } = props;
+
+    const tools = createTools(workDir);
+
+    const llm = chatService.getLLM(provider, model);
+    const llmWithTools = llm.bindTools?.(Object.values(tools)) ?? llm;
+
+    console.log("WORK", messages);
+
+    return workInternal({ llmWithTools, tools, messages, send });
+}
+
+interface WorkInternalProps
+{
+    llmWithTools: Runnable<TMessage[], AIMessageChunk>;
+    tools: { [key: string]: DynamicStructuredTool };
+    messages: TMessage[];
+    send: (messages: TMessage[]) => void;
+}
+
+async function workInternal(props: WorkInternalProps)
+{
+    const { llmWithTools, tools, send } = props;
 
     const messages = [...props.messages];
-
-    // TODO: fix this HACK!
-    basePath = workDir;
 
     let stream = await llmWithTools.stream(messages);
 
@@ -135,13 +108,12 @@ async function work(props: WorkProps)
 
             if (selectedTool)
             {
-                // @ts-expect-error
                 const toolMessage = await selectedTool.invoke(toolCall);
                 messages.push(toolMessage);
             }
         }
 
-        return work({ workDir, send, messages });
+        return workInternal({ ...props, messages });
     }
 
     return messages;

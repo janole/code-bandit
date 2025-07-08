@@ -1,12 +1,62 @@
 import React, { useState } from 'react';
-import { Box, Text } from 'ink';
+import { Box, Newline, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import { TMessage, work } from './work.js';
 import { HumanMessage, ToolMessage } from '@langchain/core/messages';
 import useTerminalSize from './useTerminalSize.js';
+import { ToolCall } from '@langchain/core/messages/tool';
 
-const ChatApp = (props: { workDir: string }) =>
+interface MessageProps
 {
+	msg: TMessage;
+}
+
+function Message(props: MessageProps)
+{
+	const { msg } = props;
+
+	const type = msg.getType();
+
+	return (
+		<Box paddingBottom={1} width="100%">
+			{["ai", "generic", "human"].includes(type) && msg.text.length > 0 &&
+				<Text color={type === "human" ? "green" : "black"}>
+					{msg.text}
+				</Text>
+			}
+
+			{ // @ts-ignore
+				msg.tool_calls?.map((toolCall: ToolCall, index) => (
+					<Box key={toolCall.id ?? index} flexDirection="column" borderStyle="single" borderColor="red" paddingX={1} marginBottom={1}>
+						<Text color="red">
+							Tool: {toolCall.name}({Object.entries(toolCall.args).map(([name, value]) => `${name}: ${value}`).join(", ")})
+						</Text>
+					</Box>
+				))
+			}
+
+			{type === "tool" &&
+				<Text color="red">
+					Tool: {(msg as ToolMessage).name}
+					<Newline />
+					{JSON.stringify(msg)}
+				</Text>
+			}
+		</Box>
+	);
+}
+
+interface ChatAppProps
+{
+	workDir: string;
+	provider: "ollama" | "openai";
+	model: string;
+}
+
+const ChatApp = (props: ChatAppProps) =>
+{
+	const { workDir, provider, model } = props;
+
 	const [_message, setMessage] = useState('');
 	const [chatHistory, setChatHistory] = useState<TMessage[]>([]);
 
@@ -22,43 +72,32 @@ const ChatApp = (props: { workDir: string }) =>
 
 			const send = (messages: TMessage[]) => setChatHistory(messages);
 
-			work({ workDir: props.workDir, messages, send }); // .then(messages => setChatHistory(messages));
+			work({
+				workDir,
+				provider,
+				model,
+				messages,
+				send,
+			});
 
-			// In a real app, you'd send this message to a server or process it.
-			// For this example, we'll just log it.
-			// console.log('Sent:', message); // This will be visible in the terminal *outside* Ink rendering
-			setMessage(''); // Clear the input after sending
+			setMessage('');
 		}
 	};
 
+	const terminalSize = useTerminalSize();
+
 	return (
-		<Box flexDirection="column" minHeight={process.stdout.rows - 2}>
-			<Box flexGrow={1} flexDirection="column">
+		<Box flexDirection="column" width={terminalSize.columns - 2} paddingBottom={1}>
+
+			{/* Messages Area */}
+			<Box flexDirection="column" paddingX={1} width="100%">
 				{chatHistory.map((msg, index) => (
-					<Text key={msg.id ?? index}>
-						{msg.getType() === "human" &&
-							<Text color="green">
-								{msg.text}
-								<Newline />
-							</Text>
-						}
-						{msg.getType() === "tool" &&
-							<Text color="red">
-								Tool: {(msg as ToolMessage).name}
-								<Newline />
-								{JSON.stringify(msg)}
-							</Text>
-						}
-						{["ai", "generic"].includes(msg.getType()) &&
-							<Text color="black">
-								{msg.text}
-							</Text>
-						}
-					</Text>
+					<Message key={msg.id ?? index} msg={msg} />
 				))}
 			</Box>
 
-			<Box borderStyle="round" padding={1}>
+			{/* Input Field */}
+			<Box borderStyle="round" paddingX={1} flexShrink={0}>
 				<Box>
 					<Text color="cyan">{'> '}</Text>
 					<TextInput
@@ -71,6 +110,11 @@ const ChatApp = (props: { workDir: string }) =>
 				<Box>
 					<Text color="blue">[Enter to Send]</Text>
 				</Box>
+			</Box>
+
+			{/* Footer */}
+			<Box paddingX={1}>
+				<Text color="gray">Press Ctrl+C to exit</Text>
 			</Box>
 		</Box>
 	);

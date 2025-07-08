@@ -1,16 +1,15 @@
 {
-	"name": "my-ink-cli",
-	"version": "0.0.0",
+	"name": "code-bandit",
+	"version": "0.0.1",
 	"license": "MIT",
-	"bin": "dist/cli.js",
+	"bin": "dist/coba.js",
 	"type": "module",
 	"engines": {
 		"node": ">=16"
 	},
 	"scripts": {
 		"build": "tsc",
-		"dev": "tsc --watch",
-		"test": "prettier --check . && xo && ava"
+		"dev": "tsc --watch"
 	},
 	"files": [
 		"dist"
@@ -19,12 +18,12 @@
 		"@langchain/core": "^0.3.62",
 		"@langchain/ollama": "^0.2.3",
 		"@langchain/openai": "^0.5.18",
+		"commander": "^14.0.0",
 		"fast-glob": "^3.3.3",
 		"ink": "^6.0.1",
 		"ink-markdown": "^1.0.4",
 		"ink-text-input": "^6.0.0",
 		"langchain": "^0.3.29",
-		"meow": "^11.0.0",
 		"react": "^19.1.0"
 	},
 	"devDependencies": {
@@ -33,22 +32,5 @@
 		"@types/react": "^19.1.8",
 		"ink-testing-library": "^3.0.0",
 		"typescript": "^5.0.3"
-	},
-	"ava": {
-		"extensions": {
-			"ts": "module",
-			"tsx": "module"
-		},
-		"nodeArguments": [
-			"--loader=ts-node/esm"
-		]
-	},
-	"xo": {
-		"extends": "xo-react",
-		"prettier": true,
-		"rules": {
-			"react/prop-types": "off"
-		}
-	},
-	"prettier": "@vdemedes/prettier-config"
+	}
 }

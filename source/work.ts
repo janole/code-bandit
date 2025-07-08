@@ -127,7 +127,7 @@ async function work(props: WorkProps)
 
     aiMessage && messages.push(aiMessage);
 
-    if (aiMessage?.tool_calls)
+    if (aiMessage?.tool_calls && aiMessage.tool_calls.length > 0)
     {
         for (const toolCall of aiMessage.tool_calls)
         {

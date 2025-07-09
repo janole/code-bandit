@@ -3,7 +3,7 @@ import { Box, Newline, Static, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import { TMessage, work } from './ai/work.js';
 import { HumanMessage, ToolMessage } from '@langchain/core/messages';
-import useTerminalSize from './utils/useTerminalSize.js';
+import useTerminalSize from './utils/use-terminal-size.js';
 import { ToolCall } from '@langchain/core/messages/tool';
 
 const colors = {

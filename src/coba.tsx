@@ -20,7 +20,7 @@ program
 	{
 		const workDir = path.join(cwd(), gitRepoPath || ".");
 
-		await render(
+		render(
 			<App
 				workDir={workDir}
 				provider={options.provider}

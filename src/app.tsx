@@ -87,7 +87,7 @@ interface ChatAppProps
 	model: string;
 }
 
-const ChatApp = (props: ChatAppProps) =>
+function ChatApp(props: ChatAppProps)
 {
 	const { workDir, provider, model } = props;
 
@@ -163,6 +163,6 @@ const ChatApp = (props: ChatAppProps) =>
 			</Box>
 		</Box>
 	);
-};
+}
 
 export default ChatApp;

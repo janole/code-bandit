@@ -6,6 +6,7 @@ import { ChatOllama } from "@langchain/ollama";
 import { tools } from "./tools.js";
 import { Runnable } from "@langchain/core/runnables";
 import tryCatch from "../utils/try-catch.js";
+import { DynamicStructuredTool } from "langchain/tools";
 
 export type TMessage = BaseMessage;
 
@@ -67,7 +68,7 @@ async function work(props: WorkProps)
     const llm = chatService.getLLM(provider, model);
     const llmWithTools = llm.bindTools?.(Object.values(tools)) ?? llm;
 
-    return workInternal({ workDir, llm, llmWithTools, messages, send });
+    return workInternal({ workDir, llm, llmWithTools, tools, messages, send });
 }
 
 interface WorkInternalProps
@@ -75,13 +76,14 @@ interface WorkInternalProps
     workDir: string;
     llm: Runnable<TMessage[], AIMessageChunk>;
     llmWithTools: Runnable<TMessage[], AIMessageChunk>;
+    tools: { [key: string]: DynamicStructuredTool };
     messages: TMessage[];
     send: (messages: TMessage[]) => void;
 }
 
 async function workInternal(props: WorkInternalProps)
 {
-    const { workDir, llm, llmWithTools, send } = props;
+    const { workDir, llm, llmWithTools, tools, send } = props;
 
     const messages = [...props.messages];
 
@@ -111,7 +113,6 @@ async function workInternal(props: WorkInternalProps)
 
             if (selectedTool)
             {
-                // @ts-expect-error
                 const toolMessage = await selectedTool.invoke(toolCall, { metadata: { workDir } });
                 messages.push(toolMessage);
             }

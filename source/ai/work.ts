@@ -3,7 +3,7 @@ import { concat } from "@langchain/core/utils/stream";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatOllama } from "@langchain/ollama";
-import { tools } from "./tools.js";
+import { tools } from "./file-system-tools.js";
 import { Runnable } from "@langchain/core/runnables";
 import tryCatch from "../utils/try-catch.js";
 import { DynamicStructuredTool } from "langchain/tools";

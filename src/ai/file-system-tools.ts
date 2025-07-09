@@ -1,7 +1,7 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import glob from "fast-glob";
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, realpathSync, writeFileSync } from "fs";
 import path from "path";
 import { RunnableConfig } from "@langchain/core/runnables";
 
@@ -12,10 +12,12 @@ function resolveWithinWorkDir(userPath: string, workDir?: unknown): string
         throw new Error("Configuration error! No base path (workDir) available.");
     }
 
-    const absWorkDir = path.resolve(workDir);
+    const absWorkDir = realpathSync(path.resolve(workDir));
     const resolvedPath = path.resolve(workDir, userPath);
 
-    if (!resolvedPath.startsWith(absWorkDir + path.sep))
+    const relative = path.relative(absWorkDir, resolvedPath);
+
+    if (relative.startsWith('..') || path.isAbsolute(relative))
     {
         throw new Error("Access outside of workDir is not allowed.");
     }

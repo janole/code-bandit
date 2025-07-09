@@ -65,7 +65,7 @@ const ChatApp = (props: ChatAppProps) =>
 
 	const handleSendMessage = () =>
 	{
-		if (_message.trim())
+		if (_message.trim() && !working)
 		{
 			const humanMessage = new HumanMessage(_message);
 

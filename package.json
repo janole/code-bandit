@@ -9,7 +9,7 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"dev": "tsc --watch"
+		"dev": "node --import @swc-node/register/esm-register ./source/coba.tsx"
 	},
 	"files": [
 		"dist"
@@ -28,9 +28,10 @@
 	},
 	"devDependencies": {
 		"@sindresorhus/tsconfig": "^3.0.1",
+		"@swc-node/register": "^1.10.10",
 		"@types/node": "^24.0.10",
 		"@types/react": "^19.1.8",
 		"ink-testing-library": "^3.0.0",
-		"typescript": "^5.0.3"
+		"typescript": "^5.8.3"
 	}
 }

@@ -17,9 +17,9 @@ export default function useTerminalSize()
             });
         };
 
-        process.stdout.on('resize', handleResize);
+        process.stdout.on("resize", handleResize);
 
-        return () => { process.stdout.off('resize', handleResize); };
+        return () => { process.stdout.off("resize", handleResize); };
     }, [
         setSize,
     ]);

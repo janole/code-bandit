@@ -5,6 +5,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { ChatOllama } from "@langchain/ollama";
 import { tools } from "./tools.js";
 import { Runnable } from "@langchain/core/runnables";
+import tryCatch from "../utils/try-catch.js";
 
 export type TMessage = BaseMessage;
 
@@ -66,12 +67,13 @@ async function work(props: WorkProps)
     const llm = chatService.getLLM(provider, model);
     const llmWithTools = llm.bindTools?.(Object.values(tools)) ?? llm;
 
-    return workInternal({ workDir, llmWithTools, messages, send });
+    return workInternal({ workDir, llm, llmWithTools, messages, send });
 }
 
 interface WorkInternalProps
 {
     workDir: string;
+    llm: Runnable<TMessage[], AIMessageChunk>;
     llmWithTools: Runnable<TMessage[], AIMessageChunk>;
     messages: TMessage[];
     send: (messages: TMessage[]) => void;
@@ -79,11 +81,17 @@ interface WorkInternalProps
 
 async function workInternal(props: WorkInternalProps)
 {
-    const { workDir, llmWithTools, send } = props;
+    const { workDir, llm, llmWithTools, send } = props;
 
     const messages = [...props.messages];
 
-    let stream = await llmWithTools.stream(messages, { metadata: { workDir } });
+    let { result: stream, error } = await tryCatch(llmWithTools.stream(messages, { metadata: { workDir } }));
+
+    if (!stream)
+    {
+        console.error(error);
+        stream = await llm.stream(messages);
+    }
 
     let aiMessage: AIMessageChunk | undefined = undefined;
 

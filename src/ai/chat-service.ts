@@ -2,15 +2,16 @@ import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatOllama } from "@langchain/ollama";
 
+export type TProvider = "ollama" | "openai";
 class ChatService
 {
     current?: {
         llm: BaseChatModel;
-        provider: "ollama" | "openai",
+        provider: TProvider;
         model: string;
     };
 
-    getLLM(provider: "ollama" | "openai", model: string): BaseChatModel
+    async getLLM(provider: TProvider, model: string): Promise<BaseChatModel>
     {
         if (this.current && this.current.provider === provider && this.current.model === model)
         {

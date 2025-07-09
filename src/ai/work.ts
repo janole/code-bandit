@@ -3,7 +3,7 @@ import { concat } from "@langchain/core/utils/stream";
 import { Runnable } from "@langchain/core/runnables";
 import { DynamicStructuredTool } from "langchain/tools";
 import tryCatch from "../utils/try-catch.js";
-import { ChatService } from "./chat-service.js";
+import { ChatService, TProvider } from "./chat-service.js";
 import { tools } from "./file-system-tools.js";
 
 export type TMessage = BaseMessage;
@@ -13,7 +13,7 @@ const chatService = new ChatService();
 interface WorkProps
 {
     workDir: string;
-    provider: "ollama" | "openai";
+    provider: TProvider;
     model: string;
     messages: TMessage[];
     send: (messages: TMessage[]) => void;
@@ -23,7 +23,7 @@ async function work(props: WorkProps)
 {
     const { workDir, provider, model, messages, send } = props;
 
-    const llm = chatService.getLLM(provider, model);
+    const llm = await chatService.getLLM(provider, model);
     const llmWithTools = llm.bindTools?.(Object.values(tools)) ?? llm;
 
     return workInternal({ workDir, llm, llmWithTools, tools, messages, send });

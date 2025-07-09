@@ -1,9 +1,9 @@
 import React, { memo, useState } from 'react';
 import { Box, Newline, Static, Text } from 'ink';
 import TextInput from 'ink-text-input';
-import { TMessage, work } from './work.js';
+import { TMessage, work } from './ai/work.js';
 import { HumanMessage, ToolMessage } from '@langchain/core/messages';
-import useTerminalSize from './useTerminalSize.js';
+import useTerminalSize from './utils/useTerminalSize.js';
 import { ToolCall } from '@langchain/core/messages/tool';
 
 const colors = {

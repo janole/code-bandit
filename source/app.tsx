@@ -1,29 +1,29 @@
-import React, { memo, useState } from 'react';
-import { Box, Newline, Static, Text } from 'ink';
-import TextInput from 'ink-text-input';
-import { TMessage, work } from './ai/work.js';
-import { HumanMessage, ToolMessage } from '@langchain/core/messages';
-import useTerminalSize from './utils/use-terminal-size.js';
-import { ToolCall } from '@langchain/core/messages/tool';
+import React, { memo, useState } from "react";
+import { Box, Newline, Static, Text } from "ink";
+import TextInput from "ink-text-input";
+import { TMessage, work } from "./ai/work.js";
+import { HumanMessage, ToolMessage } from "@langchain/core/messages";
+import useTerminalSize from "./utils/use-terminal-size.js";
+import { ToolCall } from "@langchain/core/messages/tool";
 
 const colors = {
-	human: 'green',
-	ai: 'black',
-	generic: 'black',
-	tool: 'red',
+	human: "green",
+	ai: "black",
+	generic: "black",
+	tool: "red",
 };
 
 const ToolCallDisplay = ({ toolCall }: { toolCall: ToolCall }) => (
 	<Box flexDirection="column" borderStyle="single" borderColor="red" paddingX={1} marginBottom={1}>
 		<Text color="red">
-			Tool: {toolCall.name}({Object.entries(toolCall.args).map(([name, value]) => `${name}: ${value}`).join(', ')})
+			Tool: {toolCall.name}({Object.entries(toolCall.args).map(([name, value]) => `${name}: ${value}`).join(", ")})
 		</Text>
 	</Box>
 );
 
 const MessageText = ({ msg, type }: { msg: TMessage; type: string }) =>
 {
-	const color = type in colors ? colors[type as keyof typeof colors] : 'black';
+	const color = type in colors ? colors[type as keyof typeof colors] : "black";
 
 	if (["ai", "generic", "human"].includes(type) && msg.text.length > 0)
 	{
@@ -82,7 +82,7 @@ const ChatApp = (props: ChatAppProps) =>
 	const { workDir, provider, model } = props;
 
 	const [working, setWorking] = useState(false);
-	const [_message, setMessage] = useState('');
+	const [_message, setMessage] = useState("");
 	const [chatHistory, setChatHistory] = useState<TMessage[]>([]);
 
 	const handleSendMessage = () =>
@@ -133,7 +133,7 @@ const ChatApp = (props: ChatAppProps) =>
 			{/* Input Field */}
 			<Box borderStyle="round" paddingX={1} flexShrink={0}>
 				<Box>
-					<Text color="cyan">{'> '}</Text>
+					<Text color="cyan">{"> "}</Text>
 					<TextInput
 						value={_message}
 						onChange={setMessage}

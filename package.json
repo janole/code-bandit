@@ -9,7 +9,7 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"dev": "node --import @swc-node/register/esm-register ./source/coba.tsx",
+		"dev": "node --import @swc-node/register/esm-register ./src/coba.tsx",
 		"watch": "tsc --watch",
 		"lint": "eslint ."
 	},

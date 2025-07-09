@@ -29,22 +29,3 @@ program
 	});
 
 program.parse(process.argv);
-
-// const cli = meow(
-// 	`
-// 	Usage
-// 	  $ my-ink-cli [path]
-
-// 	Examples
-// 	  $ my-ink-cli
-// 	  $ my-ink-cli ./some/folder
-// `,
-// 	{
-// 		importMeta: import.meta,
-// 		argv: process.argv.slice(2),
-// 	},
-// );
-
-// const workDir = path.join(cwd(), cli.input[0] || ".");
-
-// render(<App workDir={workDir} />);

@@ -10,7 +10,8 @@
 	"scripts": {
 		"build": "tsc",
 		"dev": "node --import @swc-node/register/esm-register ./source/coba.tsx",
-		"watch": "tsc --watch"
+		"watch": "tsc --watch",
+		"lint": "eslint ."
 	},
 	"files": [
 		"dist"

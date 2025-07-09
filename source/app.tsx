@@ -110,8 +110,8 @@ const ChatApp = (props: ChatAppProps) =>
 
 	const terminalSize = useTerminalSize();
 
-	const { items, currentItem } = working
-		? { items: chatHistory.slice(0, -1), currentItem: chatHistory[chatHistory.length - 1] }
+	const { items, workingItem } = working
+		? { items: chatHistory.slice(0, -1), workingItem: chatHistory[chatHistory.length - 1] }
 		: { items: chatHistory };
 
 	return (
@@ -124,8 +124,8 @@ const ChatApp = (props: ChatAppProps) =>
 						<MemoMessage key={message.id ?? index} msg={message} />
 					)}
 				</Static>
-				{!!currentItem &&
-					<Message msg={currentItem} />
+				{!!workingItem &&
+					<Message msg={workingItem} />
 				}
 			</Box>
 

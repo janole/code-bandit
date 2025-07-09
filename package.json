@@ -1,6 +1,12 @@
 {
 	"name": "@janole/code-bandit",
 	"version": "0.0.2",
+	"author": "Jan Ole Suhr <ole@janole.com> (https://janole.com)",
+	"homepage": "https://github.com/janole/code-bandit?#readme",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/janole/code-bandit.git"
+	},
 	"license": "MIT",
 	"bin": {
 		"coba": "dist/coba.js"

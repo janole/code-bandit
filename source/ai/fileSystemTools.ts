@@ -5,42 +5,41 @@ import { readFileSync, writeFileSync } from "fs";
 import path from "path";
 import { RunnableConfig } from "@langchain/core/runnables";
 
-const listDirectory = tool(
-    ({ directory }: { directory: string }, config?: RunnableConfig): string =>
+function listDirectory({ directory }: { directory: string }, config?: RunnableConfig): string
+{
+    const basePath = config?.metadata?.["workDir"] as string;
+
+    try
     {
-        const basePath = config?.metadata?.["workDir"] as string;
+        if (!basePath) return "ERROR: no basePath configured!";
 
-        try
-        {
-            if (!basePath) return "ERROR: no basePath configured!";
+        const combinedPath = path.join(basePath, directory, "*");
 
-            const combinedPath = path.join(basePath, directory, "*");
+        const files = glob.globSync(combinedPath, {
+            dot: true,
+            onlyFiles: false,
+            objectMode: true,
+            stats: true,
+        });
 
-            const files = glob.globSync(combinedPath, {
-                dot: true,
-                onlyFiles: false,
-                objectMode: true,
-                stats: true,
-            });
-
-            return files
-                .filter(f => f.dirent.isDirectory() || f.dirent.isFile())
-                .map((f) => `${f.dirent.isDirectory() ? "[DIR]  " : "[FILE] "} ${f.name} ${f.stats?.size}`)
-                .join("\n");
-        }
-        catch (error: any)
-        {
-            return "ERROR: " + error.message + " " + JSON.stringify(config) + "X";
-        }
-    },
+        return files
+            .filter(f => f.dirent.isDirectory() || f.dirent.isFile())
+            .map((f) => `${f.dirent.isDirectory() ? "[DIR]  " : "[FILE] "} ${f.name} ${f.stats?.size}`)
+            .join("\n");
+    }
+    catch (error: any)
     {
-        name: "listDirectory",
-        description: "List file and directory names inside a folder. Use this ONLY when the user wants to see what files or folders exist on disk.",
-        schema: z.object({
-            directory: z.string(),
-        }),
-    },
-);
+        return "ERROR: Tool `listDirectory` failed with: " + error.message;
+    }
+}
+
+const listDirectoryTool = tool(listDirectory, {
+    name: "listDirectory",
+    description: "List file and directory names inside a folder. Use this ONLY when the user wants to see what files or folders exist on disk.",
+    schema: z.object({
+        directory: z.string(),
+    }),
+});
 
 const readFile = tool(
     ({ fileName, maxLength }: { fileName: string, maxLength?: number }, config: RunnableConfig): string =>
@@ -102,7 +101,7 @@ const writeFile = tool(
 );
 
 const tools = {
-    [listDirectory.name]: listDirectory,
+    [listDirectoryTool.name]: listDirectoryTool,
     [readFile.name]: readFile,
     [writeFile.name]: writeFile,
 };

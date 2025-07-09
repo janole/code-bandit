@@ -57,21 +57,16 @@ const listDirectoryTool = tool(listDirectory, {
 });
 
 const readFile = tool(
-    ({ fileName, maxLength }: { fileName: string, maxLength?: number }, config: RunnableConfig): string =>
+    ({ fileName, maxLength }: { fileName: string; maxLength?: number }, config: RunnableConfig): string =>
     {
-        const basePath = config?.metadata?.["workDir"] as string;
-
         try
         {
-            if (!basePath) return "ERROR: no basePath configured!";
-
-            const combinedPath = path.join(basePath, fileName);
-
-            return readFileSync(combinedPath).toString().slice(0, maxLength);
+            const resolvedPath = resolveWithinWorkDir(fileName, config?.metadata?.["workDir"]);
+            return readFileSync(resolvedPath).toString().slice(0, maxLength);
         }
         catch (error: any)
         {
-            return "ERROR: " + error.message;
+            return "ERROR: Tool `readFile` failed with: " + error.message;
         }
     },
     {
@@ -85,25 +80,19 @@ const readFile = tool(
 );
 
 const writeFile = tool(
-    ({ fileName, fileData }: { fileName: string, fileData: string }, config: RunnableConfig): string =>
+    ({ fileName, fileData }: { fileName: string; fileData: string }, config: RunnableConfig): string =>
     {
-        const basePath = config?.metadata?.["workDir"] as string;
-
         try
         {
-            if (!basePath) return "ERROR: no basePath configured!";
+            const resolvedPath = resolveWithinWorkDir(fileName, config?.metadata?.["workDir"]);
+            writeFileSync(resolvedPath, fileData);
 
-            const combinedPath = path.join(basePath, fileName);
-
-            writeFileSync(combinedPath, fileData);
-
-            return `${fileName} created`;
+            return `${fileName} created.`;
         }
         catch (error: any)
         {
             return "ERROR: " + error.message;
         }
-
     },
     {
         name: "writeFile",

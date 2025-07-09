@@ -5,7 +5,7 @@ import stylistic from "@stylistic/eslint-plugin";
 
 export default [
     {
-        files: ["source/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+        files: ["src/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
         languageOptions: {
             parser: tsParser,
             parserOptions: {

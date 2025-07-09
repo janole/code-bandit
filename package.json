@@ -1,8 +1,10 @@
 {
-	"name": "code-bandit",
+	"name": "@janole/code-bandit",
 	"version": "0.0.1",
 	"license": "MIT",
-	"bin": "dist/coba.js",
+	"bin": {
+		"coba": "dist/coba.js"
+	},
 	"type": "module",
 	"engines": {
 		"node": ">=16"

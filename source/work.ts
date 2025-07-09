@@ -3,9 +3,8 @@ import { concat } from "@langchain/core/utils/stream";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatOllama } from "@langchain/ollama";
-import createTools from "./tools.js";
+import { tools } from "./tools.js";
 import { Runnable } from "@langchain/core/runnables";
-import { DynamicStructuredTool } from "langchain/tools";
 
 export type TMessage = BaseMessage;
 
@@ -64,29 +63,27 @@ async function work(props: WorkProps)
 {
     const { workDir, provider, model, messages, send } = props;
 
-    const tools = createTools(workDir);
-
     const llm = chatService.getLLM(provider, model);
     const llmWithTools = llm.bindTools?.(Object.values(tools)) ?? llm;
 
-    return workInternal({ llmWithTools, tools, messages, send });
+    return workInternal({ workDir, llmWithTools, messages, send });
 }
 
 interface WorkInternalProps
 {
+    workDir: string;
     llmWithTools: Runnable<TMessage[], AIMessageChunk>;
-    tools: { [key: string]: DynamicStructuredTool };
     messages: TMessage[];
     send: (messages: TMessage[]) => void;
 }
 
 async function workInternal(props: WorkInternalProps)
 {
-    const { llmWithTools, tools, send } = props;
+    const { workDir, llmWithTools, send } = props;
 
     const messages = [...props.messages];
 
-    let stream = await llmWithTools.stream(messages);
+    let stream = await llmWithTools.stream(messages, { metadata: { workDir } });
 
     let aiMessage: AIMessageChunk | undefined = undefined;
 
@@ -106,7 +103,8 @@ async function workInternal(props: WorkInternalProps)
 
             if (selectedTool)
             {
-                const toolMessage = await selectedTool.invoke(toolCall);
+                // @ts-expect-error
+                const toolMessage = await selectedTool.invoke(toolCall, { metadata: { workDir } });
                 messages.push(toolMessage);
             }
         }

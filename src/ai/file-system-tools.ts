@@ -1,4 +1,4 @@
-import { tool } from "@langchain/core/tools";
+import { DynamicStructuredTool, tool } from "@langchain/core/tools";
 import { z } from "zod";
 import glob from "fast-glob";
 import { readFileSync, realpathSync, writeFileSync } from "fs";
@@ -50,66 +50,60 @@ function listDirectory({ directory }: { directory: string }, config?: RunnableCo
     }
 }
 
-const listDirectoryTool = tool(listDirectory, {
-    name: "listDirectory",
-    description: "List file and directory names inside a folder. Use this ONLY when the user wants to see what files or folders exist on disk.",
-    schema: z.object({
-        directory: z.string(),
-    }),
-});
+function readfile({ fileName, maxLength }: { fileName: string; maxLength?: number }, config: RunnableConfig): string
+{
+    try
+    {
+        const resolvedPath = resolveWithinWorkDir(fileName, config?.metadata?.["workDir"]);
+        return readFileSync(resolvedPath).toString().slice(0, maxLength);
+    }
+    catch (error: any)
+    {
+        return "ERROR: Tool `readFile` failed with: " + error.message;
+    }
+};
 
-const readFile = tool(
-    ({ fileName, maxLength }: { fileName: string; maxLength?: number }, config: RunnableConfig): string =>
+function writeFile({ fileName, fileData }: { fileName: string; fileData: string }, config: RunnableConfig): string
+{
+    try
     {
-        try
-        {
-            const resolvedPath = resolveWithinWorkDir(fileName, config?.metadata?.["workDir"]);
-            return readFileSync(resolvedPath).toString().slice(0, maxLength);
-        }
-        catch (error: any)
-        {
-            return "ERROR: Tool `readFile` failed with: " + error.message;
-        }
-    },
+        const resolvedPath = resolveWithinWorkDir(fileName, config?.metadata?.["workDir"]);
+        writeFileSync(resolvedPath, fileData);
+
+        return `${fileName} created.`;
+    }
+    catch (error: any)
     {
+        return "ERROR: " + error.message;
+    }
+}
+
+const _tools = [
+    tool(listDirectory, {
+        name: "listDirectory",
+        description: "List file and directory names inside a folder. Use this ONLY when the user wants to see what files or folders exist on disk.",
+        schema: z.object({
+            directory: z.string(),
+        }),
+    }),
+    tool(readfile, {
         name: "readFile",
         description: "Read the contents of a specified file. Use this ONLY when the user wants to retrieve exact stored data from disk.",
         schema: z.object({
             fileName: z.string().describe("The name of the file to read. Use absolute paths."),
             maxLength: z.number().optional().describe("Optionally read only [maxLength] bytes of the file."),
         }),
-    },
-);
-
-const writeFile = tool(
-    ({ fileName, fileData }: { fileName: string; fileData: string }, config: RunnableConfig): string =>
-    {
-        try
-        {
-            const resolvedPath = resolveWithinWorkDir(fileName, config?.metadata?.["workDir"]);
-            writeFileSync(resolvedPath, fileData);
-
-            return `${fileName} created.`;
-        }
-        catch (error: any)
-        {
-            return "ERROR: " + error.message;
-        }
-    },
-    {
+    }),
+    tool(writeFile, {
         name: "writeFile",
         description: "Write given content to a specified file (create or overwrite). Use this ONLY if user explicitly wants to save data.",
         schema: z.object({
             fileName: z.string().describe("The name of the file to write. Use absolute paths."),
             fileData: z.string().describe("The data to be written to the file."),
         }),
-    },
-);
+    }),
+];
 
-const tools = {
-    [listDirectoryTool.name]: listDirectoryTool,
-    [readFile.name]: readFile,
-    [writeFile.name]: writeFile,
-};
+const tools: { [key: string]: DynamicStructuredTool } = _tools.reduce((tools, t) => ({ ...tools, [t.name]: t }), {});
 
 export { tools };

@@ -5,6 +5,24 @@ import { readFileSync, writeFileSync } from "fs";
 import path from "path";
 import { RunnableConfig } from "@langchain/core/runnables";
 
+function resolveWithinWorkDir(userPath: string, workDir?: unknown): string
+{
+    if (!workDir || typeof workDir !== "string")
+    {
+        throw new Error("Configuration error! No base path (workDir) available.");
+    }
+
+    const absWorkDir = path.resolve(workDir);
+    const resolvedPath = path.resolve(workDir, userPath);
+
+    if (!resolvedPath.startsWith(absWorkDir + path.sep))
+    {
+        throw new Error("Access outside of workDir is not allowed.");
+    }
+
+    return resolvedPath;
+}
+
 function listDirectory({ directory }: { directory: string }, config?: RunnableConfig): string
 {
     const basePath = config?.metadata?.["workDir"] as string;

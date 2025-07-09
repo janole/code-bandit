@@ -6,6 +6,41 @@ import { HumanMessage, ToolMessage } from '@langchain/core/messages';
 import useTerminalSize from './useTerminalSize.js';
 import { ToolCall } from '@langchain/core/messages/tool';
 
+const colors = {
+	human: 'green',
+	ai: 'black',
+	generic: 'black',
+	tool: 'red',
+};
+
+const ToolCallDisplay = ({ toolCall }: { toolCall: ToolCall }) => (
+	<Box flexDirection="column" borderStyle="single" borderColor="red" paddingX={1} marginBottom={1}>
+		<Text color="red">
+			Tool: {toolCall.name}({Object.entries(toolCall.args).map(([name, value]) => `${name}: ${value}`).join(', ')})
+		</Text>
+	</Box>
+);
+
+const MessageText = ({ msg, type }: { msg: TMessage; type: string }) =>
+{
+	const color = type in colors ? colors[type as keyof typeof colors] : 'black';
+
+	if (["ai", "generic", "human"].includes(type) && msg.text.length > 0)
+	{
+		return <Text color={color}>{msg.text}</Text>;
+	}
+
+	return null;
+};
+
+const ToolMessageDisplay = ({ msg }: { msg: ToolMessage }) => (
+	<Text color={colors.tool}>
+		Tool: {msg.name}
+		<Newline />
+		{JSON.stringify(msg)}
+	</Text>
+);
+
 interface MessageProps
 {
 	msg: TMessage;
@@ -19,28 +54,15 @@ function Message(props: MessageProps)
 
 	return (
 		<Box flexDirection="column" paddingBottom={1} width="100%">
-			{["ai", "generic", "human"].includes(type) && msg.text.length > 0 &&
-				<Text color={type === "human" ? "green" : "black"}>
-					{msg.text}
-				</Text>
-			}
+			<MessageText msg={msg} type={type} />
 
 			{ // @ts-ignore
 				msg.tool_calls?.map((toolCall: ToolCall, index) => (
-					<Box key={toolCall.id ?? index} flexDirection="column" borderStyle="single" borderColor="red" paddingX={1} marginBottom={1}>
-						<Text color="red">
-							Tool: {toolCall.name}({Object.entries(toolCall.args).map(([name, value]) => `${name}: ${value}`).join(", ")})
-						</Text>
-					</Box>
+					<ToolCallDisplay key={toolCall.id ?? index} toolCall={toolCall} />
 				))
 			}
-
 			{type === "tool" &&
-				<Text color="red">
-					Tool: {(msg as ToolMessage).name}
-					<Newline />
-					{JSON.stringify(msg)}
-				</Text>
+				<ToolMessageDisplay msg={msg as ToolMessage} />
 			}
 		</Box>
 	);

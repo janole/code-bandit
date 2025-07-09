@@ -1,9 +1,21 @@
-import eslintPluginUnicorn from "eslint-plugin-unicorn";
 import globals from "globals";
+import stylistic from "@stylistic/eslint-plugin";
+import eslintPluginUnicorn from "eslint-plugin-unicorn";
 
 export default [
     {
-        ignores: ["dist/**", "node_modules/**"],
+        ...stylistic.configs.customize({
+            indent: 4,
+            braceStyle: "allman",
+            quotes: "double",
+            semi: true,
+            jsx: true,
+            // ...
+        }),
+        files: ["source/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+    },
+    {
+        files: ["source/**/*"],
         languageOptions: {
             globals: globals.builtin,
         },

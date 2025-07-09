@@ -58,10 +58,14 @@ async function workInternal(props: WorkInternalProps)
     for await (const chunk of stream)
     {
         aiMessage = aiMessage !== undefined ? concat(aiMessage, chunk) : chunk;
-        send([...messages, aiMessage]);
+
+        if (!aiMessage?.tool_calls || aiMessage.tool_calls.length === 0)
+        {
+            send([...messages, aiMessage]);
+        }
     }
 
-    aiMessage && messages.push(aiMessage);
+    aiMessage && messages.push(aiMessage) && send([...messages]);
 
     if (aiMessage?.tool_calls && aiMessage.tool_calls.length > 0)
     {

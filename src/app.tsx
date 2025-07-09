@@ -2,7 +2,7 @@ import React, { memo, useState } from "react";
 import { Box, Newline, Static, Text } from "ink";
 import TextInput from "ink-text-input";
 import { TMessage, work } from "./ai/work.js";
-import { HumanMessage, ToolMessage } from "@langchain/core/messages";
+import { AIMessage, HumanMessage, ToolMessage } from "@langchain/core/messages";
 import useTerminalSize from "./utils/use-terminal-size.js";
 import { ToolCall } from "@langchain/core/messages/tool";
 
@@ -13,16 +13,9 @@ const colors = {
 	tool: "red",
 };
 
-const ToolCallDisplay = ({ toolCall }: { toolCall: ToolCall }) => (
-	<Box flexDirection="column" borderStyle="single" borderColor="red" paddingX={1} marginBottom={1}>
-		<Text color="red">
-			Tool: {toolCall.name}({Object.entries(toolCall.args).map(([name, value]) => `${name}: ${value}`).join(", ")})
-		</Text>
-	</Box>
-);
-
-const MessageText = ({ msg, type }: { msg: TMessage; type: string }) =>
+function MessageText({ msg }: { msg: TMessage })
 {
+	const type = msg.getType();
 	const color = type in colors ? colors[type as keyof typeof colors] : "black";
 
 	if (["ai", "generic", "human"].includes(type) && msg.text.length > 0)
@@ -31,6 +24,37 @@ const MessageText = ({ msg, type }: { msg: TMessage; type: string }) =>
 	}
 
 	return null;
+}
+
+function ToolCallDisplay({ toolCall }: { toolCall: ToolCall })
+{
+	return (
+		<Box borderStyle="single" borderColor="red" paddingX={1} width="100%">
+			<Text color="red">
+				Tool: {toolCall.name}({Object.entries(toolCall.args).map(([name, value]) =>
+					`${name}: ${value.toString().slice(0, 60)}`
+				).join(", ")})
+			</Text>
+		</Box>
+	);
+}
+
+function ToolCalls({ msg }: { msg: TMessage })
+{
+	const aiMessage: AIMessage | undefined = msg.getType() === "ai" ? msg : undefined;
+
+	if (!aiMessage?.tool_calls?.length)
+	{
+		return null;
+	}
+
+	return (
+		<Box flexDirection="column" width="100%">
+			{aiMessage?.tool_calls?.map((toolCall, index) => (
+				<ToolCallDisplay key={toolCall.id ?? index} toolCall={toolCall} />
+			))}
+		</Box>
+	);
 };
 
 const ToolMessageDisplay = ({ msg }: { msg: ToolMessage }) => (
@@ -41,27 +65,13 @@ const ToolMessageDisplay = ({ msg }: { msg: ToolMessage }) => (
 	</Text>
 );
 
-interface MessageProps
+function Message({ msg }: { msg: TMessage })
 {
-	msg: TMessage;
-}
-
-function Message(props: MessageProps)
-{
-	const { msg } = props;
-
-	const type = msg.getType();
-
 	return (
 		<Box flexDirection="column" paddingBottom={1} width="100%">
-			<MessageText msg={msg} type={type} />
-
-			{ // @ts-ignore
-				msg.tool_calls?.map((toolCall: ToolCall, index) => (
-					<ToolCallDisplay key={toolCall.id ?? index} toolCall={toolCall} />
-				))
-			}
-			{type === "tool" &&
+			<MessageText msg={msg} />
+			<ToolCalls msg={msg} />
+			{msg.getType() === "tool" &&
 				<ToolMessageDisplay msg={msg as ToolMessage} />
 			}
 		</Box>

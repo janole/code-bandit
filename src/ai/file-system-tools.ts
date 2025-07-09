@@ -25,13 +25,10 @@ function resolveWithinWorkDir(userPath: string, workDir?: unknown): string
 
 function listDirectory({ directory }: { directory: string }, config?: RunnableConfig): string
 {
-    const basePath = config?.metadata?.["workDir"] as string;
-
     try
     {
-        if (!basePath) return "ERROR: no basePath configured!";
-
-        const combinedPath = path.join(basePath, directory, "*");
+        const resolvedPath = resolveWithinWorkDir(directory, config?.metadata?.["workDir"]);
+        const combinedPath = path.join(resolvedPath, "*");
 
         const files = glob.globSync(combinedPath, {
             dot: true,
@@ -41,7 +38,7 @@ function listDirectory({ directory }: { directory: string }, config?: RunnableCo
         });
 
         return files
-            .filter(f => f.dirent.isDirectory() || f.dirent.isFile())
+            .filter((f) => f.dirent.isDirectory() || f.dirent.isFile())
             .map((f) => `${f.dirent.isDirectory() ? "[DIR]  " : "[FILE] "} ${f.name} ${f.stats?.size}`)
             .join("\n");
     }

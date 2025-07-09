@@ -32,6 +32,8 @@
 		"@swc-node/register": "^1.10.10",
 		"@types/node": "^24.0.10",
 		"@types/react": "^19.1.8",
+		"eslint": "^9.30.1",
+		"eslint-plugin-unicorn": "^59.0.1",
 		"ink-testing-library": "^3.0.0",
 		"typescript": "^5.8.3"
 	}

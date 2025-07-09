@@ -3,9 +3,10 @@
 `Code Bandit` is a command-line tool for interacting with git repositories using AI models.
 
 ## Features
-- Conversational interface powered by AI models
-  - [Ollama](https://github.com/ollama/ollama) and OpenAI via [langchain.js](https://github.com/langchain-ai/langchainjs)
 - Analyze and interact with your code via CLI
+- Conversational interface powered by AI models
+  - [Ollama](https://github.com/ollama/ollama) and [OpenAI API](https://openai.com/api/) 
+    (via [langchain.js](https://github.com/langchain-ai/langchainjs))
 
 ## Capabilities
 
@@ -25,19 +26,19 @@
 You can install the CLI globally via npm:
 
 ```bash
-npm install -g @janole/code-bandit
+$ npm install -g @janole/code-bandit
 ```
 
 Then run the command:
 
 ```bash
-coba
+$ coba -p openai -m gpt-4.1-mini   # make sure, your `OPENAI_API_KEY` is properly set
 ```
 
 Or use it directly with npx:
 
 ```bash
-npx @janole/code-bandit
+$ npx @janole/code-bandit -p ollama -m magistral:24b   # make sure, Ollama is installed on your computer
 ```
 
 ## Status

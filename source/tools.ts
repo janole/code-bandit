@@ -3,104 +3,108 @@ import { z } from "zod";
 import glob from "fast-glob";
 import { readFileSync, writeFileSync } from "fs";
 import path from "path";
+import { RunnableConfig } from "@langchain/core/runnables";
 
-export default function createTools(basePath: string)
-{
-    const listDirectory = tool(
-        ({ directory }: { directory: string }): string =>
+const listDirectory = tool(
+    ({ directory }: { directory: string }, config?: RunnableConfig): string =>
+    {
+        const basePath = config?.metadata?.["workDir"] as string;
+
+        try
         {
-            try
-            {
-                if (!basePath) return "ERROR: no basePath configured!";
+            if (!basePath) return "ERROR: no basePath configured!";
 
-                const combinedPath = path.join(basePath, directory, "*");
+            const combinedPath = path.join(basePath, directory, "*");
 
-                const files = glob.globSync(combinedPath, {
-                    dot: true,
-                    onlyFiles: false,
-                    objectMode: true,
-                    stats: true,
-                });
+            const files = glob.globSync(combinedPath, {
+                dot: true,
+                onlyFiles: false,
+                objectMode: true,
+                stats: true,
+            });
 
-                return files
-                    .filter(f => f.dirent.isDirectory() || f.dirent.isFile())
-                    .map((f) => `${f.dirent.isDirectory() ? "[DIR]  " : "[FILE] "} ${f.name} ${f.stats?.size}`)
-                    .join("\n");
-            }
-            catch (error: any)
-            {
-                return "ERROR: " + error.message;
-            }
-        },
+            return files
+                .filter(f => f.dirent.isDirectory() || f.dirent.isFile())
+                .map((f) => `${f.dirent.isDirectory() ? "[DIR]  " : "[FILE] "} ${f.name} ${f.stats?.size}`)
+                .join("\n");
+        }
+        catch (error: any)
         {
-            name: "listDirectory",
-            description: "List the contents of a directory",
-            schema: z.object({
-                directory: z.string(),
-            }),
-        },
-    );
+            return "ERROR: " + error.message + " " + JSON.stringify(config) + "X";
+        }
+    },
+    {
+        name: "listDirectory",
+        description: "List file and directory names inside a folder. Use this ONLY when the user wants to see what files or folders exist on disk.",
+        schema: z.object({
+            directory: z.string(),
+        }),
+    },
+);
 
-    const readFile = tool(
-        ({ fileName, maxLength }: { fileName: string, maxLength?: number }): string =>
+const readFile = tool(
+    ({ fileName, maxLength }: { fileName: string, maxLength?: number }, config: RunnableConfig): string =>
+    {
+        const basePath = config?.metadata?.["workDir"] as string;
+
+        try
         {
-            try
-            {
-                if (!basePath) return "ERROR: no basePath configured!";
+            if (!basePath) return "ERROR: no basePath configured!";
 
-                const combinedPath = path.join(basePath, fileName);
+            const combinedPath = path.join(basePath, fileName);
 
-                return readFileSync(combinedPath).toString().slice(0, maxLength);
-            }
-            catch (error: any)
-            {
-                return "ERROR: " + error.message;
-            }
-        },
+            return readFileSync(combinedPath).toString().slice(0, maxLength);
+        }
+        catch (error: any)
         {
-            name: "readFile",
-            description: "Read a file.",
-            schema: z.object({
-                fileName: z.string().describe("The name of the file to read. Use absolute paths."),
-                maxLength: z.number().optional().describe("Optionally read only [maxLength] bytes of the file."),
-            }),
-        },
-    );
+            return "ERROR: " + error.message;
+        }
+    },
+    {
+        name: "readFile",
+        description: "Read the contents of a specified file. Use this ONLY when the user wants to retrieve exact stored data from disk.",
+        schema: z.object({
+            fileName: z.string().describe("The name of the file to read. Use absolute paths."),
+            maxLength: z.number().optional().describe("Optionally read only [maxLength] bytes of the file."),
+        }),
+    },
+);
 
-    const writeFile = tool(
-        ({ fileName, fileData }: { fileName: string, fileData: string }): string =>
+const writeFile = tool(
+    ({ fileName, fileData }: { fileName: string, fileData: string }, config: RunnableConfig): string =>
+    {
+        const basePath = config?.metadata?.["workDir"] as string;
+
+        try
         {
-            try
-            {
-                if (!basePath) return "ERROR: no basePath configured!";
+            if (!basePath) return "ERROR: no basePath configured!";
 
-                const combinedPath = path.join(basePath, fileName);
+            const combinedPath = path.join(basePath, fileName);
 
-                writeFileSync(combinedPath, fileData);
+            writeFileSync(combinedPath, fileData);
 
-                return `${fileName} created`;
-            }
-            catch (error: any)
-            {
-                return "ERROR: " + error.message;
-            }
-
-        },
+            return `${fileName} created`;
+        }
+        catch (error: any)
         {
-            name: "writeFile",
-            description: "Create or overwrite a file.",
-            schema: z.object({
-                fileName: z.string().describe("The name of the file to write. Use absolute paths."),
-                fileData: z.string().describe("The data to be written to the file."),
-            }),
-        },
-    );
+            return "ERROR: " + error.message;
+        }
 
-    const tools = {
-        [listDirectory.name]: listDirectory,
-        [readFile.name]: readFile,
-        [writeFile.name]: writeFile,
-    };
+    },
+    {
+        name: "writeFile",
+        description: "Write given content to a specified file (create or overwrite). Use this ONLY if user explicitly wants to save data.",
+        schema: z.object({
+            fileName: z.string().describe("The name of the file to write. Use absolute paths."),
+            fileData: z.string().describe("The data to be written to the file."),
+        }),
+    },
+);
 
-    return tools;
-}
+const tools = {
+    [listDirectory.name]: listDirectory,
+    [readFile.name]: readFile,
+    [writeFile.name]: writeFile,
+};
+
+export { tools };

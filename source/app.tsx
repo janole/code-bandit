@@ -124,6 +124,7 @@ const ChatApp = (props: ChatAppProps) =>
 						<MemoMessage key={message.id ?? index} msg={message} />
 					)}
 				</Static>
+
 				{!!workingItem &&
 					<Message msg={workingItem} />
 				}
@@ -140,6 +141,7 @@ const ChatApp = (props: ChatAppProps) =>
 						placeholder="Type your message..."
 					/>
 				</Box>
+
 				<Box>
 					<Text color="blue">[Enter to Send]</Text>
 				</Box>

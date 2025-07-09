@@ -59,6 +59,7 @@ const ChatApp = (props: ChatAppProps) =>
 {
 	const { workDir, provider, model } = props;
 
+	const [working, setWorking] = useState(false);
 	const [_message, setMessage] = useState('');
 	const [chatHistory, setChatHistory] = useState<TMessage[]>([]);
 
@@ -71,35 +72,38 @@ const ChatApp = (props: ChatAppProps) =>
 			const messages = [...chatHistory, humanMessage];
 
 			setChatHistory(messages);
-
-			const send = (messages: TMessage[]) => setChatHistory(messages);
+			setMessage("");
+			setWorking(true);
 
 			work({
 				workDir,
 				provider,
 				model,
 				messages,
-				send,
-			});
-
-			setMessage('');
+				send: (messages: TMessage[]) => setChatHistory(messages),
+			})
+				.finally(() => { setWorking(false); });
 		}
 	};
 
 	const terminalSize = useTerminalSize();
+
+	const { items, currentItem } = working
+		? { items: chatHistory.slice(0, -1), currentItem: chatHistory[chatHistory.length - 1] }
+		: { items: chatHistory };
 
 	return (
 		<Box flexDirection="column" width={terminalSize.columns - 1} paddingBottom={1}>
 
 			{/* Messages Area */}
 			<Box flexDirection="column" paddingX={1} width="100%">
-				<Static items={chatHistory.slice(0, -1)}>
+				<Static items={items}>
 					{(message, index) => (
 						<MemoMessage key={message.id ?? index} msg={message} />
 					)}
 				</Static>
-				{!!chatHistory[chatHistory.length - 1] &&
-					<Message msg={chatHistory[chatHistory.length - 1] as TMessage} />
+				{!!currentItem &&
+					<Message msg={currentItem} />
 				}
 			</Box>
 

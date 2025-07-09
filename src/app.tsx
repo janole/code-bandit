@@ -65,13 +65,13 @@ const ToolMessageDisplay = ({ msg }: { msg: ToolMessage }) => (
 	</Text>
 );
 
-function Message({ msg }: { msg: TMessage })
+function Message({ msg, debug }: { msg: TMessage; debug?: boolean; })
 {
 	return (
 		<Box flexDirection="column" paddingBottom={1} width="100%">
 			<MessageText msg={msg} />
 			<ToolCalls msg={msg} />
-			{msg.getType() === "tool" &&
+			{debug && msg.getType() === "tool" &&
 				<ToolMessageDisplay msg={msg as ToolMessage} />
 			}
 		</Box>
@@ -85,11 +85,12 @@ interface ChatAppProps
 	workDir: string;
 	provider: "ollama" | "openai";
 	model: string;
+	debug?: boolean;
 }
 
 function ChatApp(props: ChatAppProps)
 {
-	const { workDir, provider, model } = props;
+	const { workDir, provider, model, debug } = props;
 
 	const [working, setWorking] = useState(false);
 	const [_message, setMessage] = useState("");
@@ -131,7 +132,7 @@ function ChatApp(props: ChatAppProps)
 			<Box flexDirection="column" paddingX={1} width="100%">
 				<Static items={items}>
 					{(message, index) => (
-						<MemoMessage key={message.id ?? index} msg={message} />
+						<MemoMessage key={message.id ?? index} msg={message} debug={debug} />
 					)}
 				</Static>
 

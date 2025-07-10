@@ -152,10 +152,6 @@ function ChatApp(props: ChatAppProps)
 						placeholder="Type your message ..."
 					/>
 				</Box>
-
-				<Box>
-					<Text color="blue">[Enter to Send]</Text>
-				</Box>
 			</Box>
 
 			{/* Footer */}

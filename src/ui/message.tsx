@@ -3,16 +3,29 @@ import { Box, Text } from "ink";
 import { AIMessage } from "@langchain/core/messages";
 import { ToolCall } from "@langchain/core/messages/tool";
 import { TMessage } from "../ai/work.js";
+import ErrorMessage from "../ai/error-message.js";
 
 const colors = {
     human: "green",
     ai: "black",
     generic: "black",
-    tool: "red",
+    tool: "magenta",
+    error: "red",
 };
 
 function MessageText({ msg }: { msg: TMessage })
 {
+    if (msg instanceof ErrorMessage)
+    {
+        const color = colors.error;
+
+        return (
+            <Box borderStyle="double" borderColor={color} paddingX={1} width="100%">
+                <Text color={color}>{msg.text}</Text>
+            </Box>
+        );
+    }
+
     const type = msg.getType();
     const color = type in colors ? colors[type as keyof typeof colors] : "black";
 

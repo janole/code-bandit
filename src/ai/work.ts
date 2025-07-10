@@ -1,4 +1,4 @@
-import { AIMessageChunk, BaseMessage } from "@langchain/core/messages";
+import { AIMessageChunk, BaseMessage, ToolMessage } from "@langchain/core/messages";
 import { concat } from "@langchain/core/utils/stream";
 import { Runnable } from "@langchain/core/runnables";
 import { DynamicStructuredTool } from "langchain/tools";
@@ -75,8 +75,19 @@ async function workInternal(props: WorkInternalProps)
 
             if (selectedTool)
             {
-                const toolMessage = await selectedTool.invoke(toolCall, { metadata: { workDir } });
-                messages.push(toolMessage);
+                const { result, error } = await tryCatch(selectedTool.invoke(toolCall, { metadata: { workDir } }));
+
+                if (result)
+                {
+                    messages.push(result);
+                }
+                else if (toolCall.id)
+                {
+                    messages.push(new ToolMessage({
+                        tool_call_id: toolCall.id,
+                        content: error?.message || "ERROR: Tool invocation failed for tool " + toolCall.name,
+                    }));
+                }
             }
         }
 

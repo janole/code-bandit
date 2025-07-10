@@ -3,19 +3,19 @@
  * Converts between LangChain messages and session messages
  */
 
-import { BaseMessage, AIMessage, HumanMessage, ToolMessage, SystemMessage } from '@langchain/core/messages';
-import { SessionMessage } from './types.js';
+import { BaseMessage, AIMessage, HumanMessage, ToolMessage, SystemMessage } from "@langchain/core/messages";
+import { SessionMessage } from "./types.js";
 
 export class LangChainSessionAdapter
 {
     /**
      * Convert LangChain messages to session messages
      */
-    static toSessionMessages(langchainMessages: BaseMessage[]): Omit<SessionMessage, 'id' | 'timestamp'>[]
+    static toSessionMessages(langchainMessages: BaseMessage[]): Omit<SessionMessage, "id" | "timestamp">[]
     {
         return langchainMessages.map(msg =>
         {
-            const baseMessage: Omit<SessionMessage, 'id' | 'timestamp'> = {
+            const baseMessage: Omit<SessionMessage, "id" | "timestamp"> = {
                 type: this.getLangChainMessageType(msg),
                 content: msg.content.toString(),
                 rawMessage: this.serializeLangChainMessage(msg),
@@ -65,7 +65,7 @@ export class LangChainSessionAdapter
                 }
                 catch (error)
                 {
-                    console.warn('Failed to deserialize raw message, falling back to basic conversion:', error);
+                    console.warn("Failed to deserialize raw message, falling back to basic conversion:", error);
                 }
             }
 
@@ -77,26 +77,26 @@ export class LangChainSessionAdapter
     /**
      * Get the session message type from a LangChain message
      */
-    private static getLangChainMessageType(msg: BaseMessage): SessionMessage['type']
+    private static getLangChainMessageType(msg: BaseMessage): SessionMessage["type"]
     {
         const type = msg.getType();
 
         switch (type)
         {
-            case 'human':
-                return 'human';
+            case "human":
+                return "human";
 
-            case 'ai':
-                return 'ai';
+            case "ai":
+                return "ai";
 
-            case 'tool':
-                return 'tool';
+            case "tool":
+                return "tool";
 
-            case 'system':
-                return 'system';
+            case "system":
+                return "system";
 
             default:
-                return 'ai'; // Default fallback
+                return "ai"; // Default fallback
         }
     }
 
@@ -115,10 +115,10 @@ export class LangChainSessionAdapter
 
         switch (type)
         {
-            case 'human':
+            case "human":
                 return base;
 
-            case 'ai':
+            case "ai":
                 const aiMsg = msg as AIMessage;
                 return {
                     ...base,
@@ -126,7 +126,7 @@ export class LangChainSessionAdapter
                     usage_metadata: aiMsg.usage_metadata,
                 };
 
-            case 'tool':
+            case "tool":
                 const toolMsg = msg as ToolMessage;
                 return {
                     ...base,
@@ -134,7 +134,7 @@ export class LangChainSessionAdapter
                     tool_call_id: toolMsg.tool_call_id,
                 };
 
-            case 'system':
+            case "system":
                 return base;
 
             default:
@@ -151,13 +151,13 @@ export class LangChainSessionAdapter
 
         switch (type)
         {
-            case 'human':
+            case "human":
                 return new HumanMessage({
                     content,
                     additional_kwargs,
                 });
 
-            case 'ai':
+            case "ai":
                 return new AIMessage({
                     content,
                     additional_kwargs,
@@ -165,7 +165,7 @@ export class LangChainSessionAdapter
                     usage_metadata: rawMessage.usage_metadata,
                 });
 
-            case 'tool':
+            case "tool":
                 return new ToolMessage({
                     content,
                     name: rawMessage.name,
@@ -173,7 +173,7 @@ export class LangChainSessionAdapter
                     additional_kwargs,
                 });
 
-            case 'system':
+            case "system":
                 return new SystemMessage({
                     content,
                     additional_kwargs,
@@ -200,25 +200,25 @@ export class LangChainSessionAdapter
 
         switch (msg.type)
         {
-            case 'human':
+            case "human":
                 return new HumanMessage({ content, additional_kwargs });
 
-            case 'ai':
+            case "ai":
                 return new AIMessage({
                     content,
                     additional_kwargs,
                     tool_calls: msg.metadata?.toolCalls,
                 });
 
-            case 'tool':
+            case "tool":
                 return new ToolMessage({
                     content,
-                    name: msg.metadata?.toolName || 'unknown',
-                    tool_call_id: msg.metadata?.toolCallId || 'unknown',
+                    name: msg.metadata?.toolName || "unknown",
+                    tool_call_id: msg.metadata?.toolCallId || "unknown",
                     additional_kwargs,
                 });
 
-            case 'system':
+            case "system":
                 return new SystemMessage({ content, additional_kwargs });
 
             default:

@@ -17,7 +17,7 @@ function resolveWithinWorkDir(userPath: string, workDir?: unknown): string
 
     const relative = path.relative(absWorkDir, resolvedPath);
 
-    if (relative.startsWith('..') || path.isAbsolute(relative))
+    if (relative.startsWith("..") || path.isAbsolute(relative))
     {
         throw new Error("Access outside of workDir is not allowed.");
     }

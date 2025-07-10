@@ -2,9 +2,9 @@
  * Main session manager - high-level session operations
  */
 
-import { randomUUID } from 'crypto';
-import { ChatSession, SessionMessage, CreateSessionOptions, SessionSummary, SessionListOptions } from './types.js';
-import { SessionStorage } from './storage.js';
+import { randomUUID } from "crypto";
+import { ChatSession, SessionMessage, CreateSessionOptions, SessionSummary, SessionListOptions } from "./types.js";
+import { SessionStorage } from "./storage.js";
 
 export class SessionManager
 {
@@ -66,11 +66,11 @@ export class SessionManager
     /**
      * Add a message to the current session
      */
-    async addMessage(message: Omit<SessionMessage, 'id' | 'timestamp'>): Promise<void>
+    async addMessage(message: Omit<SessionMessage, "id" | "timestamp">): Promise<void>
     {
         if (!this.currentSession)
         {
-            throw new Error('No active session. Create or load a session first.');
+            throw new Error("No active session. Create or load a session first.");
         }
 
         const sessionMessage: SessionMessage = {
@@ -88,11 +88,11 @@ export class SessionManager
     /**
      * Add multiple messages to the current session
      */
-    async addMessages(messages: Omit<SessionMessage, 'id' | 'timestamp'>[]): Promise<void>
+    async addMessages(messages: Omit<SessionMessage, "id" | "timestamp">[]): Promise<void>
     {
         if (!this.currentSession)
         {
-            throw new Error('No active session. Create or load a session first.');
+            throw new Error("No active session. Create or load a session first.");
         }
 
         const now = new Date();
@@ -111,11 +111,11 @@ export class SessionManager
     /**
      * Update session metadata
      */
-    async updateSession(updates: Partial<Pick<ChatSession, 'name' | 'metadata'>>): Promise<void>
+    async updateSession(updates: Partial<Pick<ChatSession, "name" | "metadata">>): Promise<void>
     {
         if (!this.currentSession)
         {
-            throw new Error('No active session. Create or load a session first.');
+            throw new Error("No active session. Create or load a session first.");
         }
 
         if (updates.name !== undefined)
@@ -187,8 +187,8 @@ export class SessionManager
      */
     private generateSessionId(): string
     {
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const shortUuid = randomUUID().split('-')[0];
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const shortUuid = randomUUID().split("-")[0];
         return `session-${timestamp}-${shortUuid}`;
     }
 

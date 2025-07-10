@@ -2,10 +2,10 @@
  * File-based session storage implementation
  */
 
-import { promises as fs } from 'fs';
-import { join } from 'path';
-import { homedir } from 'os';
-import { ChatSession, SessionSummary, SessionListOptions } from './types.js';
+import { promises as fs } from "fs";
+import { join } from "path";
+import { homedir } from "os";
+import { ChatSession, SessionSummary, SessionListOptions } from "./types.js";
 
 export class SessionStorage
 {
@@ -13,7 +13,7 @@ export class SessionStorage
 
     constructor(baseDir?: string)
     {
-        this.sessionsDir = join(baseDir || homedir(), '.code-bandit', 'sessions');
+        this.sessionsDir = join(baseDir || homedir(), ".code-bandit", "sessions");
     }
 
     /**
@@ -24,10 +24,11 @@ export class SessionStorage
         try
         {
             await fs.mkdir(this.sessionsDir, { recursive: true });
-        } catch (error)
+        }
+        catch (error)
         {
             // Directory might already exist, ignore EEXIST errors
-            if ((error as NodeJS.ErrnoException).code !== 'EEXIST')
+            if ((error as NodeJS.ErrnoException).code !== "EEXIST")
             {
                 throw error;
             }
@@ -61,7 +62,7 @@ export class SessionStorage
             })),
         };
 
-        await fs.writeFile(filePath, JSON.stringify(sessionData, null, 2), 'utf-8');
+        await fs.writeFile(filePath, JSON.stringify(sessionData, null, 2), "utf-8");
     }
 
     /**
@@ -72,7 +73,7 @@ export class SessionStorage
         try
         {
             const filePath = this.getSessionFilePath(sessionId);
-            const content = await fs.readFile(filePath, 'utf-8');
+            const content = await fs.readFile(filePath, "utf-8");
             const sessionData = JSON.parse(content);
 
             // Convert ISO strings back to dates
@@ -85,9 +86,10 @@ export class SessionStorage
                     timestamp: new Date(msg.timestamp),
                 })),
             };
-        } catch (error)
+        }
+        catch (error)
         {
-            if ((error as NodeJS.ErrnoException).code === 'ENOENT')
+            if ((error as NodeJS.ErrnoException).code === "ENOENT")
             {
                 return null;
             }
@@ -104,7 +106,7 @@ export class SessionStorage
         {
             await this.ensureSessionsDir();
             const files = await fs.readdir(this.sessionsDir);
-            const sessionFiles = files.filter(file => file.endsWith('.json'));
+            const sessionFiles = files.filter(file => file.endsWith(".json"));
 
             const sessions: SessionSummary[] = [];
 
@@ -112,7 +114,7 @@ export class SessionStorage
             {
                 try
                 {
-                    const sessionId = file.replace('.json', '');
+                    const sessionId = file.replace(".json", "");
                     const session = await this.loadSession(sessionId);
 
                     if (!session) continue;
@@ -159,7 +161,7 @@ export class SessionStorage
         catch (error)
         {
             // If sessions directory doesn't exist, return empty array
-            if ((error as NodeJS.ErrnoException).code === 'ENOENT')
+            if ((error as NodeJS.ErrnoException).code === "ENOENT")
             {
                 return [];
             }
@@ -180,7 +182,7 @@ export class SessionStorage
         }
         catch (error)
         {
-            if ((error as NodeJS.ErrnoException).code === 'ENOENT')
+            if ((error as NodeJS.ErrnoException).code === "ENOENT")
             {
                 return false;
             }
@@ -205,7 +207,8 @@ export class SessionStorage
             }
 
             return deletedCount;
-        } catch (error)
+        }
+        catch (error)
         {
             throw error;
         }

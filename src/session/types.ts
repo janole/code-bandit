@@ -5,7 +5,7 @@
 export interface SessionMessage
 {
     id: string;
-    type: 'human' | 'ai' | 'tool' | 'system';
+    type: "human" | "ai" | "tool" | "system";
     content: string;
     timestamp: Date;
     metadata?: Record<string, any>;

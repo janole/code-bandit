@@ -194,7 +194,7 @@ export class LangChainSessionAdapter
     private static createBasicLangChainMessage(msg: SessionMessage): BaseMessage
     {
         const content = msg.content;
-        const additional_kwargs = msg.metadata?.langchainType
+        const additional_kwargs = msg.metadata?.["langchainType"]
             ? { ...msg.metadata }
             : {};
 
@@ -207,14 +207,14 @@ export class LangChainSessionAdapter
                 return new AIMessage({
                     content,
                     additional_kwargs,
-                    tool_calls: msg.metadata?.toolCalls,
+                    tool_calls: msg.metadata?.["toolCalls"],
                 });
 
             case "tool":
                 return new ToolMessage({
                     content,
-                    name: msg.metadata?.toolName || "unknown",
-                    tool_call_id: msg.metadata?.toolCallId || "unknown",
+                    name: msg.metadata?.["toolName"] || "unknown",
+                    tool_call_id: msg.metadata?.["toolCallId"] || "unknown",
                     additional_kwargs,
                 });
 

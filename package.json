@@ -28,6 +28,7 @@
 		"dist"
 	],
 	"dependencies": {
+		"@langchain/anthropic": "^0.3.24",
 		"@langchain/core": "^0.3.62",
 		"@langchain/ollama": "^0.2.3",
 		"@langchain/openai": "^0.5.18",

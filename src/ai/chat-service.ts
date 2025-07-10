@@ -1,8 +1,9 @@
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatOllama } from "@langchain/ollama";
+import { ChatAnthropic } from "@langchain/anthropic";
 
-export type TProvider = "ollama" | "openai";
+export type TProvider = "ollama" | "openai" | "anthropic";
 class ChatService
 {
     current?: {
@@ -27,6 +28,10 @@ class ChatService
         else if (provider === "openai")
         {
             llm = new ChatOpenAI({ model });
+        }
+        else if (provider === "anthropic")
+        {
+            llm = new ChatAnthropic({ model });
         }
         else
         {

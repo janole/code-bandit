@@ -126,7 +126,7 @@ function ChatApp(props: ChatAppProps)
 		: { items: chatHistory };
 
 	return (
-		<Box flexDirection="column" width={terminalSize.columns - 1} paddingBottom={1}>
+		<Box flexDirection="column" width={terminalSize.columns}>
 
 			{/* Messages Area */}
 			<Box flexDirection="column" paddingX={1} width="100%">

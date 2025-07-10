@@ -124,9 +124,7 @@ export class SessionStorage
                     if (options.provider && session.provider !== options.provider) continue;
                     if (options.model && session.model !== options.model) continue;
 
-                    const lastMessage = session.messages.length > 0
-                        ? session.messages[session.messages.length - 1].content.slice(0, 100)
-                        : undefined;
+                    const lastMessage = session.messages[session.messages.length - 1]?.content.slice(0, 100);
 
                     sessions.push({
                         id: session.id,

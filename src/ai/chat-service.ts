@@ -2,8 +2,9 @@ import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatOllama } from "@langchain/ollama";
 import { ChatAnthropic } from "@langchain/anthropic";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 
-export type TProvider = "ollama" | "openai" | "anthropic";
+export type TProvider = "ollama" | "openai" | "anthropic" | "gemini";
 class ChatService
 {
     current?: {
@@ -32,6 +33,10 @@ class ChatService
         else if (provider === "anthropic")
         {
             llm = new ChatAnthropic({ model });
+        }
+        else if (provider === "gemini")
+        {
+            llm = new ChatGoogleGenerativeAI({ model });
         }
         else
         {

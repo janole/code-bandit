@@ -5,6 +5,7 @@ import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 
 export type TProvider = "ollama" | "openai" | "anthropic" | "gemini";
+
 class ChatService
 {
     current?: {

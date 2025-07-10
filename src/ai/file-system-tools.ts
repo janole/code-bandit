@@ -1,7 +1,7 @@
 import { DynamicStructuredTool, tool } from "@langchain/core/tools";
 import { z } from "zod";
 import glob from "fast-glob";
-import { readFileSync, realpathSync, writeFileSync } from "fs";
+import { readFileSync, realpathSync, unlinkSync, writeFileSync } from "fs";
 import path from "path";
 import { RunnableConfig } from "@langchain/core/runnables";
 
@@ -74,7 +74,19 @@ function writeFile({ fileName, fileData }: { fileName: string; fileData: string 
     }
     catch (error: any)
     {
-        return "ERROR: " + error.message;
+function deleteFile({ fileName }: { fileName: string }, config: RunnableConfig): string
+{
+    try
+    {
+        const resolvedPath = resolveWithinWorkDir(fileName, config?.metadata?.["workDir"]);
+
+        unlinkSync(resolvedPath);
+
+        return `${fileName} deleted.`;
+    }
+    catch (error: any)
+    {
+        return "ERROR: Tool `deleteFile` failed with: " + error.message;
     }
 }
 
@@ -100,6 +112,13 @@ const _tools = [
         schema: z.object({
             fileName: z.string().describe("The name of the file to write. Use absolute paths."),
             fileData: z.string().describe("The data to be written to the file."),
+        }),
+    }),
+    tool(deleteFile, {
+        name: "deleteFile",
+        description: "Delete the file. Use this ONLY if user explicitly wants to delete a file.",
+        schema: z.object({
+            fileName: z.string().describe("The name of the file to delete."),
         }),
     }),
 ];

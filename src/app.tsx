@@ -6,6 +6,7 @@ import { TMessage, work } from "./ai/work.js";
 import useTerminalSize from "./utils/use-terminal-size.js";
 import MemoMessage, { Message } from "./ui/message.js";
 import Spinner from "./ui/spinner.js";
+import ErrorMessage from "./ai/error-message.js";
 
 interface ChatAppProps
 {
@@ -42,6 +43,13 @@ function ChatApp(props: ChatAppProps)
 				messages,
 				send: (messages: TMessage[]) => setChatHistory(messages),
 			})
+				.catch(error => 
+				{
+					setChatHistory(messages => ([
+						...messages,
+						new ErrorMessage(`Error: ${error.message || error.toString()}`),
+					]));
+				})
 				.finally(() => { setWorking(false); });
 		}
 	};

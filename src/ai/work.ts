@@ -5,8 +5,11 @@ import { DynamicStructuredTool } from "langchain/tools";
 import tryCatch from "../utils/try-catch.js";
 import { ChatService, TProvider } from "./chat-service.js";
 import { tools } from "./file-system-tools.js";
+import ErrorMessage from "./error-message.js";
 
 export type TMessage = BaseMessage;
+
+const filterMessages = (messages: TMessage[]) => messages.filter(msg => !(msg instanceof ErrorMessage));
 
 const chatService = new ChatService();
 
@@ -45,12 +48,13 @@ async function workInternal(props: WorkInternalProps)
 
     const messages = [...props.messages];
 
-    let { result: stream, error } = await tryCatch(llmWithTools.stream(messages, { metadata: { workDir } }));
+    let { result: stream, error } = await tryCatch(llmWithTools.stream(filterMessages(messages), { metadata: { workDir } }));
 
     if (!stream)
     {
-        console.error(error);
-        stream = await llm.stream(messages);
+        messages.push(new ErrorMessage(`Error: ${error?.message || error?.toString() || "llmWithTools() failed."}`));
+
+        stream = await llm.stream(filterMessages(messages));
     }
 
     let aiMessage: AIMessageChunk | undefined = undefined;

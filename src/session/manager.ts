@@ -174,12 +174,7 @@ export class SessionManager
             limit: 1
         });
 
-        if (sessions.length === 0)
-        {
-            return null;
-        }
-
-        return this.loadSession(sessions[0].id);
+        return sessions[0]?.id ? this.loadSession(sessions[0].id) : null;
     }
 
     /**

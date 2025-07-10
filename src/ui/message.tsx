@@ -1,6 +1,6 @@
 import React, { memo } from "react";
-import { Box, Newline, Text } from "ink";
-import { AIMessage, ToolMessage } from "@langchain/core/messages";
+import { Box, Text } from "ink";
+import { AIMessage } from "@langchain/core/messages";
 import { ToolCall } from "@langchain/core/messages/tool";
 import { TMessage } from "../ai/work.js";
 
@@ -55,22 +55,25 @@ function ToolCalls({ msg }: { msg: TMessage })
     );
 };
 
-const ToolMessageDisplay = ({ msg }: { msg: ToolMessage }) => (
-    <Text color={colors.tool}>
-        Tool: {msg.name}
-        <Newline />
-        {JSON.stringify(msg)}
-    </Text>
-);
+function MessageDebugLog({ msg }: { msg: TMessage })
+{
+    return (
+        <Text color="gray">
+            {JSON.stringify(msg, null, 2)}
+        </Text>
+    );
+}
 
 function Message({ msg, debug }: { msg: TMessage; debug?: boolean; })
 {
     return (
         <Box flexDirection="column" paddingBottom={1} width="100%">
             <MessageText msg={msg} />
+
             <ToolCalls msg={msg} />
-            {debug && msg.getType() === "tool" &&
-                <ToolMessageDisplay msg={msg as ToolMessage} />
+
+            {debug &&
+                <MessageDebugLog msg={msg} />
             }
         </Box>
     );

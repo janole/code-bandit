@@ -50,7 +50,7 @@ function listDirectory({ directory }: { directory: string }, config?: RunnableCo
     }
 }
 
-function readfile({ fileName, maxLength }: { fileName: string; maxLength?: number }, config: RunnableConfig): string
+function readFile({ fileName, maxLength }: { fileName: string; maxLength?: number }, config: RunnableConfig): string
 {
     try
     {
@@ -98,7 +98,7 @@ const _tools = [
             directory: z.string(),
         }),
     }),
-    tool(readfile, {
+    tool(readFile, {
         name: "readFile",
         description: "Read the contents of a specified file. Use this ONLY when the user wants to retrieve exact stored data from disk.",
         schema: z.object({

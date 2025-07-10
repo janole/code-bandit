@@ -1,9 +1,9 @@
 import { DynamicStructuredTool, tool } from "@langchain/core/tools";
-import { z } from "zod";
-import glob from "fast-glob";
-import { readFileSync, realpathSync, unlinkSync, writeFileSync } from "fs";
-import path from "path";
 import { RunnableConfig } from "@langchain/core/runnables";
+import { z } from "zod";
+import { mkdirSync, readFileSync, realpathSync, renameSync, unlinkSync, writeFileSync } from "fs";
+import path from "path";
+import glob from "fast-glob";
 
 function resolveWithinWorkDir(userPath: string, workDir?: unknown): string
 {
@@ -78,6 +78,23 @@ function writeFile({ fileName, fileData }: { fileName: string; fileData: string 
     }
 }
 
+function moveFile({ sourceFileName, destinationFileName }: { sourceFileName: string, destinationFileName: string }, config: RunnableConfig): string
+{
+    try
+    {
+        const resolvedSourcePath = resolveWithinWorkDir(sourceFileName, config?.metadata?.["workDir"]);
+        const resolvedDestinationPath = resolveWithinWorkDir(destinationFileName, config?.metadata?.["workDir"]);
+
+        renameSync(resolvedSourcePath, resolvedDestinationPath);
+
+        return `${sourceFileName} moved to ${destinationFileName}.`;
+    }
+    catch (error: any)
+    {
+        return "ERROR: Tool `moveFile` failed with: " + error.message;
+    }
+}
+
 function deleteFile({ fileName }: { fileName: string }, config: RunnableConfig): string
 {
     try
@@ -91,6 +108,22 @@ function deleteFile({ fileName }: { fileName: string }, config: RunnableConfig):
     catch (error: any)
     {
         return "ERROR: Tool `deleteFile` failed with: " + error.message;
+    }
+}
+
+function createDirectory({ fileName }: { fileName: string }, config: RunnableConfig): string
+{
+    try
+    {
+        const resolvedPath = resolveWithinWorkDir(fileName, config?.metadata?.["workDir"]);
+
+        mkdirSync(resolvedPath, { recursive: true });
+
+        return `${fileName} created.`;
+    }
+    catch (error: any)
+    {
+        return "ERROR: Tool `createDirectory` failed with: " + error.message;
     }
 }
 
@@ -123,6 +156,21 @@ const _tools = [
         description: "Delete the file. Use this ONLY if user explicitly wants to delete a file.",
         schema: z.object({
             fileName: z.string().describe("The name of the file to delete."),
+        }),
+    }),
+    tool(moveFile, {
+        name: "moveFile",
+        description: "Rename a file.",
+        schema: z.object({
+            sourceFileName: z.string().describe("The path of the file to rename."),
+            destinationFileName: z.string().describe("The new path of the file after renaming."),
+        }),
+    }),
+    tool(createDirectory, {
+        name: "createDirectory",
+        description: "Creates a directory at the specified path, including any necessary parent directories (i.e., supports recursive creation like mkdir -p).",
+        schema: z.object({
+            fileName: z.string().describe("The name of the directory to create."),
         }),
     }),
 ];

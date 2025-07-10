@@ -130,47 +130,47 @@ function createDirectory({ fileName }: { fileName: string }, config: RunnableCon
 const _tools = [
     tool(listDirectory, {
         name: "listDirectory",
-        description: "List file and directory names inside a folder. Use this ONLY when the user wants to see what files or folders exist on disk.",
+        description: "List the files and folders inside a given directory (relative to the working directory). Use ONLY when the user wants to browse or inspect the contents of a folder.",
         schema: z.object({
-            directory: z.string(),
+            directory: z.string().describe("Path to the directory to list, relative to the working directory."), // .optional().default(".")
         }),
     }),
     tool(readFile, {
         name: "readFile",
-        description: "Read the contents of a specified file. Use this ONLY when the user wants to retrieve exact stored data from disk.",
+        description: "Read the contents of a file. Use ONLY when the user wants to retrieve or inspect saved content (e.g., source code, configuration files, etc.).",
         schema: z.object({
-            fileName: z.string().describe("The name of the file to read."),
-            maxLength: z.number().optional().describe("Optionally read only [maxLength] bytes of the file."),
+            fileName: z.string().describe("Path to the file to read, relative to the working directory."),
+            maxLength: z.number().optional().describe("Optionally limit the number of characters to read."),
         }),
     }),
     tool(writeFile, {
         name: "writeFile",
-        description: "Write given content to a specified file (create or overwrite). Use this ONLY if user explicitly wants to save data.",
+        description: "Write content to a file (create or overwrite). Use ONLY when the user wants to persist generated or modified content to disk.",
         schema: z.object({
-            fileName: z.string().describe("The name of the file to write."),
-            fileData: z.string().describe("The data to be written to the file."),
+            fileName: z.string().describe("Path to the file to write, relative to the working directory."),
+            fileData: z.string().describe("The content to write into the file."),
         }),
     }),
     tool(deleteFile, {
         name: "deleteFile",
-        description: "Delete the file. Use this ONLY if user explicitly wants to delete a file.",
+        description: "Delete a file from disk. Use ONLY when the user clearly wants to remove a file permanently.",
         schema: z.object({
-            fileName: z.string().describe("The name of the file to delete."),
+            fileName: z.string().describe("Path to the file to delete, relative to the working directory."),
         }),
     }),
     tool(moveFile, {
         name: "moveFile",
-        description: "Rename a file.",
+        description: "Rename or move a file within the working directory. Use ONLY when the user asks to rename or move a file.",
         schema: z.object({
-            sourceFileName: z.string().describe("The path of the file to rename."),
-            destinationFileName: z.string().describe("The new path of the file after renaming."),
+            sourceFileName: z.string().describe("Path of the file to move or rename, relative to the working directory."),
+            destinationFileName: z.string().describe("New path or name for the file, relative to the working directory."),
         }),
     }),
     tool(createDirectory, {
         name: "createDirectory",
-        description: "Creates a directory at the specified path, including any necessary parent directories (i.e., supports recursive creation like mkdir -p).",
+        description: "Create a directory (and any necessary parent directories) at the given path. Use ONLY when the user wants to make a new folder.",
         schema: z.object({
-            fileName: z.string().describe("The name of the directory to create."),
+            fileName: z.string().describe("Path to the directory to create, relative to the working directory."),
         }),
     }),
 ];

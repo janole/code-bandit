@@ -83,7 +83,12 @@ function ChatApp(props: ChatAppProps)
 
 			{/* Footer */}
 			<Box paddingX={1}>
-				<Text color="gray">Press Ctrl+C to exit</Text>
+				<Spinner empty={!working} color={!working ? "gray" : "blue"}>
+					{!working
+						? <Text color="green">{provider}/{model}</Text>
+						: "(working)"
+					}
+				</Spinner>
 			</Box>
 		</Box>
 	);

@@ -74,6 +74,10 @@ function writeFile({ fileName, fileData }: { fileName: string; fileData: string 
     }
     catch (error: any)
     {
+        return "ERROR: Tool `writeFile` failed with: " + error.message;
+    }
+}
+
 function deleteFile({ fileName }: { fileName: string }, config: RunnableConfig): string
 {
     try
@@ -102,7 +106,7 @@ const _tools = [
         name: "readFile",
         description: "Read the contents of a specified file. Use this ONLY when the user wants to retrieve exact stored data from disk.",
         schema: z.object({
-            fileName: z.string().describe("The name of the file to read. Use absolute paths."),
+            fileName: z.string().describe("The name of the file to read."),
             maxLength: z.number().optional().describe("Optionally read only [maxLength] bytes of the file."),
         }),
     }),
@@ -110,7 +114,7 @@ const _tools = [
         name: "writeFile",
         description: "Write given content to a specified file (create or overwrite). Use this ONLY if user explicitly wants to save data.",
         schema: z.object({
-            fileName: z.string().describe("The name of the file to write. Use absolute paths."),
+            fileName: z.string().describe("The name of the file to write."),
             fileData: z.string().describe("The data to be written to the file."),
         }),
     }),

@@ -13,6 +13,23 @@ const filterMessages = (messages: TMessage[]) => messages.filter(msg => !(msg in
 
 const chatService = new ChatService();
 
+function addFailedToolCallMessage(errorMessage: string, toolCall: { id?: string; name: string }, messages: TMessage[])
+{
+    const content = `ERROR: Tool invocation failed for tool ${toolCall.name} with error: ${errorMessage}.`;
+
+    if (toolCall.id)
+    {
+        messages.push(new ToolMessage({
+            tool_call_id: toolCall.id,
+            content,
+        }));
+    }
+    else
+    {
+        messages.push(new ErrorMessage(content));
+    }
+}
+
 interface WorkProps
 {
     workDir: string;
@@ -76,21 +93,22 @@ async function workInternal(props: WorkInternalProps)
         {
             const selectedTool = tools[toolCall.name];
 
-            if (selectedTool)
+            if (!selectedTool)
             {
-                const { result, error } = await tryCatch(selectedTool.invoke(toolCall, { metadata: { workDir } }));
+                addFailedToolCallMessage("Tool not found", toolCall, messages);
 
-                if (result)
-                {
-                    messages.push(result);
-                }
-                else if (toolCall.id)
-                {
-                    messages.push(new ToolMessage({
-                        tool_call_id: toolCall.id,
-                        content: error?.message || "ERROR: Tool invocation failed for tool " + toolCall.name,
-                    }));
-                }
+                continue;
+            }
+
+            const { result, error } = await tryCatch(selectedTool.invoke(toolCall, { metadata: { workDir } }));
+
+            if (result)
+            {
+                messages.push(result);
+            }
+            else
+            {
+                addFailedToolCallMessage(error?.message || "Unknown Error", toolCall, messages);
             }
         }
 

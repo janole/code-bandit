@@ -27,27 +27,6 @@ function MessageText({ type, text }: { type: MessageType | "error"; text: string
     }
 
     return <Text color={color}>{text}</Text>;
-
-    // if (msg instanceof ErrorMessage)
-    // {
-    //     const color = colors.error;
-
-    //     return (
-    //         <Box borderStyle="double" borderColor={color} paddingX={1} width="100%">
-    //             <Text color={color}>{msg.text}</Text>
-    //         </Box>
-    //     );
-    // }
-
-    // // const type = msg.getType();
-    // const color = type in colors ? colors[type as keyof typeof colors] : "black";
-
-    // if (["ai", "generic", "human"].includes(type) && msg.text.trim().length > 0)
-    // {
-    //     return <Text color={color}>{msg.text}</Text>;
-    // }
-
-    // return null;
 }
 
 function ToolCallDisplay({ toolCall }: { toolCall: ToolCall })

@@ -4,6 +4,8 @@ import { ChatOllama } from "@langchain/ollama";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 
+export type TProvider = "ollama" | "openai" | "anthropic" | "gemini" | "openrouter";
+
 export interface IChatServiceOptions
 {
     provider: TProvider;
@@ -57,6 +59,16 @@ class ChatService
         else if (provider === "gemini")
         {
             llm = new ChatGoogleGenerativeAI({ model });
+        }
+        else if (provider === "openrouter")
+        {
+            llm = new ChatOpenAI({
+                model,
+                openAIApiKey: props.apiKey, // || process.env["OPENROUTER_API_KEY"],
+                configuration: {
+                    baseURL: props.apiUrl || "https://openrouter.ai/api/v1", // || process.env["OPENROUTER_API_BASE_URL"],
+                },
+            });
         }
         else
         {

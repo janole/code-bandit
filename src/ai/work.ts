@@ -125,9 +125,6 @@ async function workInternal(props: WorkInternalProps)
                 if (result)
                 {
                     messages.push(result);
-                    // messages.push(new AIMessage({
-                    //     content: "Result of tool call " + toolCall.name + ":\n\n" + (result as ToolMessage).text || "ERROR: No content returned from tool.",
-                    // }));
                 }
                 else
                 {

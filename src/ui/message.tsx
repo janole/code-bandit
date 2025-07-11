@@ -60,7 +60,7 @@ function ToolCalls({ msg }: { msg: TMessage })
     }
 
     return (
-        <Box flexDirection="column" width="100%">
+        <Box flexDirection="column" width="100%" paddingX={1}>
             {aiMessage?.tool_calls?.map((toolCall, index) => (
                 <ToolCallDisplay key={toolCall.id ?? index} toolCall={toolCall} />
             ))}

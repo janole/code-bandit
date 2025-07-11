@@ -4,7 +4,15 @@ import { ChatOllama } from "@langchain/ollama";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 
-export type TProvider = "ollama" | "openai" | "anthropic" | "gemini";
+export interface IChatServiceOptions
+{
+    provider: TProvider;
+    model: string;
+
+    apiKey?: string;
+    apiUrl?: string;
+    headers?: Record<string, string>;
+}
 
 class ChatService
 {
@@ -14,8 +22,10 @@ class ChatService
         model: string;
     };
 
-    async getLLM(provider: TProvider, model: string): Promise<BaseChatModel>
+    async getLLM(props: IChatServiceOptions): Promise<BaseChatModel>
     {
+        const { provider, model } = props;
+
         if (this.current && this.current.provider === provider && this.current.model === model)
         {
             return this.current.llm;
@@ -25,11 +35,20 @@ class ChatService
 
         if (provider === "ollama")
         {
-            llm = new ChatOllama({ model });
+            llm = new ChatOllama({
+                model,
+                baseUrl: props.apiUrl, // || process.env["OLLAMA_API_URL"],
+            });
         }
         else if (provider === "openai")
         {
-            llm = new ChatOpenAI({ model });
+            llm = new ChatOpenAI({
+                model,
+                openAIApiKey: props.apiKey, // || process.env["OPENAI_API_KEY"],
+                configuration: {
+                    baseURL: props.apiUrl, // || process.env["OPENAI_API_BASE_URL"],
+                },
+            });
         }
         else if (provider === "anthropic")
         {

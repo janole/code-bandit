@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { Box, Text } from "ink";
-import { AIMessage } from "@langchain/core/messages";
+import { AIMessage, MessageType } from "@langchain/core/messages";
 import { ToolCall } from "@langchain/core/messages/tool";
 import { TMessage } from "../ai/work.js";
 import ErrorMessage from "../ai/error-message.js";
@@ -13,28 +13,41 @@ const colors = {
     error: "red",
 };
 
-function MessageText({ msg }: { msg: TMessage })
+function MessageText({ type, text }: { type: MessageType | "error"; text: string })
 {
-    if (msg instanceof ErrorMessage)
-    {
-        const color = colors.error;
+    const color = type in colors ? colors[type as keyof typeof colors] : "black";
 
+    if (type === "error")
+    {
         return (
             <Box borderStyle="double" borderColor={color} paddingX={1} width="100%">
-                <Text color={color}>{msg.text}</Text>
+                <Text color={color}>{text}</Text>
             </Box>
         );
     }
 
-    const type = msg.getType();
-    const color = type in colors ? colors[type as keyof typeof colors] : "black";
+    return <Text color={color}>{text}</Text>;
 
-    if (["ai", "generic", "human"].includes(type) && msg.text.length > 0)
-    {
-        return <Text color={color}>{msg.text}</Text>;
-    }
+    // if (msg instanceof ErrorMessage)
+    // {
+    //     const color = colors.error;
 
-    return null;
+    //     return (
+    //         <Box borderStyle="double" borderColor={color} paddingX={1} width="100%">
+    //             <Text color={color}>{msg.text}</Text>
+    //         </Box>
+    //     );
+    // }
+
+    // // const type = msg.getType();
+    // const color = type in colors ? colors[type as keyof typeof colors] : "black";
+
+    // if (["ai", "generic", "human"].includes(type) && msg.text.trim().length > 0)
+    // {
+    //     return <Text color={color}>{msg.text}</Text>;
+    // }
+
+    // return null;
 }
 
 function ToolCallDisplay({ toolCall }: { toolCall: ToolCall })
@@ -50,18 +63,11 @@ function ToolCallDisplay({ toolCall }: { toolCall: ToolCall })
     );
 }
 
-function ToolCalls({ msg }: { msg: TMessage })
+function ToolCalls({ toolCalls }: { toolCalls: ToolCall[] })
 {
-    const aiMessage: AIMessage | undefined = msg.getType() === "ai" ? msg : undefined;
-
-    if (!aiMessage?.tool_calls?.length)
-    {
-        return null;
-    }
-
     return (
         <Box flexDirection="column" width="100%" paddingX={1}>
-            {aiMessage?.tool_calls?.map((toolCall, index) => (
+            {toolCalls.map((toolCall, index) => (
                 <ToolCallDisplay key={toolCall.id + index.toString()} toolCall={toolCall} />
             ))}
         </Box>
@@ -79,11 +85,26 @@ function MessageDebugLog({ msg }: { msg: TMessage })
 
 function Message({ msg, debug }: { msg: TMessage; debug?: boolean; })
 {
+    const type = (msg instanceof ErrorMessage) ? "error" : msg.getType();
+
+    const hasText = ["human", "ai", "generic", "error"].includes(type) && msg.text.trim().length > 0;
+
+    const toolCalls = (msg as AIMessage).tool_calls;
+
+    if (!debug && !hasText && !toolCalls)
+    {
+        return null;
+    }
+
     return (
         <Box flexDirection="column" paddingBottom={1} width="100%">
-            <MessageText msg={msg} />
+            {hasText &&
+                <MessageText type={type} text={msg.text} />
+            }
 
-            <ToolCalls msg={msg} />
+            {!!toolCalls &&
+                <ToolCalls toolCalls={toolCalls} />
+            }
 
             {debug &&
                 <MessageDebugLog msg={msg} />

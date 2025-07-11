@@ -42,17 +42,23 @@ async function work(props: WorkProps)
 {
     const { workDir, chatServiceOptions, messages, send } = props;
 
-    const llm = await chatService.getLLM(chatServiceOptions);
-    const llmWithTools = llm.bindTools?.(Object.values(tools)) ?? llm;
+    const llm = await chatService.getLLM(chatServiceOptions).then(llm => 
+    {
+        if (!llm.bindTools)
+        {
+            throw new Error("LLM does not support binding tools.");
+        }
 
-    return workInternal({ workDir, llm, llmWithTools, tools, messages, send });
+        return llm.bindTools(Object.values(tools)); // .withFallbacks([llm]);
+    });
+
+    return workInternal({ workDir, llm, tools, messages, send });
 }
 
 interface WorkInternalProps
 {
     workDir: string;
     llm: Runnable<TMessage[], AIMessageChunk>;
-    llmWithTools: Runnable<TMessage[], AIMessageChunk>;
     tools: { [key: string]: DynamicStructuredTool };
     messages: TMessage[];
     send: (messages: TMessage[]) => void;
@@ -60,17 +66,19 @@ interface WorkInternalProps
 
 async function workInternal(props: WorkInternalProps)
 {
-    const { workDir, llm, llmWithTools, tools, send } = props;
+    const { workDir, llm, tools, send } = props;
 
     const messages = [...props.messages];
 
-    let { result: stream, error } = await tryCatch(llmWithTools.stream(filterMessages(messages), { metadata: { workDir } }));
+    let { result: stream, error } = await tryCatch(llm.stream(filterMessages(messages), { metadata: { workDir } }));
 
     if (!stream)
     {
-        messages.push(new ErrorMessage(`Error: ${error?.message || error?.toString() || "llmWithTools() failed."}`));
+        messages.push(new ErrorMessage(`ERROR: ${error?.message || error?.toString() || "llm.stream(...) failed."}`));
 
-        stream = await llm.stream(filterMessages(messages));
+        send([...messages]);
+
+        return messages;
     }
 
     let aiMessage: AIMessageChunk | undefined = undefined;

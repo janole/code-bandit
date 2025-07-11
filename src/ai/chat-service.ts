@@ -40,6 +40,7 @@ class ChatService
             llm = new ChatOllama({
                 model,
                 baseUrl: props.apiUrl, // || process.env["OLLAMA_API_URL"],
+                numCtx: 8192, // 8k context size
             });
         }
         else if (provider === "openai")

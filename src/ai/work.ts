@@ -3,7 +3,7 @@ import { concat } from "@langchain/core/utils/stream";
 import { Runnable } from "@langchain/core/runnables";
 import { DynamicStructuredTool } from "langchain/tools";
 import tryCatch from "../utils/try-catch.js";
-import { ChatService, TProvider } from "./chat-service.js";
+import { ChatService, IChatServiceOptions } from "./chat-service.js";
 import { tools } from "./file-system-tools.js";
 import ErrorMessage from "./error-message.js";
 
@@ -16,17 +16,16 @@ const chatService = new ChatService();
 interface WorkProps
 {
     workDir: string;
-    provider: TProvider;
-    model: string;
+    chatServiceOptions: IChatServiceOptions;
     messages: TMessage[];
     send: (messages: TMessage[]) => void;
 }
 
 async function work(props: WorkProps)
 {
-    const { workDir, provider, model, messages, send } = props;
+    const { workDir, chatServiceOptions, messages, send } = props;
 
-    const llm = await chatService.getLLM(provider, model);
+    const llm = await chatService.getLLM(chatServiceOptions);
     const llmWithTools = llm.bindTools?.(Object.values(tools)) ?? llm;
 
     return workInternal({ workDir, llm, llmWithTools, tools, messages, send });

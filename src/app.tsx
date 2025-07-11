@@ -7,18 +7,18 @@ import useTerminalSize from "./utils/use-terminal-size.js";
 import MemoMessage, { Message } from "./ui/message.js";
 import Spinner from "./ui/spinner.js";
 import ErrorMessage from "./ai/error-message.js";
+import { IChatServiceOptions } from "./ai/chat-service.js";
 
 interface ChatAppProps
 {
 	workDir: string;
-	provider: "ollama" | "openai";
-	model: string;
+	chatServiceOptions: IChatServiceOptions;
 	debug?: boolean;
 }
 
 function ChatApp(props: ChatAppProps)
 {
-	const { workDir, provider, model, debug } = props;
+	const { workDir, chatServiceOptions, debug } = props;
 
 	const [working, setWorking] = useState(false);
 	const [_message, setMessage] = useState("");
@@ -38,8 +38,7 @@ function ChatApp(props: ChatAppProps)
 
 			work({
 				workDir,
-				provider,
-				model,
+				chatServiceOptions,
 				messages,
 				send: (messages: TMessage[]) => setChatHistory(messages),
 			})
@@ -93,7 +92,7 @@ function ChatApp(props: ChatAppProps)
 			<Box paddingX={1}>
 				<Spinner empty={!working} color={!working ? "gray" : "blue"}>
 					{!working
-						? <Text color="green">{provider}/{model}</Text>
+						? <Text color="green">{chatServiceOptions.provider}/{chatServiceOptions.model}</Text>
 						: "(working)"
 					}
 				</Spinner>

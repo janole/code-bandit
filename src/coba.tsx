@@ -21,11 +21,15 @@ program
 	{
 		const workDir = path.join(cwd(), gitRepoPath || ".");
 
+		const chatServiceOptions = {
+			provider: options.provider,
+			model: options.model,
+		};
+
 		render(
 			<App
 				workDir={workDir}
-				provider={options.provider}
-				model={options.model}
+				chatServiceOptions={chatServiceOptions}
 				debug={options.debug}
 			/>
 		);

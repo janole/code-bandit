@@ -82,48 +82,64 @@ async function workInternal(props: WorkInternalProps)
     }
 
     let aiMessage: AIMessageChunk | undefined = undefined;
+    const toolMessages: AIMessageChunk[] = [];
 
     for await (const chunk of stream)
     {
-        aiMessage = aiMessage !== undefined ? concat(aiMessage, chunk) : chunk;
-
-        if (!aiMessage?.tool_calls || aiMessage.tool_calls.length === 0)
+        // once we detect a tool message, stop streaming chunks to frontend
+        if (chunk.tool_calls?.length || toolMessages.length)
         {
+            toolMessages.push(chunk);
+        }
+        else
+        {
+            aiMessage = aiMessage !== undefined ? concat(aiMessage, chunk) : chunk;
             send([...messages, aiMessage]);
         }
     }
 
-    aiMessage && messages.push(aiMessage) && send([...messages]);
+    aiMessage && messages.push(aiMessage);
 
-    if (aiMessage?.tool_calls && aiMessage.tool_calls.length > 0)
+    if (toolMessages.length === 0)
     {
-        for (const toolCall of aiMessage.tool_calls)
+        return messages;
+    }
+
+    for (const toolMessage of toolMessages)
+    {
+        messages.push(toolMessage);
+        send([...messages]);
+
+        for (const toolCall of (toolMessage.tool_calls || []))
         {
             const selectedTool = tools[toolCall.name];
 
             if (!selectedTool)
             {
                 addFailedToolCallMessage("Tool not found", toolCall, messages);
-
-                continue;
-            }
-
-            const { result, error } = await tryCatch(selectedTool.invoke(toolCall, { metadata: { workDir } }));
-
-            if (result)
-            {
-                messages.push(result);
             }
             else
             {
-                addFailedToolCallMessage(error?.message || "Unknown Error", toolCall, messages);
-            }
-        }
+                const { result, error } = await tryCatch(selectedTool.invoke(toolCall, { metadata: { workDir } }));
 
-        return workInternal({ ...props, messages });
+                if (result)
+                {
+                    messages.push(result);
+                    // messages.push(new AIMessage({
+                    //     content: "Result of tool call " + toolCall.name + ":\n\n" + (result as ToolMessage).text || "ERROR: No content returned from tool.",
+                    // }));
+                }
+                else
+                {
+                    addFailedToolCallMessage(error?.message || "Unknown Error", toolCall, messages);
+                }
+            }
+
+            send([...messages]);
+        }
     }
 
-    return messages;
+    return workInternal({ ...props, messages });
 }
 
 export { work };

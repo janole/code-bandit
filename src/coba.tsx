@@ -17,6 +17,8 @@ program
 	.option("-m, --model <model>", "Specify the model to be used", "magistral:24b")
 	.option("-p, --provider <provider>", "Specify the model provider to be used", "ollama")
 	.option("-d, --debug", "Show debug information")
+	.option("-u, --api-url <url>", "API URL for the model provider")
+	.option("-k, --api-key <key>", "API key for the model provider")
 	.action(async (gitRepoPath: string, options) =>
 	{
 		const workDir = path.join(cwd(), gitRepoPath || ".");
@@ -24,6 +26,8 @@ program
 		const chatServiceOptions = {
 			provider: options.provider,
 			model: options.model,
+			apiUrl: options.apiUrl,
+			apiKey: options.apiKey,
 		};
 
 		render(

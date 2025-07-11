@@ -40,8 +40,8 @@ function MessageText({ msg }: { msg: TMessage })
 function ToolCallDisplay({ toolCall }: { toolCall: ToolCall })
 {
     return (
-        <Box borderStyle="single" borderColor="red" paddingX={1} width="100%">
-            <Text color="red">
+        <Box borderStyle="round" borderColor={colors.tool} paddingX={1}>
+            <Text color={colors.tool}>
                 Tool: {toolCall.name}({Object.entries(toolCall.args).map(([name, value]) =>
                     `${name}: ${value.toString().slice(0, 60)}`
                 ).join(", ")})

@@ -66,7 +66,7 @@ function ChatApp(props: ChatAppProps)
 			<Box flexDirection="column" paddingX={1} width="100%">
 				<Static items={items}>
 					{(message, index) => (
-						<MemoMessage key={message.id ?? index} msg={message} debug={debug} />
+						<MemoMessage key={message.id + index.toString()} msg={message} debug={debug} />
 					)}
 				</Static>
 

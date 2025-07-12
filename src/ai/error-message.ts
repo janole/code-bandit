@@ -7,14 +7,16 @@ class ErrorMessage extends BaseMessage
         return "generic";
     }
 
-    static isErrorMessage(message: BaseMessage): message is ErrorMessage
+    static isErrorMessage(message: BaseMessage)
     {
-        return message instanceof ErrorMessage;
+        return message.additional_kwargs["__coba_type"] === "error";
     }
 
     constructor(content: string)
     {
         super({ content });
+
+        this.additional_kwargs["__coba_type"] = "error";
     }
 }
 

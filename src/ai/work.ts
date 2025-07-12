@@ -15,7 +15,7 @@ const systemMessage = new SystemMessage(systemPrompts.test);
 
 function prepareMessages(messages: TMessage[], transformToolMessages?: boolean): TMessage[]
 {
-    let preparedMessages = messages.filter(msg => !(msg instanceof ErrorMessage));
+    let preparedMessages = messages.filter(msg => !ErrorMessage.isErrorMessage(msg));
 
     if (transformToolMessages)
     {

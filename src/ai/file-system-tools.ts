@@ -39,10 +39,12 @@ function listDirectory({ directory }: { directory: string }, config?: RunnableCo
             stats: true,
         });
 
-        return files
+        const output = files
             .filter((f) => f.dirent.isDirectory() || f.dirent.isFile())
             .map((f) => `${f.dirent.isDirectory() ? "[DIR]  " : "[FILE] "} ${f.name} ${f.stats?.size}`)
             .join("\n");
+
+        return output || `The directory ${directory} is empty.`;
     }
     catch (error: any)
     {
@@ -55,7 +57,10 @@ function readFile({ fileName, maxLength }: { fileName: string; maxLength?: numbe
     try
     {
         const resolvedPath = resolveWithinWorkDir(fileName, config?.metadata?.["workDir"]);
-        return readFileSync(resolvedPath).toString().slice(0, maxLength);
+
+        const content = readFileSync(resolvedPath).toString().slice(0, maxLength);
+
+        return content || `The file "${fileName}" is empty.`;
     }
     catch (error: any)
     {
@@ -68,6 +73,7 @@ function writeFile({ fileName, fileData }: { fileName: string; fileData: string 
     try
     {
         const resolvedPath = resolveWithinWorkDir(fileName, config?.metadata?.["workDir"]);
+
         writeFileSync(resolvedPath, fileData);
 
         return `${fileName} created.`;

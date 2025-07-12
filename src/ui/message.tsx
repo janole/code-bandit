@@ -27,7 +27,7 @@ function MessageText({ type, text }: { type: MessageType | "error"; text: string
         );
     }
 
-    if (type === 'ai')
+    if (type === "ai")
     {
         return <Markdown color={color}>{text}</Markdown>;
     }

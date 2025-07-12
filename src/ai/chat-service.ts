@@ -3,6 +3,11 @@ import { ChatOpenAI } from "@langchain/openai";
 import { ChatOllama } from "@langchain/ollama";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { AIMessage, BaseMessage, SystemMessage, trimMessages } from "@langchain/core/messages";
+import { Runnable } from "@langchain/core/runnables";
+import ErrorMessage from "./error-message.js";
+import { systemPrompts } from "./system-prompt.js";
+import tryCatch from "../utils/try-catch.js";
 
 export type TProvider = "ollama" | "openai" | "anthropic" | "gemini" | "openrouter";
 
@@ -22,6 +27,9 @@ class ChatService
         llm: BaseChatModel;
         provider: TProvider;
         model: string;
+
+        systemMessage?: SystemMessage;
+        trimmer: Runnable<BaseMessage[], BaseMessage[]>;
     };
 
     async getLLM(props: IChatServiceOptions): Promise<BaseChatModel>
@@ -35,12 +43,16 @@ class ChatService
 
         let llm: BaseChatModel;
 
+        let contextSize = 32 * 1024; // Default to 32k context size
+
         if (provider === "ollama")
         {
+            contextSize = 8192; // 8k context size
+
             llm = new ChatOllama({
                 model,
                 baseUrl: props.apiUrl, // || process.env["OLLAMA_API_URL"],
-                numCtx: 8192, // 8k context size
+                numCtx: contextSize,
             });
         }
         else if (provider === "openai")
@@ -80,9 +92,56 @@ class ChatService
             llm,
             provider,
             model,
+
+            systemMessage: new SystemMessage(
+                systemPrompts[provider as keyof typeof systemPrompts] || systemPrompts.default
+            ),
+
+            trimmer: trimMessages({
+                tokenCounter: llm,
+                maxTokens: contextSize,
+
+                strategy: "last",
+                allowPartial: false,
+                includeSystem: true,
+                startOn: ["system", "human"],
+                // endOn: ["tool", "ai"],
+            }),
         };
 
         return this.current.llm;
+    }
+
+    async prepareMessages(messages: BaseMessage[])
+    {
+        if (!this.current)
+        {
+            throw new Error("ChatService is not initialized. Call getLLM() first.");
+        }
+
+        let preparedMessages = messages.filter(msg => !ErrorMessage.isErrorMessage(msg));
+
+        if (this.current.llm.getName() === "ChatOllama")
+        {
+            preparedMessages = preparedMessages.map(msg => 
+            {
+                return msg.getType() !== "tool" ? msg : new AIMessage({
+                    content: "Result of tool call " + msg.name + ":\n\n" + (msg.text || "ERROR: No content returned from tool."),
+                });
+            });
+        }
+
+        const { result } = await tryCatch(this.current.trimmer.invoke(preparedMessages));
+
+        if (result)
+        {
+            preparedMessages = result;
+        }
+
+        return [
+            ...(this.current.systemMessage ? [this.current.systemMessage] : []),
+            ...preparedMessages
+        ];
     }
 }
 

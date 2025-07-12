@@ -1,4 +1,4 @@
-import { AIMessage, AIMessageChunk, BaseMessage, SystemMessage, ToolMessage } from "@langchain/core/messages";
+import { AIMessageChunk, BaseMessage, ToolMessage } from "@langchain/core/messages";
 import { concat } from "@langchain/core/utils/stream";
 import { Runnable } from "@langchain/core/runnables";
 import { BaseChatModelCallOptions } from "@langchain/core/language_models/chat_models";
@@ -7,42 +7,19 @@ import tryCatch from "../utils/try-catch.js";
 import { ChatService, IChatServiceOptions } from "./chat-service.js";
 import { tools } from "./file-system-tools.js";
 import ErrorMessage from "./error-message.js";
-import { systemPrompts } from "./system-prompt.js";
 
 export type TMessage = BaseMessage;
 
-const systemMessage = new SystemMessage(systemPrompts.test);
-
-function prepareMessages(messages: TMessage[], transformToolMessages?: boolean): TMessage[]
-{
-    let preparedMessages = messages.filter(msg => !ErrorMessage.isErrorMessage(msg));
-
-    if (transformToolMessages)
-    {
-        preparedMessages = preparedMessages.map(msg => 
-        {
-            return msg.getType() !== "tool" ? msg : new AIMessage({
-                content: "Result of tool call " + msg.name + ":\n\n" + (msg.text || "ERROR: No content returned from tool."),
-            });
-        });
-    }
-
-    return [
-        systemMessage,
-        ...preparedMessages
-    ];
-}
+const chatService = new ChatService();
 
 async function getStream(llm: Runnable<TMessage[], AIMessageChunk>, messages: TMessage[], options?: Partial<BaseChatModelCallOptions>)
 {
-    const transformToolMessages = llm.getName() === "ChatOllama";
+    const preparedMessages = await chatService.prepareMessages(messages);
 
-    const { result: stream, error } = await tryCatch(llm.stream(prepareMessages(messages, transformToolMessages), options));
+    const { result: stream, error } = await tryCatch(llm.stream(preparedMessages, options));
 
     return { stream, error };
 }
-
-const chatService = new ChatService();
 
 function addFailedToolCallMessage(errorMessage: string, toolCall: { id?: string; name: string }, messages: TMessage[])
 {

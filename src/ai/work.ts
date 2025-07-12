@@ -151,7 +151,7 @@ async function workInternal(props: WorkInternalProps)
             }
             else
             {
-                const { result, error } = await tryCatch(selectedTool.invoke(toolCall, { metadata: { workDir } }));
+                const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, { metadata: { workDir } }));
 
                 if (result)
                 {

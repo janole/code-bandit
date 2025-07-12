@@ -83,7 +83,7 @@ function ChatApp(props: ChatAppProps)
 						value={_message}
 						onChange={setMessage}
 						onSubmit={handleSendMessage}
-						placeholder="Type your message ..."
+						placeholder="How can I help you?"
 					/>
 				</Box>
 			</Box>

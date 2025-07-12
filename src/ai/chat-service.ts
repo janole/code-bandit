@@ -1,7 +1,6 @@
 import { ChatAnthropic } from "@langchain/anthropic";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { AIMessage, BaseMessage, SystemMessage, trimMessages } from "@langchain/core/messages";
-import { Runnable } from "@langchain/core/runnables";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatOllama } from "@langchain/ollama";
 import { ChatOpenAI } from "@langchain/openai";
@@ -17,6 +16,8 @@ export interface IChatServiceOptions
     provider: TProvider;
     model: string;
 
+    contextSize?: number; // in tokens
+
     apiKey?: string;
     apiUrl?: string;
     headers?: Record<string, string>;
@@ -29,13 +30,13 @@ class ChatService
         provider: TProvider;
         model: string;
 
+        contextSize?: number;
         systemMessage?: SystemMessage;
-        trimmer: Runnable<BaseMessage[], BaseMessage[]>;
     };
 
     async getLLM(props: IChatServiceOptions): Promise<BaseChatModel>
     {
-        const { provider, model } = props;
+        let { provider, model, contextSize = 32 * 1024 } = props;
 
         if (this.current && this.current.provider === provider && this.current.model === model)
         {
@@ -43,8 +44,6 @@ class ChatService
         }
 
         let llm: BaseChatModel;
-
-        let contextSize = 32 * 1024; // Default to 32k context size
 
         if (provider === "ollama")
         {
@@ -94,20 +93,11 @@ class ChatService
             provider,
             model,
 
+            contextSize,
+
             systemMessage: new SystemMessage(
                 systemPrompts[provider as keyof typeof systemPrompts] || systemPrompts.default
             ),
-
-            trimmer: trimMessages({
-                tokenCounter: llm,
-                maxTokens: contextSize,
-
-                strategy: "last",
-                allowPartial: false,
-                includeSystem: true,
-                startOn: ["system", "human"],
-                // endOn: ["tool", "ai"],
-            }),
         };
 
         return this.current.llm;
@@ -132,11 +122,23 @@ class ChatService
             });
         }
 
-        const { result } = await tryCatch(this.current.trimmer.invoke(preparedMessages));
-
-        if (result)
+        if (this.current.contextSize)
         {
-            preparedMessages = result;
+            const { result } = await tryCatch(trimMessages(preparedMessages, {
+                tokenCounter: this.current.llm,
+                maxTokens: this.current.contextSize,
+
+                strategy: "last",
+                allowPartial: false,
+                includeSystem: true,
+                startOn: ["system", "human"],
+                // endOn: ["tool", "ai"],
+            }));
+
+            if (result)
+            {
+                preparedMessages = result;
+            }
         }
 
         return [

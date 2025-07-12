@@ -3,9 +3,10 @@
  */
 
 import { promises as fs } from "fs";
-import { join } from "path";
 import { homedir } from "os";
-import { ChatSession, SessionSummary, SessionListOptions } from "./types.js";
+import { join } from "path";
+
+import { ChatSession, SessionListOptions, SessionSummary } from "./types.js";
 
 export class SessionStorage
 {

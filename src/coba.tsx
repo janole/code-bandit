@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import React from "react";
 import { render } from "ink";
 import path from "path";
 import { cwd } from "process";
-import App from "./app.js";
+import React from "react";
+
 import { VERSION } from "./.version.js";
+import App from "./app.js";
 
 const program = new Command();
 

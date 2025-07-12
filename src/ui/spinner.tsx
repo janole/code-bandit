@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
 import { Text, TextProps } from "ink";
+import React, { useEffect, useState } from "react";
 
 const frames = [
     "····",

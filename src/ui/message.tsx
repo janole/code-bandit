@@ -1,9 +1,10 @@
-import React, { memo } from "react";
-import { Box, Text } from "ink";
 import { AIMessage, MessageType } from "@langchain/core/messages";
 import { ToolCall } from "@langchain/core/messages/tool";
-import { TMessage } from "../ai/work.js";
+import { Box, Text } from "ink";
+import React, { memo } from "react";
+
 import ErrorMessage from "../ai/error-message.js";
+import { TMessage } from "../ai/work.js";
 import { Markdown } from "./markdown.js";
 
 const colors = {

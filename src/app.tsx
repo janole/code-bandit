@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+import { HumanMessage, mapChatMessagesToStoredMessages } from "@langchain/core/messages";
+import { writeFileSync } from "fs";
 import { Box, Static, Text } from "ink";
 import TextInput from "ink-text-input";
-import { HumanMessage } from "@langchain/core/messages";
+import React, { useEffect, useState } from "react";
+
+import { IChatServiceOptions } from "./ai/chat-service.js";
+import ErrorMessage from "./ai/error-message.js";
 import { TMessage, work } from "./ai/work.js";
-import useTerminalSize from "./utils/use-terminal-size.js";
 import MemoMessage, { Message } from "./ui/message.js";
 import Spinner from "./ui/spinner.js";
-import ErrorMessage from "./ai/error-message.js";
-import { IChatServiceOptions } from "./ai/chat-service.js";
+import useTerminalSize from "./utils/use-terminal-size.js";
 
 interface ChatAppProps
 {

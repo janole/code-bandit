@@ -1,7 +1,8 @@
-import React from "react";
 import { Text } from "ink";
 import { marked } from "marked";
 import TerminalRenderer from "marked-terminal";
+import React from "react";
+
 import tryCatch from "../utils/try-catch.js";
 
 marked.setOptions({

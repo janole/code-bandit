@@ -64,13 +64,10 @@ async function work(props: WorkProps)
     return workInternal({ workDir, llm, tools, messages, send });
 }
 
-interface WorkInternalProps
+interface WorkInternalProps extends Pick<WorkProps, "workDir" | "messages" | "send">
 {
-    workDir: string;
     llm: Runnable<TMessage[], AIMessageChunk>;
     tools: { [key: string]: DynamicStructuredTool };
-    messages: TMessage[];
-    send: (messages: TMessage[]) => void;
 }
 
 async function workInternal(props: WorkInternalProps)

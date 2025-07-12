@@ -4,6 +4,7 @@ import { AIMessage, MessageType } from "@langchain/core/messages";
 import { ToolCall } from "@langchain/core/messages/tool";
 import { TMessage } from "../ai/work.js";
 import ErrorMessage from "../ai/error-message.js";
+import { Markdown } from "./markdown.js";
 
 const colors = {
     human: "green",
@@ -24,6 +25,11 @@ function MessageText({ type, text }: { type: MessageType | "error"; text: string
                 <Text color={color}>{text}</Text>
             </Box>
         );
+    }
+
+    if (type === 'ai')
+    {
+        return <Markdown color={color}>{text}</Markdown>;
     }
 
     return <Text color={color}>{text}</Text>;

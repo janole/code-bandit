@@ -2,6 +2,10 @@ type TryCatchResult<R> = { result?: R; error?: Error; };
 
 type TTask<R> = (() => R) | Promise<R> | (() => Promise<R>);
 
+function tryCatch<R>(task: Promise<R>): Promise<TryCatchResult<R>>;
+function tryCatch<R>(task: () => Promise<R>): Promise<TryCatchResult<R>>;
+function tryCatch<R>(task: () => R): TryCatchResult<R>;
+function tryCatch<R>(task: TTask<R>): Promise<TryCatchResult<R>> | TryCatchResult<R>; // Generic fallback
 function tryCatch<R>(task: TTask<R>): Promise<TryCatchResult<R>> | TryCatchResult<R>
 {
     if (task instanceof Promise)
@@ -34,6 +38,10 @@ interface ITryCatchMemoOptions
 
 const cache = new Map<string, { result: any; expiresAt: number; }>();
 
+function tryCatchCache<R>(task: Promise<R>, options: ITryCatchMemoOptions): Promise<TryCatchResult<R>>;
+function tryCatchCache<R>(task: () => Promise<R>, options: ITryCatchMemoOptions): Promise<TryCatchResult<R>>;
+function tryCatchCache<R>(task: () => R, options: ITryCatchMemoOptions): TryCatchResult<R>;
+function tryCatchCache<R>(task: TTask<R>, options: ITryCatchMemoOptions): Promise<TryCatchResult<R>> | TryCatchResult<R>; // Generic fallback
 function tryCatchCache<R>(task: TTask<R>, options: ITryCatchMemoOptions): Promise<TryCatchResult<R>> | TryCatchResult<R>
 {
     const cached = cache.get(options.key);

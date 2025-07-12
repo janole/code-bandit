@@ -22,7 +22,7 @@ function prepareMessages(messages: TMessage[], transformToolMessages?: boolean):
         preparedMessages = preparedMessages.map(msg => 
         {
             return msg.getType() !== "tool" ? msg : new AIMessage({
-                content: "Result of tool call " + msg.name + ":\n\n" + (msg as ToolMessage).text || "ERROR: No content returned from tool.",
+                content: "Result of tool call " + msg.name + ":\n\n" + (msg.text || "ERROR: No content returned from tool."),
             });
         });
     }

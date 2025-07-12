@@ -52,6 +52,7 @@ function addFailedToolCallMessage(errorMessage: string, toolCall: { id?: string;
     {
         messages.push(new ToolMessage({
             tool_call_id: toolCall.id,
+            status: "error",
             content,
         }));
     }

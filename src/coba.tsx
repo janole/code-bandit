@@ -7,6 +7,7 @@ import React from "react";
 
 import { VERSION } from "./.version.js";
 import App from "./app.js";
+import { IChatServiceOptions } from "./ai/chat-service.js";
 
 const program = new Command();
 
@@ -20,13 +21,15 @@ program
 	.option("-d, --debug", "Show debug information")
 	.option("-u, --api-url <url>", "API URL for the model provider")
 	.option("-k, --api-key <key>", "API key for the model provider")
+	.option("--context-size <size>", "Context size in tokens")
 	.action(async (gitRepoPath: string, options) =>
 	{
 		const workDir = path.join(cwd(), gitRepoPath || ".");
 
-		const chatServiceOptions = {
+		const chatServiceOptions: IChatServiceOptions = {
 			provider: options.provider,
 			model: options.model,
+			contextSize: options.provider === "ollama" ? 8 * 1024 : 32 * 1024, // 8k for ollama, 32k for others
 			apiUrl: options.apiUrl,
 			apiKey: options.apiKey,
 		};

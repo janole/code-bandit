@@ -36,7 +36,7 @@ class ChatService
 
     async getLLM(props: IChatServiceOptions): Promise<BaseChatModel>
     {
-        let { provider, model, contextSize = 32 * 1024 } = props;
+        const { provider, model, contextSize } = props;
 
         if (this.current && this.current.provider === provider && this.current.model === model)
         {
@@ -47,8 +47,6 @@ class ChatService
 
         if (provider === "ollama")
         {
-            contextSize = 8192; // 8k context size
-
             llm = new ChatOllama({
                 model,
                 baseUrl: props.apiUrl, // || process.env["OLLAMA_API_URL"],
@@ -127,7 +125,6 @@ class ChatService
             const { result } = await tryCatch(trimMessages(preparedMessages, {
                 tokenCounter: this.current.llm,
                 maxTokens: this.current.contextSize,
-
                 strategy: "last",
                 allowPartial: false,
                 includeSystem: true,

@@ -94,7 +94,7 @@ async function workInternal(props: WorkInternalProps)
     {
         aiMessage = aiMessage !== undefined ? concat(aiMessage, chunk) : chunk;
 
-        if (!aiMessage?.tool_calls || aiMessage.tool_calls.length === 0)
+        if (!aiMessage?.tool_calls?.length && !aiMessage?.tool_call_chunks?.length)
         {
             send([...messages, aiMessage]);
         }

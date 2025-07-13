@@ -156,6 +156,9 @@ const _tools = [
             fileName: z.string().describe("Path to the file to write, relative to the working directory."),
             fileData: z.string().describe("The content to write into the file."),
         }),
+        metadata: {
+            destructive: true,
+        },
     }),
     tool(deleteFile, {
         name: "deleteFile",
@@ -163,6 +166,9 @@ const _tools = [
         schema: z.object({
             fileName: z.string().describe("Path to the file to delete, relative to the working directory."),
         }),
+        metadata: {
+            destructive: true,
+        },
     }),
     tool(moveFile, {
         name: "moveFile",
@@ -171,6 +177,9 @@ const _tools = [
             sourceFileName: z.string().describe("Path of the file to move or rename, relative to the working directory."),
             destinationFileName: z.string().describe("New path or name for the file, relative to the working directory."),
         }),
+        metadata: {
+            destructive: true,
+        },
     }),
     tool(createDirectory, {
         name: "createDirectory",

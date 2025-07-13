@@ -29,4 +29,8 @@ export default [
             "@stylistic/quotes": [2, "double"]
         },
     },
+    {
+        // Note: there should be no other properties in this object
+        ignores: ["dist", "node_modules", "patches", ".git"],
+    },
 ];

@@ -8,6 +8,7 @@ import React from "react";
 import { VERSION } from "./.version.js";
 import { IChatServiceOptions } from "./ai/chat-service.js";
 import App from "./app.js";
+import { ChatSession } from "./session/man.js";
 
 const program = new Command();
 
@@ -22,6 +23,7 @@ program
 	.option("-u, --api-url <url>", "API URL for the model provider")
 	.option("-k, --api-key <key>", "API key for the model provider")
 	.option("--context-size <size>", "Context size in tokens used for chat history")
+	.option("-C, --continue-session <filename>", "Continue with session loaded from filename")
 	.action(async (gitRepoPath: string, options) =>
 	{
 		const workDir = path.join(cwd(), gitRepoPath || ".");
@@ -38,10 +40,13 @@ program
 			apiKey: options.apiKey,
 		};
 
+		const session = options.session
+			? await ChatSession.createFromFile(options.session)
+			: ChatSession.create({ workDir, chatServiceOptions });
+
 		render(
 			<App
-				workDir={workDir}
-				chatServiceOptions={chatServiceOptions}
+				session={session}
 				debug={options.debug}
 			/>
 		);

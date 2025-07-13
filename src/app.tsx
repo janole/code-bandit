@@ -48,7 +48,7 @@ function ChatApp(props: ChatAppProps)
 				{
 					setChatHistory(messages => ([
 						...messages,
-						new ErrorMessage(`Error: ${error.message || error.toString()}`),
+						new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`),
 					]));
 				})
 				.finally(() => { setWorking(false); });

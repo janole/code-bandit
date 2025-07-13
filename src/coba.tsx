@@ -6,8 +6,8 @@ import { cwd } from "process";
 import React from "react";
 
 import { VERSION } from "./.version.js";
-import App from "./app.js";
 import { IChatServiceOptions } from "./ai/chat-service.js";
+import App from "./app.js";
 
 const program = new Command();
 

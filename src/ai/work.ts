@@ -89,66 +89,55 @@ async function workInternal(props: WorkInternalProps)
     }
 
     let aiMessage: AIMessageChunk | undefined = undefined;
-    const toolMessages: AIMessageChunk[] = [];
 
     for await (const chunk of stream)
     {
-        // once we detect a tool message, stop streaming chunks to frontend
-        if (chunk.tool_calls?.length || toolMessages.length)
+        aiMessage = aiMessage !== undefined ? concat(aiMessage, chunk) : chunk;
+
+        if (!aiMessage?.tool_calls || aiMessage.tool_calls.length === 0)
         {
-            toolMessages.push(chunk);
-        }
-        else
-        {
-            aiMessage = aiMessage !== undefined ? concat(aiMessage, chunk) : chunk;
             send([...messages, aiMessage]);
         }
     }
 
-    aiMessage && messages.push(aiMessage);
+    aiMessage && messages.push(aiMessage) && send([...messages]);
 
-    if (toolMessages.length === 0)
+    if (!aiMessage?.tool_calls?.length)
     {
         return messages;
     }
 
-    for (const toolMessage of toolMessages)
+    for (const toolCall of aiMessage.tool_calls)
     {
-        messages.push(toolMessage);
-        send([...messages]);
+        const selectedTool = tools[toolCall.name];
 
-        for (const toolCall of (toolMessage.tool_calls || []))
+        if (!selectedTool)
         {
-            const selectedTool = tools[toolCall.name];
+            addFailedToolCallMessage("Tool not found", toolCall, messages);
+        }
+        else
+        {
+            // if (selectedTool.metadata?.["destructive"])
+            // {
+            //     // TODO: if destructive tool, ask for confirmation
+            // }
 
-            if (!selectedTool)
+            const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, { metadata }));
+
+            if (result)
             {
-                addFailedToolCallMessage("Tool not found", toolCall, messages);
+                messages.push(result);
             }
             else
             {
-                // if (selectedTool.metadata?.["destructive"])
-                // {
-                //     // TODO: if destructive tool, ask for confirmation
-                // }
-
-                const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, { metadata }));
-
-                if (result)
-                {
-                    messages.push(result);
-                }
-                else
-                {
-                    addFailedToolCallMessage(error?.message || "Unknown Error", toolCall, messages);
-                }
+                addFailedToolCallMessage(error?.message || "Unknown Error", toolCall, messages);
             }
-
-            send([...messages]);
         }
+
+        send([...messages]);
     }
 
-    return workInternal({ ...props, session });
+    return workInternal({ ...props, session: { ...session, messages } });
 }
 
 export { work };

@@ -1,0 +1,12 @@
+diff --git a/node_modules/@langchain/ollama/dist/utils.js b/node_modules/@langchain/ollama/dist/utils.js
+index 7fa19da..7320347 100644
+--- a/node_modules/@langchain/ollama/dist/utils.js
++++ b/node_modules/@langchain/ollama/dist/utils.js
+@@ -7,7 +7,6 @@ export function convertOllamaMessagesToLangChain(messages, extra) {
+             name: tc.function.name,
+             args: JSON.stringify(tc.function.arguments),
+             type: "tool_call_chunk",
+-            index: 0,
+             id: uuidv4(),
+         })),
+         response_metadata: extra?.responseMetadata,

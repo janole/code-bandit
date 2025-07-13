@@ -127,6 +127,11 @@ async function workInternal(props: WorkInternalProps)
             }
             else
             {
+                // if (selectedTool.metadata?.["destructive"])
+                // {
+                //     // TODO: if destructive tool, ask for confirmation
+                // }
+
                 const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, { metadata: { workDir } }));
 
                 if (result)

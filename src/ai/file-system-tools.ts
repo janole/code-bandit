@@ -25,7 +25,7 @@ function resolveWithinWorkDir(userPath: string, workDir?: unknown): string
     return resolvedPath;
 }
 
-function listDirectory({ directory }: { directory: string }, config?: RunnableConfig): string
+function listDirectory({ directory = "." }: { directory: string }, config?: RunnableConfig): string
 {
     try
     {
@@ -138,7 +138,7 @@ const _tools = [
         name: "listDirectory",
         description: "List the files and folders inside a given directory (relative to the working directory). Use ONLY when the user wants to browse or inspect the contents of a folder.",
         schema: z.object({
-            directory: z.string().describe("Path to the directory to list, relative to the working directory."), // .optional().default(".")
+            directory: z.string().describe("Path to the directory to list, relative to the working directory.").optional().default("."),
         }),
     }),
     tool(readFile, {

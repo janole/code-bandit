@@ -51,7 +51,10 @@ function ChatApp(props: ChatAppProps)
 						new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`),
 					]));
 				})
-				.finally(() => { setWorking(false); });
+				.finally(() => 
+				{
+					setWorking(false);
+				});
 		}
 	};
 

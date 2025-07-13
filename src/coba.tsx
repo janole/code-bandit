@@ -21,15 +21,19 @@ program
 	.option("-d, --debug", "Show debug information")
 	.option("-u, --api-url <url>", "API URL for the model provider")
 	.option("-k, --api-key <key>", "API key for the model provider")
-	.option("--context-size <size>", "Context size in tokens")
+	.option("--context-size <size>", "Context size in tokens used for chat history")
 	.action(async (gitRepoPath: string, options) =>
 	{
 		const workDir = path.join(cwd(), gitRepoPath || ".");
 
+		const contextSize = options.contextSize
+			? parseInt(options.contextSize)
+			: (options.provider === "ollama" ? 8192 : undefined);
+
 		const chatServiceOptions: IChatServiceOptions = {
 			provider: options.provider,
 			model: options.model,
-			contextSize: options.provider === "ollama" ? 8 * 1024 : 32 * 1024, // 8k for ollama, 32k for others
+			contextSize,
 			apiUrl: options.apiUrl,
 			apiKey: options.apiKey,
 		};

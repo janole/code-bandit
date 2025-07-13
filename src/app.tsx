@@ -1,10 +1,9 @@
-import { HumanMessage, mapChatMessagesToStoredMessages } from "@langchain/core/messages";
-import { writeFileSync } from "fs";
+import { HumanMessage } from "@langchain/core/messages";
 import { Box, Static, Text } from "ink";
 import TextInput from "ink-text-input";
 import React, { useEffect, useState } from "react";
 
-import { IChatServiceOptions } from "./ai/chat-service.js";
+import { ChatSession } from "./ai/chat-session.js";
 import ErrorMessage from "./ai/error-message.js";
 import { TMessage, work } from "./ai/work.js";
 import MemoMessage, { Message } from "./ui/message.js";
@@ -13,18 +12,18 @@ import useTerminalSize from "./utils/use-terminal-size.js";
 
 interface ChatAppProps
 {
-	workDir: string;
-	chatServiceOptions: IChatServiceOptions;
+	session: ChatSession;
 	debug?: boolean;
 }
 
 function ChatApp(props: ChatAppProps)
 {
-	const { workDir, chatServiceOptions, debug } = props;
+	const { session, debug } = props;
+	const { chatServiceOptions } = session;
 
 	const [working, setWorking] = useState(false);
 	const [_message, setMessage] = useState("");
-	const [chatHistory, setChatHistory] = useState<TMessage[]>([]);
+	const [chatHistory, setChatHistory] = useState<TMessage[]>(session.messages);
 
 	const handleSendMessage = () =>
 	{
@@ -38,10 +37,11 @@ function ChatApp(props: ChatAppProps)
 			setMessage("");
 			setWorking(true);
 
+			// TODO: refactor session.messages and setMessage/setState handling
+			session.setMessages(messages, false);
+
 			work({
-				workDir,
-				chatServiceOptions,
-				messages,
+				session,
 				send: (messages: TMessage[]) => setChatHistory(messages),
 			})
 				.catch(error => 
@@ -57,6 +57,15 @@ function ChatApp(props: ChatAppProps)
 				});
 		}
 	};
+
+	useEffect(() =>
+	{
+		!working && session.setMessages(chatHistory);
+	}, [
+		working,
+		session,
+		chatHistory,
+	]);
 
 	const terminalSize = useTerminalSize();
 

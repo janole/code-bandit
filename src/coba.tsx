@@ -26,7 +26,9 @@ program
 	.option("-C, --continue-session <filename>", "Continue with session loaded from filename")
 	.action(async (gitRepoPath: string, options) =>
 	{
-		const workDir = path.join(cwd(), gitRepoPath || ".");
+		gitRepoPath && process.chdir(gitRepoPath);
+
+		const workDir = cwd();
 
 		const contextSize = options.contextSize
 			? parseInt(options.contextSize)

@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { render } from "ink";
-import path from "path";
 import { cwd } from "process";
 import React from "react";
 

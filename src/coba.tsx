@@ -7,8 +7,8 @@ import React from "react";
 
 import { VERSION } from "./.version.js";
 import { IChatServiceOptions } from "./ai/chat-service.js";
+import { ChatSession } from "./ai/chat-session.js";
 import App from "./app.js";
-import { ChatSession } from "./session/man.js";
 
 const program = new Command();
 

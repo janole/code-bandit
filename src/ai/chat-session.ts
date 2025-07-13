@@ -68,9 +68,11 @@ export class ChatSession implements IChatSession
 
     async setMessages(messages: TMessage[], autoSave: boolean = true): Promise<void>
     {
+        const empty = messages.length === 0 && this.messages.length === 0;
+
         this.messages = messages;
 
-        if (autoSave)
+        if (autoSave && !empty)
         {
             this.save();
         }

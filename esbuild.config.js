@@ -1,26 +1,26 @@
-import esbuild from 'esbuild';
-import { builtinModules } from 'module';
-import fs from 'fs';
+import esbuild from "esbuild";
+import fs from "fs";
+import { builtinModules } from "module";
 
 // Read dependencies from package.json
-const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+const packageJson = JSON.parse(fs.readFileSync("package.json", "utf-8"));
 const deps = Object.keys(packageJson.dependencies || {});
 
 // Mark everything external except '@langchain/ollama'
 const externalDeps = [
     ...builtinModules, // Node built-in modules
-    ...deps.filter(dep => dep !== '@langchain/ollama'),
+    ...deps.filter(dep => dep !== "@langchain/ollama"),
 ];
 
 await esbuild.build({
-    entryPoints: ['src/coba.tsx'],
-    outfile: 'dist/coba.js',
+    entryPoints: ["src/coba.tsx"],
+    outfile: "dist/coba.js",
     bundle: true,
-    platform: 'node',
+    platform: "node",
     sourcemap: true,
-    format: 'esm',
+    format: "esm",
     external: externalDeps,
-    logLevel: 'info',
+    logLevel: "info",
 });
 
-console.log('Build completed.');
+console.log("Build completed.");

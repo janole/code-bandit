@@ -1,12 +1,12 @@
-import tsParser from "@typescript-eslint/parser";
-import globals from "globals";
-import eslintPluginUnicorn from "eslint-plugin-unicorn";
 import stylistic from "@stylistic/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
+import eslintPluginUnicorn from "eslint-plugin-unicorn";
+import globals from "globals";
 
 export default [
     {
-        files: ["src/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+        files: ["*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
         languageOptions: {
             parser: tsParser,
             parserOptions: {

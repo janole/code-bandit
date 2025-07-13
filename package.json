@@ -21,7 +21,7 @@
 		"lint": "eslint",
 		"lint:fix": "eslint --fix",
 		"prebuild": "npm run genversion",
-		"build": "rimraf dist && tsc",
+		"build": "rimraf dist && node esbuild.config.js",
 		"genversion": "echo \"export const VERSION = \\\"${npm_package_version}\\\";\" > src/.version.ts",
 		"clean": "rimraf dist",
 		"postinstall": "patch-package"
@@ -56,6 +56,7 @@
 		"@types/react": "^19.1.8",
 		"@types/write-file-atomic": "^4.0.3",
 		"@typescript-eslint/eslint-plugin": "^8.36.0",
+		"esbuild": "^0.25.6",
 		"eslint": "^9.30.1",
 		"eslint-plugin-import": "^2.32.0",
 		"eslint-plugin-simple-import-sort": "^12.1.1",

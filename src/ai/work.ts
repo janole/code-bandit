@@ -5,7 +5,8 @@ import { concat } from "@langchain/core/utils/stream";
 import { DynamicStructuredTool } from "langchain/tools";
 
 import tryCatch from "../utils/try-catch.js";
-import { ChatService, IChatServiceOptions } from "./chat-service.js";
+import { ChatService } from "./chat-service.js";
+import { IChatSession } from "./chat-session.js";
 import ErrorMessage from "./error-message.js";
 import { tools } from "./file-system-tools.js";
 
@@ -42,17 +43,15 @@ function addFailedToolCallMessage(errorMessage: string, toolCall: { id?: string;
 
 interface WorkProps
 {
-    workDir: string;
-    chatServiceOptions: IChatServiceOptions;
-    messages: TMessage[];
+    session: IChatSession;
     send: (messages: TMessage[]) => void;
 }
 
 async function work(props: WorkProps)
 {
-    const { workDir, chatServiceOptions, messages, send } = props;
+    const { session, send } = props;
 
-    const llm = await chatService.getLLM(chatServiceOptions).then(llm => 
+    const llm = await chatService.getLLM(session.chatServiceOptions).then(llm => 
     {
         if (!llm.bindTools)
         {
@@ -62,10 +61,10 @@ async function work(props: WorkProps)
         return llm.bindTools(Object.values(tools)); // .withFallbacks([llm]);
     });
 
-    return workInternal({ workDir, llm, tools, messages, send });
+    return workInternal({ session, llm, tools, send });
 }
 
-interface WorkInternalProps extends Pick<WorkProps, "workDir" | "messages" | "send">
+interface WorkInternalProps extends Pick<WorkProps, "session" | "send">
 {
     llm: Runnable<TMessage[], AIMessageChunk>;
     tools: { [key: string]: DynamicStructuredTool };
@@ -73,11 +72,12 @@ interface WorkInternalProps extends Pick<WorkProps, "workDir" | "messages" | "se
 
 async function workInternal(props: WorkInternalProps)
 {
-    const { workDir, llm, tools, send } = props;
+    const { session, llm, tools, send } = props;
 
-    const messages = [...props.messages];
+    const messages = [...session.messages];
+    const metadata = { workDir: session.workDir };
 
-    let { stream, error } = await getStream(llm, messages, { metadata: { workDir } });
+    let { stream, error } = await getStream(llm, messages, { metadata });
 
     if (!stream)
     {
@@ -132,7 +132,7 @@ async function workInternal(props: WorkInternalProps)
                 //     // TODO: if destructive tool, ask for confirmation
                 // }
 
-                const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, { metadata: { workDir } }));
+                const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, { metadata }));
 
                 if (result)
                 {
@@ -148,7 +148,7 @@ async function workInternal(props: WorkInternalProps)
         }
     }
 
-    return workInternal({ ...props, messages });
+    return workInternal({ ...props, session });
 }
 
 export { work };

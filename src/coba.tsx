@@ -40,8 +40,8 @@ program
 			apiKey: options.apiKey,
 		};
 
-		const session = options.session
-			? await ChatSession.createFromFile(options.session)
+		const session = options.continueSession
+			? await ChatSession.createFromFile(options.continueSession)
 			: ChatSession.create({ workDir, chatServiceOptions });
 
 		render(

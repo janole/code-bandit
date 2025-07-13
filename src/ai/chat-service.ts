@@ -38,7 +38,7 @@ class ChatService
     {
         const { provider, model, contextSize } = props;
 
-        if (this.current && this.current.provider === provider && this.current.model === model)
+        if (this.current?.provider === provider && this.current.model === model && this.current.contextSize === contextSize)
         {
             return this.current.llm;
         }

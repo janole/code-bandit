@@ -97,6 +97,9 @@ function ChatApp(props: ChatAppProps)
 						? <Text color="green">{chatServiceOptions.provider}/{chatServiceOptions.model}</Text>
 						: "(working)"
 					}
+					{!working && chatServiceOptions.contextSize &&
+						<Text> (ctx:{chatServiceOptions.contextSize})</Text>
+					}
 				</Spinner>
 			</Box>
 		</Box>

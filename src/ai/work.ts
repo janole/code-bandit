@@ -92,8 +92,6 @@ async function workInternal(props: WorkInternalProps)
 
     for await (const chunk of stream)
     {
-        // chunk.tool_call_chunks = chunk.tool_call_chunks?.map(chunk => ({ ...chunk, index: undefined }));
-
         aiMessage = aiMessage !== undefined ? concat(aiMessage, chunk) : chunk;
 
         if (!aiMessage?.tool_calls?.length && !aiMessage?.tool_call_chunks?.length)

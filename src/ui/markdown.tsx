@@ -38,10 +38,8 @@ export function Markdown(props: MarkdownProps)
     ]);
 
     return (
-        <Box width="90%">
-            <Text>
-                {rendered}
-            </Text>
-        </Box>
+        <Text>
+            {rendered}
+        </Text>
     );
 }

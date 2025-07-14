@@ -1,4 +1,4 @@
-import { Text } from "ink";
+import { Box, Text } from "ink";
 import { marked } from "marked";
 import TerminalRenderer from "marked-terminal";
 import React from "react";
@@ -13,12 +13,11 @@ marked.setOptions({
 interface MarkdownProps
 {
     children: string;
-    color?: string;
 };
 
 export function Markdown(props: MarkdownProps)
 {
-    const { children, color } = props;
+    const { children } = props;
 
     const rendered = React.useMemo(() =>
     {
@@ -39,8 +38,10 @@ export function Markdown(props: MarkdownProps)
     ]);
 
     return (
-        <Text color={color}>
-            {rendered}
-        </Text>
+        <Box width="90%">
+            <Text>
+                {rendered}
+            </Text>
+        </Box>
     );
 }

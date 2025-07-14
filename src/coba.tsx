@@ -37,8 +37,8 @@ program
 			: (options.provider === "ollama" ? 8192 : undefined);
 
 		const chatServiceOptions: IChatServiceOptions = {
-			provider: options.provider,
-			model: options.model,
+			provider: options.provider ?? process.env["CODE_BANDIT_PROVIDER"],
+			model: options.model ?? process.env["CODE_BANDIT_MODEL"],
 			contextSize,
 			apiUrl: options.apiUrl,
 			apiKey: options.apiKey,

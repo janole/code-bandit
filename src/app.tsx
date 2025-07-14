@@ -1,6 +1,5 @@
 import { HumanMessage } from "@langchain/core/messages";
-import { Box, Static, Text } from "ink";
-import TextInput from "ink-text-input";
+import { Box, Key, Static, Text } from "ink";
 import React, { useEffect, useState } from "react";
 
 import { ChatSession } from "./ai/chat-session.js";
@@ -8,6 +7,7 @@ import ErrorMessage from "./ai/error-message.js";
 import { TMessage, work } from "./ai/work.js";
 import MemoMessage, { Message } from "./ui/message.js";
 import Spinner from "./ui/spinner.js";
+import TextInput from "./ui/text-input.js";
 import useTerminalSize from "./utils/use-terminal-size.js";
 
 interface ChatAppProps
@@ -23,7 +23,21 @@ function ChatApp(props: ChatAppProps)
 
 	const [working, setWorking] = useState(false);
 	const [_message, setMessage] = useState("");
+
 	const [chatHistory, setChatHistory] = useState<TMessage[]>(session.messages);
+	const [_, setReadOnly] = useState(session.readOnly);
+
+	const handleInput = (input: string, key: Key): boolean =>
+	{
+		if (key.ctrl && input === "r")
+		{
+			setReadOnly(readOnly => (session.readOnly = !readOnly));
+
+			return true;
+		}
+
+		return false;
+	};
 
 	const handleSendMessage = () =>
 	{
@@ -91,15 +105,13 @@ function ChatApp(props: ChatAppProps)
 
 			{/* Input Field */}
 			<Box borderStyle="round" paddingX={1} flexShrink={0}>
-				<Box>
-					<Text color="cyan">{"> "}</Text>
 					<TextInput
 						value={_message}
 						onChange={setMessage}
 						onSubmit={handleSendMessage}
-						placeholder="How can I help you?"
+					placeholder="> How can I help you?"
+					onHandleInput={handleInput}
 					/>
-				</Box>
 			</Box>
 
 			{/* Footer */}

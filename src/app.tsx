@@ -91,7 +91,7 @@ function ChatApp(props: ChatAppProps)
 		<Box flexDirection="column" width={terminalSize.columns}>
 
 			{/* Messages Area */}
-			<Box flexDirection="column" paddingX={1} width="100%">
+			<Box flexDirection="column" paddingX={1} width={terminalSize.columns}>
 				<Static items={items}>
 					{(message, index) => (
 						<MemoMessage key={message.id + index.toString()} msg={message} debug={debug} />
@@ -104,7 +104,7 @@ function ChatApp(props: ChatAppProps)
 			</Box>
 
 			{/* Input Field */}
-			<Box borderStyle="round" paddingX={1} flexShrink={0}>
+			<Box borderStyle="round" paddingX={1} width={terminalSize.columns}>
 				<TextInput
 					value={_message}
 					onChange={setMessage}

@@ -83,7 +83,7 @@ function Message({ msg, debug }: { msg: TMessage; debug?: boolean; })
     }
 
     return (
-        <Box flexDirection="column" paddingBottom={1} width="100%">
+        <Box flexDirection="column" marginBottom={1} width={process.stdout.columns - 2}>
             {hasText &&
                 <MessageText type={type} text={msg.text} />
             }

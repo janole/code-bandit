@@ -125,6 +125,10 @@ function ChatApp(props: ChatAppProps)
 						<Text> (ctx:{chatServiceOptions.contextSize})</Text>
 					}
 				</Spinner>
+
+				<Text color={session.readOnly ? "blue" : "red"}>
+					{` [${session.readOnly ? "READ ONLY" : "WRITE MODE"}]`}
+				</Text>
 			</Box>
 		</Box>
 	);

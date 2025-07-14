@@ -13,6 +13,7 @@ export interface IChatSession
     id: string;
 
     workDir: string;
+    readOnly: boolean;
     chatServiceOptions: IChatServiceOptions;
 
     messages: TMessage[];
@@ -23,6 +24,7 @@ export class ChatSession implements IChatSession
     id: string;
 
     workDir: string;
+    readOnly: boolean;
     chatServiceOptions: IChatServiceOptions;
 
     messages: TMessage[] = [];
@@ -33,13 +35,14 @@ export class ChatSession implements IChatSession
     {
         this.id = props.id;
         this.workDir = props.workDir;
+        this.readOnly = props.readOnly;
         this.chatServiceOptions = props.chatServiceOptions;
         this.messages = props.messages;
 
         this.storage = new FileSessionStorage(this.workDir);
     }
 
-    static create(props: Pick<IChatSession, "workDir" | "chatServiceOptions">)
+    static create(props: Pick<IChatSession, "workDir" | "readOnly" | "chatServiceOptions">)
     {
         const chatSession = new ChatSession({
             id: ulid(),
@@ -98,6 +101,7 @@ class FileSessionStorage implements ISessionStorage
         return {
             id: data.id,
             workDir: data.workDir,
+            readOnly: data.readOnly,
             chatServiceOptions: data.chatServiceOptions,
             messages: mapStoredMessagesToChatMessages(data.messages)
         };

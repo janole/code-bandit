@@ -1,4 +1,4 @@
-import { Box, Text } from "ink";
+import { Text } from "ink";
 import { marked } from "marked";
 import TerminalRenderer from "marked-terminal";
 import React from "react";

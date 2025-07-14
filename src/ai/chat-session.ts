@@ -2,7 +2,7 @@ import { mapChatMessagesToStoredMessages, mapStoredMessagesToChatMessages } from
 import { mkdir, readFile } from "fs/promises";
 import { homedir } from "os";
 import { join } from "path";
-import { decodeTime, ulid } from "ulid";
+import { ulid } from "ulid";
 import writeFileAtomic from "write-file-atomic";
 
 import { IChatServiceOptions } from "./chat-service.js";
@@ -16,8 +16,6 @@ export interface IChatSession
     chatServiceOptions: IChatServiceOptions;
 
     messages: TMessage[];
-
-    // get createdAt(): number;
 }
 
 export class ChatSession implements IChatSession
@@ -59,11 +57,6 @@ export class ChatSession implements IChatSession
         const chatSession = new ChatSession(chatSessionData);
 
         return chatSession;
-    }
-
-    get createdAt(): number
-    {
-        return decodeTime(this.id);
     }
 
     async setMessages(messages: TMessage[], autoSave: boolean = true): Promise<void>

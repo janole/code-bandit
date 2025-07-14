@@ -9,6 +9,8 @@ import { IChatServiceOptions } from "./ai/chat-service.js";
 import { ChatSession } from "./ai/chat-session.js";
 import App from "./app.js";
 
+const isEnvTrue = (envVar: string) => ["1", "true", "yes"].includes(process.env[envVar]?.toLocaleLowerCase() || "");
+
 const program = new Command();
 
 program
@@ -23,6 +25,7 @@ program
 	.option("-k, --api-key <key>", "API key for the model provider")
 	.option("--context-size <size>", "Context size in tokens used for chat history")
 	.option("-C, --continue-session <filename>", "Continue with session loaded from filename")
+	.option("--write-mode", "Enable write mode. Alternatively set CODE_BANDIT_WRITE_MODE=1")
 	.action(async (gitRepoPath: string, options) =>
 	{
 		gitRepoPath && process.chdir(gitRepoPath);
@@ -41,9 +44,11 @@ program
 			apiKey: options.apiKey,
 		};
 
+		const readOnly = !(options.writeMode ?? isEnvTrue("CODE_BANDIT_WRITE_MODE"));
+
 		const session = options.continueSession
 			? await ChatSession.createFromFile(options.continueSession)
-			: ChatSession.create({ workDir, chatServiceOptions });
+			: ChatSession.create({ workDir, readOnly, chatServiceOptions });
 
 		render(
 			<App

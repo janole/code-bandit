@@ -94,7 +94,7 @@ function ChatApp(props: ChatAppProps)
 			<Box flexDirection="column" paddingX={1} width={terminalSize.columns}>
 				<Static items={items}>
 					{(message, index) => (
-						<MemoMessage key={message.id + index.toString()} msg={message} debug={debug} />
+						<MemoMessage key={index} msg={message} debug={debug} />
 					)}
 				</Static>
 

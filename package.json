@@ -18,6 +18,7 @@
 	"scripts": {
 		"dev": "node --import @swc-node/register/esm-register ./src/coba.tsx",
 		"watch": "tsc --watch",
+		"typecheck": "npx tsc --noEmit -p tsconfig.json",
 		"lint": "eslint",
 		"lint:fix": "eslint --fix",
 		"prebuild": "npm run genversion && patch-package",

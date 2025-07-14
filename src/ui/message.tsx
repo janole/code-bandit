@@ -39,7 +39,7 @@ function MessageText({ type, text }: { type: MessageType | "error"; text: string
 function ToolCallDisplay({ toolCall }: { toolCall: ToolCall })
 {
     return (
-        <Box borderStyle="single" borderColor={colors.tool} paddingX={1}>
+        <Box borderStyle="round" borderColor={colors.tool} paddingX={1}>
             <Text color={colors.tool}>
                 Tool: {toolCall.name}({Object.entries(toolCall.args).map(([name, value]) =>
                     `${name}: ${value.toString().slice(0, 60)}`

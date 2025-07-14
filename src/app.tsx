@@ -104,7 +104,7 @@ function ChatApp(props: ChatAppProps)
 			</Box>
 
 			{/* Input Field */}
-			<Box borderStyle="single" paddingX={1} flexShrink={0}>
+			<Box borderStyle="round" paddingX={1} flexShrink={0}>
 				<TextInput
 					value={_message}
 					onChange={setMessage}

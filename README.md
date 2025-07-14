@@ -2,6 +2,8 @@
 
 Code Bandit is an **AI-powered command-line assistant** for interacting with git repositories using AI models.
 
+![Code Bandit Demo](docs/demo.webp)
+
 ---
 
 ## Features

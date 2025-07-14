@@ -52,7 +52,7 @@ function ToolCallDisplay({ toolCall }: { toolCall: ToolCall })
 function ToolCalls({ toolCalls }: { toolCalls: ToolCall[] })
 {
     return (
-        <Box flexDirection="column" width="100%" paddingX={1}>
+        <Box flexDirection="column" paddingX={1}>
             {toolCalls.map((toolCall, index) => (
                 <ToolCallDisplay key={toolCall.id + index.toString()} toolCall={toolCall} />
             ))}

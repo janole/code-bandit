@@ -105,13 +105,13 @@ function ChatApp(props: ChatAppProps)
 
 			{/* Input Field */}
 			<Box borderStyle="round" paddingX={1} flexShrink={0}>
-					<TextInput
-						value={_message}
-						onChange={setMessage}
-						onSubmit={handleSendMessage}
+				<TextInput
+					value={_message}
+					onChange={setMessage}
+					onSubmit={handleSendMessage}
 					placeholder="> How can I help you?"
 					onHandleInput={handleInput}
-					/>
+				/>
 			</Box>
 
 			{/* Footer */}

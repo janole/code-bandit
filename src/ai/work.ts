@@ -8,11 +8,14 @@ import tryCatch from "../utils/try-catch.js";
 import { ChatService } from "./chat-service.js";
 import { IChatSession } from "./chat-session.js";
 import ErrorMessage from "./error-message.js";
-import { tools } from "./file-system-tools.js";
+import { tools as fileSystemTools } from "./file-system-tools.js";
 
 export type TMessage = BaseMessage;
 
 const chatService = new ChatService();
+
+const allTools = { ...fileSystemTools };
+const safeTools = Object.fromEntries(Object.entries(allTools).filter(([_, tool]) => !tool.metadata?.["destructive"]));
 
 async function getStream(llm: Runnable<TMessage[], AIMessageChunk>, messages: TMessage[], options?: Partial<BaseChatModelCallOptions>)
 {
@@ -50,6 +53,8 @@ interface WorkProps
 async function work(props: WorkProps)
 {
     const { session, send } = props;
+
+    const tools = session.readOnly ? safeTools : allTools;
 
     const llm = await chatService.getLLM(session.chatServiceOptions).then(llm => 
     {
@@ -117,11 +122,6 @@ async function workInternal(props: WorkInternalProps)
         }
         else
         {
-            // if (selectedTool.metadata?.["destructive"])
-            // {
-            //     // TODO: if destructive tool, ask for confirmation
-            // }
-
             const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, { metadata }));
 
             if (result)

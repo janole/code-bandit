@@ -22,7 +22,7 @@ function MessageText({ type, text }: { type: MessageType | "error"; text: string
     if (type === "error")
     {
         return (
-            <Box borderStyle="double" borderColor={color} paddingX={1} width="100%">
+            <Box borderStyle="double" borderColor={color} paddingX={1}>
                 <Text color={color}>{text}</Text>
             </Box>
         );

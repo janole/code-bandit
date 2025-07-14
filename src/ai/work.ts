@@ -101,7 +101,7 @@ async function workInternal(props: WorkInternalProps)
 
         if (!aiMessage?.tool_calls?.length && !aiMessage?.tool_call_chunks?.length)
         {
-            send([...messages, aiMessage]);
+            send([...messages, aiMessage]); // TODO: check for race conditions
         }
     }
 

@@ -1,5 +1,5 @@
 import { BaseChatModelCallOptions } from "@langchain/core/language_models/chat_models";
-import { AIMessageChunk, BaseMessage, mapChatMessagesToStoredMessages, mapStoredMessagesToChatMessages, mapStoredMessageToChatMessage, ToolMessage } from "@langchain/core/messages";
+import { AIMessageChunk, BaseMessage, ToolMessage } from "@langchain/core/messages";
 import { Runnable } from "@langchain/core/runnables";
 import { concat } from "@langchain/core/utils/stream";
 import { DynamicStructuredTool } from "langchain/tools";
@@ -11,11 +11,6 @@ import ErrorMessage from "./error-message.js";
 import { tools as fileSystemTools } from "./file-system-tools.js";
 
 export type TMessage = BaseMessage;
-
-function cloneMessage(message: TMessage): TMessage
-{
-    return mapStoredMessagesToChatMessages(mapChatMessagesToStoredMessages([message]))[0]!;
-}
 
 const chatService = new ChatService();
 

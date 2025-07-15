@@ -2,6 +2,7 @@ import { ChatAnthropic } from "@langchain/anthropic";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { AIMessage, BaseMessage, SystemMessage, trimMessages } from "@langchain/core/messages";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatGroq } from "@langchain/groq";
 import { ChatOllama } from "@langchain/ollama";
 import { ChatOpenAI } from "@langchain/openai";
 
@@ -9,7 +10,7 @@ import tryCatch from "../utils/try-catch.js";
 import ErrorMessage from "./error-message.js";
 import { systemPrompts } from "./system-prompt.js";
 
-export type TProvider = "ollama" | "openai" | "anthropic" | "gemini" | "openrouter";
+export type TProvider = "ollama" | "openai" | "anthropic" | "gemini" | "openrouter" | "groq";
 
 export interface IChatServiceOptions
 {
@@ -79,6 +80,14 @@ class ChatService
                 configuration: {
                     baseURL: props.apiUrl || "https://openrouter.ai/api/v1", // || process.env["OPENROUTER_API_BASE_URL"],
                 },
+            });
+        }
+        else if (provider === "groq")
+        {
+            llm = new ChatGroq({
+                model,
+                apiKey: props.apiKey, // || process.env["GROQ_API_KEY"]
+                baseUrl: props.apiUrl,
             });
         }
         else

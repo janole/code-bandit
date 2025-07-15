@@ -110,16 +110,6 @@ class ChatService
 
         let preparedMessages = messages.filter(msg => !ErrorMessage.isErrorMessage(msg));
 
-        if (this.current.llm.getName() === "ChatOllama")
-        {
-            preparedMessages = preparedMessages.map(msg => 
-            {
-                return msg.getType() !== "tool" ? msg : new AIMessage({
-                    content: "Result of tool call " + msg.name + ":\n\n" + (msg.text || "ERROR: No content returned from tool."),
-                });
-            });
-        }
-
         if (this.current.contextSize)
         {
             const { result } = await tryCatch(trimMessages(preparedMessages, {

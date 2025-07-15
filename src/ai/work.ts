@@ -23,8 +23,10 @@ async function getStream(llm: Runnable<TMessage[], AIMessageChunk>, messages: TM
     return { stream, error };
 }
 
-function addFailedToolCallMessage(errorMessage: string, toolCall: { id?: string; name: string }, messages: TMessage[])
+function addFailedToolCallMessage(error: string | Error, toolCall: { id?: string; name: string }, messages: TMessage[])
 {
+    const errorMessage = (error instanceof Error) ? error.message : error.toString();
+
     const content = `ERROR: Tool invocation failed for tool ${toolCall.name} with error: ${errorMessage}.`;
 
     if (toolCall.id)
@@ -33,11 +35,14 @@ function addFailedToolCallMessage(errorMessage: string, toolCall: { id?: string;
             tool_call_id: toolCall.id,
             status: "error",
             content,
+            response_metadata: {
+                error,
+            }
         }));
     }
     else
     {
-        messages.push(new ErrorMessage(content));
+        messages.push(new ErrorMessage(content, (error instanceof Error) ? error : undefined));
     }
 }
 
@@ -84,7 +89,7 @@ async function workInternal(props: WorkInternalProps)
 
     if (!stream)
     {
-        messages.push(new ErrorMessage(`ERROR: ${error?.message || error?.toString() || "llm.stream(...) failed."}`));
+        messages.push(new ErrorMessage(`ERROR: ${error?.message || error?.toString() || "llm.stream(...) failed."}`, error));
 
         send([...messages]);
 
@@ -128,7 +133,7 @@ async function workInternal(props: WorkInternalProps)
             }
             else
             {
-                addFailedToolCallMessage(error?.message || "Unknown Error", toolCall, messages);
+                addFailedToolCallMessage(error || "Unknown Error", toolCall, messages);
             }
         }
 

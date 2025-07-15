@@ -10,7 +10,7 @@ Code Bandit is an **AI-powered command-line assistant** for interacting with git
 
 - **Conversational codebase analysis**: Interact with your codebase through a chat-like CLI powered by popular AI models
 - **Supports multiple LLM providers** via [LangChain.js](https://github.com/langchain-ai/langchainjs):  
-  - [Ollama](https://github.com/ollama/ollama), [OpenAI API](https://openai.com/api/), [Anthropic](https://www.anthropic.com/api), and [Google Gemini](https://ai.google.dev/)
+  - [Ollama](https://github.com/ollama/ollama), [OpenAI API](https://openai.com/api/), [Anthropic](https://www.anthropic.com/api), [Google Gemini](https://ai.google.dev/), and [Groq](https://groq.com/)
 - **Session management**:  
   Conversations and history are stored per session for easy retrieval
 

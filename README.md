@@ -9,9 +9,9 @@ Code Bandit is an **AI-powered command-line assistant** for interacting with git
 ## Features
 
 - **Conversational codebase analysis**: Interact with your codebase through a chat-like CLI powered by popular AI models
-- **Supports multiple LLM providers** via [LangChain.js](https://github.com/langchain-ai/langchainjs):  
+- **Supports multiple LLM providers** via [LangChain.js](https://github.com/langchain-ai/langchainjs):
   - [Ollama](https://github.com/ollama/ollama), [OpenAI API](https://openai.com/api/), [Anthropic](https://www.anthropic.com/api), [Google Gemini](https://ai.google.dev/), and [Groq](https://groq.com/)
-- **Session management**:  
+- **Session management**:
   Conversations and history are stored per session for easy retrieval
 
 ---
@@ -27,10 +27,12 @@ Commands currently exposed to the AI and CLI include:
 - `moveFile`: Rename or move files.
 - `createDirectory`: Make new folders.
 
-> [!WARNING]
-> Currently, this tool executes all requested file operations automatically without any confirmation prompts.
-> This means **you can overwrite or delete files immediately and without explicit permission — be careful!**
-> ... or use `git` :wink:
+> [!NOTE]
+> By default, Code Bandit starts in **read-only mode** to prevent accidental file modifications.
+>
+> To enable writing files, you can either:
+> - Start the app with the `--write-mode` flag.
+> - Press `ctrl-w` during a session to toggle write mode on or off.
 
 ---
 
@@ -58,15 +60,16 @@ coba [git-repo-path] [options]
 
 #### Common Options
 
-- `-p, --provider <provider>`: Choose your LLM backend (default: ollama)
-- `-m, --model <model>`: Pick a language model (e.g. `gpt-4.1-mini`, `magistral:24b`)
+- `-p, --provider <provider>`: Choose your LLM backend (e.g. `openai` or `ollama`)
+- `-m, --model <model>`: Pick a language model (e.g. `gpt-4.1-mini` or `magistral:24b`)
 - `-k, --api-key <key>`: Supply API key for remote providers
 - `-u, --api-url <url>`: Set custom API URL
 - `-C, --continue-session <file>`: Continue a saved conversation
+- `--write-mode`: Enable write mode from the start
 
 Example:
 ```bash
-coba -p openai -m gpt-4.1-mini     # Requires OPENAI_API_KEY env var set
+coba -p gemini -m gemini-2.5-pro     # Requires GOOGLE_API_KEY env var set
 ```
 
 ---
@@ -82,9 +85,8 @@ coba -p openai -m gpt-4.1-mini     # Requires OPENAI_API_KEY env var set
 
 ## Security & Responsibility
 
-- Code Bandit is powerful — use it in a version-controlled (`git`) directory to safeguard your work.
-- There is NO confirmation for deletions or overwrites: all actions requested via chat or tool invocation happen instantly!
-- Review changes with git before committing.
+- Code Bandit is powerful. When in write mode, it can overwrite or delete files. It is highly recommended to use it in a version-controlled (`git`) directory to safeguard your work.
+- Always review changes made by the assistant before committing. `git diff` is your friend.
 
 ---
 

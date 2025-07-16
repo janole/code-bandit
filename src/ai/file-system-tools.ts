@@ -133,6 +133,57 @@ function createDirectory({ fileName }: { fileName: string }, config: RunnableCon
     }
 }
 
+function searchInFiles({ pattern, glob: globPattern, directory = ".", isCaseSensitive = false }: { pattern: string; glob: string; directory?: string, isCaseSensitive?: boolean }, config?: RunnableConfig): string
+{
+    try
+    {
+        const workDir = config?.metadata?.["workDir"] as string || ".";
+        const resolvedPath = resolveWithinWorkDir(directory, workDir);
+        const combinedGlob = path.join(resolvedPath, globPattern);
+
+        const files = globbySync(combinedGlob, {
+            dot: true,
+            onlyFiles: true,
+            gitignore: true,
+        });
+
+        const searchResults = [];
+
+        for (const file of files)
+        {
+            const fileContent = readFileSync(file, "utf-8");
+            const lines = fileContent.split("\n");
+
+            for (let i = 0; i < lines.length; i++)
+            {
+                const line = lines[i] || "";
+                const lineToSearch = isCaseSensitive ? line : line.toLowerCase();
+                const patternToSearch = isCaseSensitive ? pattern : pattern.toLowerCase();
+
+                if (lineToSearch.includes(patternToSearch))
+                {
+                    searchResults.push({
+                        fileName: path.relative(workDir, file),
+                        lineNumber: i + 1,
+                        lineContent: line.trim(),
+                    });
+                }
+            }
+        }
+
+        if (searchResults.length === 0)
+        {
+            return `No matches found for pattern "${pattern}" in files matching "${globPattern}".`;
+        }
+
+        return JSON.stringify(searchResults, null, 2);
+    }
+    catch (error: any)
+    {
+        return "ERROR: Tool `searchInFiles` failed with: " + error.message;
+    }
+}
+
 const _tools = [
     tool(listDirectory, {
         name: "listDirectory",
@@ -186,6 +237,16 @@ const _tools = [
         description: "Create a directory (and any necessary parent directories) at the given path. Use ONLY when the user wants to make a new folder.",
         schema: z.object({
             fileName: z.string().describe("Path to the directory to create, relative to the working directory."),
+        }),
+    }),
+    tool(searchInFiles, {
+        name: "searchInFiles",
+        description: "Search for a pattern within files in the project. This is much more efficient than reading each file manually.",
+        schema: z.object({
+            pattern: z.string().describe("The string or regex pattern to search for."),
+            glob: z.string().describe("A glob pattern to filter which files to search in (e.g., 'src/**/*.ts', '*.md')."),
+            directory: z.string().describe("The base directory to start the search from. Defaults to the current working directory.").optional().default("."),
+            isCaseSensitive: z.boolean().describe("Whether the search should be case-sensitive. Defaults to false.").optional().default(false),
         }),
     }),
 ];

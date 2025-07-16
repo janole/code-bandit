@@ -48,11 +48,12 @@ interface WorkProps
 {
     session: IChatSession;
     send: (messages: TMessage[]) => void;
+    signal: AbortSignal;
 }
 
 async function work(props: WorkProps)
 {
-    const { session, send } = props;
+    const { session, send, signal } = props;
 
     const tools = session.readOnly ? safeTools : allTools;
 
@@ -66,10 +67,10 @@ async function work(props: WorkProps)
         return llm.bindTools(Object.values(tools)); // .withFallbacks([llm]);
     });
 
-    return workInternal({ session, llm, tools, send });
+    return workInternal({ session, llm, tools, send, signal });
 }
 
-interface WorkInternalProps extends Pick<WorkProps, "session" | "send">
+interface WorkInternalProps extends Pick<WorkProps, "session" | "send" | "signal">
 {
     llm: Runnable<TMessage[], AIMessageChunk>;
     tools: { [key: string]: DynamicStructuredTool };
@@ -77,12 +78,12 @@ interface WorkInternalProps extends Pick<WorkProps, "session" | "send">
 
 async function workInternal(props: WorkInternalProps)
 {
-    const { session, llm, tools, send } = props;
+    const { session, llm, tools, send, signal } = props;
 
     const messages = [...session.messages];
     const metadata = { workDir: session.workDir };
 
-    let { stream, error } = await getStream(llm, messages, { metadata });
+    let { stream, error } = await getStream(llm, messages, { metadata, signal });
 
     if (!stream)
     {

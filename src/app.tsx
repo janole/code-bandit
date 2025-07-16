@@ -1,5 +1,5 @@
 import { HumanMessage } from "@langchain/core/messages";
-import { Box, Key, Static, Text } from "ink";
+import { Box, Key, Static, Text, useApp } from "ink";
 import React, { useEffect, useState } from "react";
 
 import { ChatSession } from "./ai/chat-session.js";
@@ -9,6 +9,94 @@ import MemoMessage, { Message } from "./ui/message.js";
 import Spinner from "./ui/spinner.js";
 import TextInput from "./ui/text-input.js";
 import useTerminalSize from "./utils/use-terminal-size.js";
+
+interface UseAppInputHandlerProps
+{
+	session: ChatSession;
+	working: boolean;
+}
+
+function useAppInputHandler(props: UseAppInputHandlerProps)
+{
+	const { session, working } = props;
+
+	const { exit } = useApp();
+
+	const [abortController, setAbortController] = useState<AbortController>();
+	const [ctrlC, setCtrlC] = useState(false);
+
+	const [_, setReadOnly] = useState(session.readOnly);
+
+	const handleInput = (input: string, key: Key): boolean =>
+	{
+		if (key.ctrl && input === "c")
+		{
+			if (!ctrlC)
+			{
+				setCtrlC(true);
+			}
+			else if (abortController)
+			{
+				abortController.abort("Ctrl-C");
+				setAbortController(undefined);
+			}
+			else
+			{
+				exit();
+				process.exit();
+			}
+
+			return true;
+		}
+
+		if (ctrlC)
+		{
+			setCtrlC(false);
+			return true;
+		}
+
+		if (key.ctrl && input === "r")
+		{
+			setReadOnly(readOnly => (session.readOnly = !readOnly));
+
+			return true;
+		}
+
+		return false;
+	};
+
+	const createAbortController = () => 
+	{
+		const abortController = new AbortController();
+		setAbortController(abortController);
+		return abortController;
+	}
+
+	useEffect(() =>
+	{
+		if (!working)
+		{
+			setAbortController(undefined);
+			setCtrlC(false);
+		}
+	}, [
+		working,
+	]);
+
+	const action = ctrlC
+		? working
+			? abortController === null
+				? "Cancelled. Please wait ..."
+				: "Cancel? Press Ctrl-C again ..."
+			: "Quit? Press Ctrl-C again ..."
+		: undefined;
+
+	return {
+		handleInput,
+		action,
+		createAbortController,
+	};
+}
 
 interface ChatAppProps
 {
@@ -21,23 +109,12 @@ function ChatApp(props: ChatAppProps)
 	const { session, debug } = props;
 	const { chatServiceOptions } = session;
 
-	const [working, setWorking] = useState(false);
 	const [_message, setMessage] = useState("");
-
 	const [chatHistory, setChatHistory] = useState<TMessage[]>(session.messages);
-	const [_, setReadOnly] = useState(session.readOnly);
 
-	const handleInput = (input: string, key: Key): boolean =>
-	{
-		if (key.ctrl && input === "r")
-		{
-			setReadOnly(readOnly => (session.readOnly = !readOnly));
+	const [working, setWorking] = useState(false);
 
-			return true;
-		}
-
-		return false;
-	};
+	const { action, handleInput, createAbortController } = useAppInputHandler({ session, working });
 
 	const handleSendMessage = () =>
 	{
@@ -57,6 +134,7 @@ function ChatApp(props: ChatAppProps)
 			work({
 				session,
 				send: (messages: TMessage[]) => setChatHistory(messages),
+				signal: createAbortController().signal,
 			})
 				.catch(error => 
 				{
@@ -106,10 +184,10 @@ function ChatApp(props: ChatAppProps)
 			{/* Input Field */}
 			<Box borderStyle="round" paddingX={1} width={terminalSize.columns}>
 				<TextInput
-					value={_message}
+					value={action ? "" : _message}
 					onChange={setMessage}
 					onSubmit={handleSendMessage}
-					placeholder="> How can I help you?"
+					placeholder={`> ${action || "How can I help you?"}`}
 					onHandleInput={handleInput}
 				/>
 			</Box>

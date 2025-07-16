@@ -50,12 +50,7 @@ program
 			? await ChatSession.createFromFile(options.continueSession)
 			: ChatSession.create({ workDir, readOnly, chatServiceOptions });
 
-		render(
-			<App
-				session={session}
-				debug={options.debug}
-			/>
-		);
+		render(<App session={session} debug={options.debug} />, { exitOnCtrlC: false });
 	});
 
 program.parse(process.argv);

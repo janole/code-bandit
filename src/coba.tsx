@@ -4,7 +4,7 @@ import { render } from "ink";
 import { cwd } from "process";
 import React from "react";
 
-import { VERSION } from "./.version.js";
+import { COMMIT_HASH, VERSION } from "./.version.js";
 import { IChatServiceOptions } from "./ai/chat-service.js";
 import { ChatSession } from "./ai/chat-session.js";
 import App from "./app.js";
@@ -16,7 +16,7 @@ const program = new Command();
 program
 	.name("coba")
 	.description("Code Bandit")
-	.version(VERSION)
+	.version(`${VERSION}+${COMMIT_HASH}`)
 	.argument("[git-repo-path]", "git repository directory", ".")
 	.requiredOption("-p, --provider <provider>", "Specify the model provider to be used", process.env["CODE_BANDIT_PROVIDER"])
 	.requiredOption("-m, --model <model>", "Specify the model to be used", process.env["CODE_BANDIT_MODEL"])

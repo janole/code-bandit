@@ -13,7 +13,7 @@
 	},
 	"type": "module",
 	"engines": {
-		"node": ">=16"
+		"node": ">=18"
 	},
 	"scripts": {
 		"dev": "node --import @swc-node/register/esm-register ./src/coba.tsx",

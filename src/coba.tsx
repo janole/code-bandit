@@ -18,14 +18,14 @@ program
 	.description("Code Bandit")
 	.version(VERSION)
 	.argument("[git-repo-path]", "git repository directory", ".")
-	.option("-m, --model <model>", "Specify the model to be used", "magistral:24b")
-	.option("-p, --provider <provider>", "Specify the model provider to be used", "ollama")
-	.option("-d, --debug", "Show debug information")
+	.requiredOption("-p, --provider <provider>", "Specify the model provider to be used", process.env["CODE_BANDIT_PROVIDER"])
+	.requiredOption("-m, --model <model>", "Specify the model to be used", process.env["CODE_BANDIT_MODEL"])
 	.option("-u, --api-url <url>", "API URL for the model provider")
 	.option("-k, --api-key <key>", "API key for the model provider")
 	.option("--context-size <size>", "Context size in tokens used for chat history")
 	.option("-C, --continue-session <filename>", "Continue with session loaded from filename")
-	.option("--write-mode", "Enable write mode. Alternatively set CODE_BANDIT_WRITE_MODE=1")
+	.option("--write-mode", "Enable write mode")
+	.option("-d, --debug", "Show debug information")
 	.action(async (gitRepoPath: string, options) =>
 	{
 		gitRepoPath && process.chdir(gitRepoPath);
@@ -37,14 +37,14 @@ program
 			: (options.provider === "ollama" ? 8192 : undefined);
 
 		const chatServiceOptions: IChatServiceOptions = {
-			provider: options.provider ?? process.env["CODE_BANDIT_PROVIDER"],
-			model: options.model ?? process.env["CODE_BANDIT_MODEL"],
+			provider: options.provider,
+			model: options.model,
 			contextSize,
 			apiUrl: options.apiUrl,
 			apiKey: options.apiKey,
 		};
 
-		const readOnly = !(options.writeMode ?? isEnvTrue("CODE_BANDIT_WRITE_MODE"));
+		const readOnly = !(options.writeMode || isEnvTrue("CODE_BANDIT_WRITE_MODE"));
 
 		const session = options.continueSession
 			? await ChatSession.createFromFile(options.continueSession)

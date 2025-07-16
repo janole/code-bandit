@@ -114,7 +114,7 @@ function ChatApp(props: ChatAppProps)
 
 	const [working, setWorking] = useState(false);
 
-	const { action, handleInput, createAbortController } = useAppInputHandler({ session, working });
+	const { handleInput, action, createAbortController } = useAppInputHandler({ session, working });
 
 	const handleSendMessage = () =>
 	{

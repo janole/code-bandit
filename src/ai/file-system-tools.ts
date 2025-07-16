@@ -1,7 +1,7 @@
 import { RunnableConfig } from "@langchain/core/runnables";
 import { DynamicStructuredTool, tool } from "@langchain/core/tools";
-import glob from "fast-glob";
 import { mkdirSync, readFileSync, realpathSync, renameSync, unlinkSync, writeFileSync } from "fs";
+import { globbySync } from "globby";
 import path from "path";
 import { z } from "zod";
 
@@ -32,7 +32,7 @@ function listDirectory({ directory = "." }: { directory: string }, config?: Runn
         const resolvedPath = resolveWithinWorkDir(directory, config?.metadata?.["workDir"]);
         const combinedPath = path.join(resolvedPath, "*");
 
-        const files = glob.globSync(combinedPath, {
+        const files = globbySync(combinedPath, {
             dot: true,
             onlyFiles: false,
             objectMode: true,

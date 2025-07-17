@@ -5,6 +5,12 @@ import { z } from "zod";
 
 import { resolveWithinWorkDir } from "./utils.js";
 
+// TODO:
+// - create different images with different toolsets
+// - use images based on project / LLM findings?
+
+const dockerImage = "janole/codebandit-node:0";
+
 const Dockerfile = `
 FROM node:20-slim
 WORKDIR /data
@@ -13,12 +19,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends git jq curl gre
 
 async function executeCommand({ command, args = [] }: { command: string; args?: string[] }, config?: RunnableConfig): Promise<string> 
 {
-	const dockerImage = "codebandit";
-
 	const readOnly = !config?.metadata?.["destructive"] ? ":ro" : "";
 
 	try 
 	{
+		// build Docker image on the fly if necessary
 		await $({ input: Dockerfile })`docker build -q -t ${dockerImage} -`;
 
 		const workDir = resolveWithinWorkDir(".", config?.metadata?.["workDir"]);

@@ -9,4 +9,14 @@ const tools = {
 const allTools = { ...tools };
 const safeTools = Object.fromEntries(Object.entries(allTools).filter(([_, tool]) => !tool.metadata?.["destructive"]));
 
-export { allTools, safeTools };
+interface GetToolsProps
+{
+    includeDestructiveTools?: boolean;
+}
+
+function getTools(props: GetToolsProps)
+{
+    return props.includeDestructiveTools ? allTools : safeTools;
+}
+
+export { getTools };

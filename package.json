@@ -38,6 +38,7 @@
 		"@langchain/ollama": "^0.2.3",
 		"@langchain/openai": "^0.5.18",
 		"commander": "^14.0.0",
+		"execa": "^9.6.0",
 		"fast-glob": "^3.3.3",
 		"globby": "^14.1.0",
 		"ink": "^6.0.1",

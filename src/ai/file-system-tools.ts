@@ -133,6 +133,35 @@ function createDirectory({ fileName }: { fileName: string }, config: RunnableCon
     }
 }
 
+function findFiles({ pattern, directory = "." }: { pattern: string; directory?: string }, config?: RunnableConfig): string
+{
+    try
+    {
+        const resolvedPath = resolveWithinWorkDir(directory, config?.metadata?.["workDir"]);
+        const combinedPattern = path.join(resolvedPath, pattern);
+
+        const files = globbySync(combinedPattern, {
+            dot: true,
+            onlyFiles: true,
+            gitignore: true,
+        });
+
+        if (files.length === 0)
+        {
+            return `No files found matching pattern: "${pattern}" in directory: "${directory}"`;
+        }
+
+        const workDir = realpathSync(path.resolve(config?.metadata?.["workDir"] as string || "."));
+        const relativeFiles = files.map(file => path.relative(workDir, file));
+
+        return relativeFiles.join("\n");
+    }
+    catch (error: any)
+    {
+        return "ERROR: Tool `findFiles` failed with: " + error.message;
+    }
+}
+
 function searchInFiles({ pattern, glob: globPattern, directory = ".", isCaseSensitive = false }: { pattern: string; glob: string; directory?: string, isCaseSensitive?: boolean }, config?: RunnableConfig): string
 {
     try
@@ -237,6 +266,14 @@ const _tools = [
         description: "Create a directory (and any necessary parent directories) at the given path. Use ONLY when the user wants to make a new folder.",
         schema: z.object({
             fileName: z.string().describe("Path to the directory to create, relative to the working directory."),
+        }),
+    }),
+    tool(findFiles, {
+        name: "findFiles",
+        description: "Finds files recursively within the project based on a glob pattern. Use this to search for files by name, extension, or pattern.",
+        schema: z.object({
+            pattern: z.string().describe("The glob pattern to search for (e.g., '**/*.md', 'src/**/*.js')."),
+            directory: z.string().describe("The base directory to start the search from.").optional().default("."),
         }),
     }),
     tool(searchInFiles, {

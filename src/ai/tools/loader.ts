@@ -9,8 +9,8 @@ interface GetToolsProps
 function getTools(props: GetToolsProps)
 {
     return {
-        ...getCommandExecutionTools(props),
         ...getFileSystemTools(props),
+        ...getCommandExecutionTools(props),
     };
 }
 

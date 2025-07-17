@@ -25,6 +25,7 @@ program
 	.option("--context-size <size>", "Context size in tokens used for chat history")
 	.option("-C, --continue-session <filename>", "Continue with session loaded from filename")
 	.option("--write-mode", "Enable write mode")
+	.option("--no-agent-rules", "Disable loading of AGENTS.md, .cursorrules, etc.")
 	.option("-d, --debug", "Show debug information")
 	.action(async (gitRepoPath: string, options) =>
 	{
@@ -42,6 +43,7 @@ program
 			contextSize,
 			apiUrl: options.apiUrl,
 			apiKey: options.apiKey,
+			disableAgentRules: options.noAgentRules,
 		};
 
 		const readOnly = !(options.writeMode || isEnvTrue("CODE_BANDIT_WRITE_MODE"));

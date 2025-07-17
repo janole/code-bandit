@@ -57,7 +57,7 @@ async function work(props: WorkProps)
 
     const tools = session.readOnly ? safeTools : allTools;
 
-    const llm = await chatService.getLLM(session.chatServiceOptions).then(llm => 
+    const llm = await chatService.getLLM(session).then(llm => 
     {
         if (!llm.bindTools)
         {

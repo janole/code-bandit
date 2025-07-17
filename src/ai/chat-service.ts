@@ -7,8 +7,9 @@ import { ChatOllama } from "@langchain/ollama";
 import { ChatOpenAI } from "@langchain/openai";
 
 import tryCatch from "../utils/try-catch.js";
+import { IChatSession } from "./chat-session.js";
 import ErrorMessage from "./error-message.js";
-import { systemPrompts } from "./system-prompt.js";
+import { PromptLoader } from "./prompt-loader.js";
 
 export type TProvider = "ollama" | "openai" | "anthropic" | "gemini" | "openrouter" | "groq";
 
@@ -18,6 +19,7 @@ export interface IChatServiceOptions
     model: string;
 
     contextSize?: number; // in tokens
+    disableAgentRules?: boolean;
 
     apiKey?: string;
     apiUrl?: string;
@@ -35,10 +37,11 @@ class ChatService
         systemMessage?: SystemMessage;
     };
 
-    async getLLM(props: IChatServiceOptions): Promise<BaseChatModel>
+    async getLLM(session: IChatSession): Promise<BaseChatModel>
     {
-        const { provider, model, contextSize } = props;
+        const { provider, model, contextSize, apiUrl, apiKey } = session.chatServiceOptions;
 
+        // TODO: compare all relevant attributes like apiUrl, apiKey, ... !?
         if (this.current?.provider === provider && this.current.model === model && this.current.contextSize === contextSize)
         {
             return this.current.llm;
@@ -50,7 +53,7 @@ class ChatService
         {
             llm = new ChatOllama({
                 model,
-                baseUrl: props.apiUrl, // || process.env["OLLAMA_API_URL"],
+                baseUrl: apiUrl, // || process.env["OLLAMA_API_URL"],
                 numCtx: contextSize,
             });
         }
@@ -58,9 +61,9 @@ class ChatService
         {
             llm = new ChatOpenAI({
                 model,
-                openAIApiKey: props.apiKey, // || process.env["OPENAI_API_KEY"],
+                openAIApiKey: apiKey, // || process.env["OPENAI_API_KEY"],
                 configuration: {
-                    baseURL: props.apiUrl, // || process.env["OPENAI_API_BASE_URL"],
+                    baseURL: apiUrl, // || process.env["OPENAI_API_BASE_URL"],
                 },
             });
         }
@@ -76,9 +79,9 @@ class ChatService
         {
             llm = new ChatOpenAI({
                 model,
-                openAIApiKey: props.apiKey, // || process.env["OPENROUTER_API_KEY"],
+                openAIApiKey: apiKey, // || process.env["OPENROUTER_API_KEY"],
                 configuration: {
-                    baseURL: props.apiUrl || "https://openrouter.ai/api/v1", // || process.env["OPENROUTER_API_BASE_URL"],
+                    baseURL: apiUrl || "https://openrouter.ai/api/v1", // || process.env["OPENROUTER_API_BASE_URL"],
                 },
             });
         }
@@ -86,14 +89,17 @@ class ChatService
         {
             llm = new ChatGroq({
                 model,
-                apiKey: props.apiKey, // || process.env["GROQ_API_KEY"]
-                baseUrl: props.apiUrl,
+                apiKey: apiKey, // || process.env["GROQ_API_KEY"]
+                baseUrl: apiUrl,
             });
         }
         else
         {
             throw new Error(`Unknown provider ${provider}`);
         }
+
+        const promptLoader = await PromptLoader.create(session);
+        const systemPrompt = promptLoader.getSystemPrompt();
 
         this.current = {
             llm,
@@ -102,9 +108,7 @@ class ChatService
 
             contextSize,
 
-            systemMessage: new SystemMessage(
-                systemPrompts[provider as keyof typeof systemPrompts] || systemPrompts.default
-            ),
+            systemMessage: new SystemMessage(systemPrompt),
         };
 
         return this.current.llm;
@@ -137,10 +141,12 @@ class ChatService
             }
         }
 
-        return [
-            ...(this.current.systemMessage ? [this.current.systemMessage] : []),
-            ...preparedMessages
-        ];
+        if (this.current.systemMessage)
+        {
+            preparedMessages.unshift(this.current.systemMessage);
+        }
+
+        return preparedMessages;
     }
 }
 

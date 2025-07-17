@@ -15,6 +15,8 @@ async function executeCommand({ command, args = [] }: { command: string; args?: 
 {
 	const dockerImage = "codebandit";
 
+	const readOnly = !config?.metadata?.["destructive"] ? ":ro" : "";
+
 	try 
 	{
 		await $({ input: Dockerfile })`docker build -q -t ${dockerImage} -`;
@@ -22,7 +24,7 @@ async function executeCommand({ command, args = [] }: { command: string; args?: 
 		const workDir = resolveWithinWorkDir(".", config?.metadata?.["workDir"]);
 
 		const execCommand = "docker";
-		const execArgs = ["run", "--rm", "-v", `${workDir}:/data`, dockerImage, command, ...args];
+		const execArgs = ["run", "--rm", "-v", `${workDir}:/data${readOnly}`, dockerImage, command, ...args];
 
 		const { stdout, stderr, exitCode, failed } = await $(execCommand, execArgs, {
 			cwd: workDir,
@@ -56,20 +58,32 @@ async function executeCommand({ command, args = [] }: { command: string; args?: 
 	}
 }
 
-const _tools = [
-	tool(executeCommand, {
-		name: "executeCommand",
-		description: "Execute an arbitrary command in the shell. Use ONLY when the user wants to run a command, like 'ls -l' or 'npm install'.",
-		schema: z.object({
-			command: z.string().describe("The command to execute (e.g., 'ls', 'npm')."),
-			args: z.array(z.string()).describe("An array of arguments to pass to the command (e.g., ['-l', '-a']).").optional().default([]),
-		}),
-		metadata: {
-			destructive: true,
-		},
+const executeCommandReadOnly = tool(executeCommand, {
+	name: "executeCommandReadOnly",
+	description: "Execute an arbitrary command in a read-only shell. You cannot write to the disk. Use ONLY when the user wants to run a command, like 'ls -l' or 'git diff'.",
+	schema: z.object({
+		command: z.string().describe("The command to execute (e.g., 'ls', 'git')."),
+		args: z.array(z.string()).describe("An array of arguments to pass to the command (e.g., ['-l', '-a']).").optional().default([]),
 	}),
-];
+});
 
-const tools: { [key: string]: DynamicStructuredTool } = _tools.reduce((tools, t) => ({ ...tools, [t.name]: t }), {});
+const executeCommandReadWrite = tool(executeCommand, {
+	name: "executeCommand",
+	description: "Execute an arbitrary command in the shell. Use ONLY when the user wants to run a command, like 'ls -l' or 'npm install'.",
+	schema: z.object({
+		command: z.string().describe("The command to execute (e.g., 'ls', 'npm')."),
+		args: z.array(z.string()).describe("An array of arguments to pass to the command (e.g., ['-l', '-a']).").optional().default([]),
+	}),
+	metadata: {
+		destructive: true,
+	},
+});
 
-export { tools };
+function getTools(props: { includeDestructiveTools?: boolean }): { [key: string]: DynamicStructuredTool }
+{
+	return props.includeDestructiveTools
+		? { [executeCommandReadWrite.name]: executeCommandReadWrite }
+		: { [executeCommandReadOnly.name]: executeCommandReadOnly };
+}
+
+export { getTools };

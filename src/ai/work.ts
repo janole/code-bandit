@@ -8,14 +8,11 @@ import tryCatch from "../utils/try-catch.js";
 import { ChatService } from "./chat-service.js";
 import { IChatSession } from "./chat-session.js";
 import ErrorMessage from "./error-message.js";
-import { tools as fileSystemTools } from "./file-system-tools.js";
+import { allTools, safeTools } from "./tools/tools.js";
 
 export type TMessage = BaseMessage;
 
 const chatService = new ChatService();
-
-const allTools = { ...fileSystemTools };
-const safeTools = Object.fromEntries(Object.entries(allTools).filter(([_, tool]) => !tool.metadata?.["destructive"]));
 
 async function getStream(llm: Runnable<TMessage[], AIMessageChunk>, messages: TMessage[], options?: Partial<BaseChatModelCallOptions>)
 {

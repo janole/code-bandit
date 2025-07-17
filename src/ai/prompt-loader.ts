@@ -3,7 +3,7 @@ import { globbySync } from "globby";
 import path from "path";
 
 import { IChatSession } from "./chat-session.js";
-import { getSystemPrompt } from "./prompts/index.js";
+import { getSystemPrompt } from "./prompts/loader.js";
 
 const MAX_PROMPT_LENGTH = 4000; // TODO: make dynamic based on session / contextLength -> promptLength?
 const AGENT_RULE_FILES = [".cursorrules", "AGENTS.md", "CLAUDE.md"];

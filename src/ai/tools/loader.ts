@@ -1,8 +1,5 @@
-import { tools as commandExecutionTools } from "./command-execution-tools.js";
-import { tools as fileSystemTools } from "./file-system-tools.js";
-
-const allTools = { ...fileSystemTools, ...commandExecutionTools };
-const safeTools = Object.fromEntries(Object.entries(allTools).filter(([_, tool]) => !tool.metadata?.["destructive"]));
+import { getTools as getCommandExecutionTools } from "./command-execution-tools.js";
+import { getTools as getFileSystemTools } from "./file-system-tools.js";
 
 interface GetToolsProps
 {
@@ -11,7 +8,10 @@ interface GetToolsProps
 
 function getTools(props: GetToolsProps)
 {
-    return props.includeDestructiveTools ? allTools : safeTools;
+    return {
+        ...getCommandExecutionTools(props),
+        ...getFileSystemTools(props),
+    };
 }
 
 export { getTools };

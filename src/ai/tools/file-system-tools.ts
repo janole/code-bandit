@@ -270,6 +270,11 @@ const _tools = [
     }),
 ];
 
-const tools: { [key: string]: DynamicStructuredTool } = _tools.reduce((tools, t) => ({ ...tools, [t.name]: t }), {});
+function getTools(props: { includeDestructiveTools?: boolean }): { [key: string]: DynamicStructuredTool }
+{
+    return _tools
+        .filter(t => props.includeDestructiveTools || t.metadata?.["destructive"])
+        .reduce((tools, t) => ({ ...tools, [t.name]: t }), {});
+}
 
-export { tools };
+export { getTools };

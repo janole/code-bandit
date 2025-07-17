@@ -3,7 +3,7 @@ import { globbySync } from "globby";
 import path from "path";
 
 import { IChatSession } from "./chat-session.js";
-import { systemPrompts } from "./system-prompt.js";
+import { getSystemPrompt } from "./prompts/index.js";
 
 const MAX_PROMPT_LENGTH = 4000; // TODO: make dynamic based on session / contextLength -> promptLength?
 const AGENT_RULE_FILES = [".cursorrules", "AGENTS.md", "CLAUDE.md"];
@@ -17,7 +17,7 @@ export class PromptLoader
 
 	constructor(session: IChatSession)
 	{
-		this.basePrompt = systemPrompts[session.chatServiceOptions.provider as keyof typeof systemPrompts] || systemPrompts.default;
+		this.basePrompt = getSystemPrompt(session.chatServiceOptions.provider);
 		this.workDir = session.workDir;
 		this.disableAgentRules = !!session.chatServiceOptions.disableAgentRules;
 	}
@@ -35,8 +35,6 @@ export class PromptLoader
 				dot: true,
 				gitignore: true,
 			});
-
-			console.error("RULES", files);
 
 			if (files.length > 0)
 			{

@@ -17,9 +17,16 @@ WORKDIR /data
 RUN apt-get update && apt-get install -y --no-install-recommends git jq curl grep tree && npm -g i npm
 `.trim();
 
-async function executeCommand({ command, args = [] }: { command: string; args?: string[] }, config?: RunnableConfig): Promise<string> 
+interface ExecuteCommandProps
 {
-	const readOnly = !config?.metadata?.["destructive"] ? ":ro" : "";
+	props: { command: string; args?: string[]; };
+	config?: RunnableConfig;
+	mountFlags?: "ro" | "rw";
+}
+
+async function executeCommand(props: ExecuteCommandProps): Promise<string> 
+{
+	const { props: { command, args = [] }, config, mountFlags = "ro" } = props;
 
 	try 
 	{
@@ -29,7 +36,7 @@ async function executeCommand({ command, args = [] }: { command: string; args?: 
 		const workDir = resolveWithinWorkDir(".", config?.metadata?.["workDir"]);
 
 		const execCommand = "docker";
-		const execArgs = ["run", "--rm", "-v", `${workDir}:/data${readOnly}`, dockerImage, command, ...args];
+		const execArgs = ["run", "--rm", "-v", `${workDir}:/data${mountFlags === "rw" ? "" : ":ro"}`, dockerImage, command, ...args];
 
 		const { stdout, stderr, exitCode, failed } = await $(execCommand, execArgs, {
 			cwd: workDir,
@@ -63,7 +70,7 @@ async function executeCommand({ command, args = [] }: { command: string; args?: 
 	}
 }
 
-const executeCommandReadOnly = tool(executeCommand, {
+const executeCommandReadOnly = tool((props, config) => executeCommand({ props, config, mountFlags: "ro" }), {
 	name: "executeCommandReadOnly",
 	description: "Execute an arbitrary command in a read-only shell. You cannot write to the disk. Use ONLY when the user wants to run a command, like 'ls -l' or 'git diff'.",
 	schema: z.object({
@@ -72,11 +79,11 @@ const executeCommandReadOnly = tool(executeCommand, {
 	}),
 });
 
-const executeCommandReadWrite = tool(executeCommand, {
+const executeCommandReadWrite = tool((props, config) => executeCommand({ props, config, mountFlags: "rw" }), {
 	name: "executeCommand",
-	description: "Execute an arbitrary command in the shell. Use ONLY when the user wants to run a command, like 'ls -l' or 'npm install'.",
+	description: "Execute an arbitrary command in the shell. Use ONLY when the user wants to run a command, like 'ls -l' or 'git diff' or 'npm install'.",
 	schema: z.object({
-		command: z.string().describe("The command to execute (e.g., 'ls', 'npm')."),
+		command: z.string().describe("The command to execute (e.g., 'ls', 'npm', 'git')."),
 		args: z.array(z.string()).describe("An array of arguments to pass to the command (e.g., ['-l', '-a']).").optional().default([]),
 	}),
 	metadata: {

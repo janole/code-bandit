@@ -1,5 +1,5 @@
-import defaultPrompt from "./default.md";
-import ollamaPrompt from "./ollama.md";
+import { prompt as defaultPrompt } from "./default.js";
+import { prompt as ollamaPrompt } from "./ollama.js";
 
 const systemPrompts = {
     default: defaultPrompt,

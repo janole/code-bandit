@@ -13,6 +13,7 @@ export class PromptLoader
 	private basePrompt: string;
 	private workDir: string;
 	private agentRules: string | null = null;
+	private projectContext: string | null = null;
 	private disableAgentRules: boolean;
 
 	constructor(session: IChatSession)
@@ -54,18 +55,61 @@ export class PromptLoader
 		}
 	}
 
+	async loadProjectContext(): Promise<void>
+	{
+		try
+		{
+			const directories = globbySync("**/*", {
+				onlyDirectories: true,
+				gitignore: true,
+				dot: true,
+				cwd: this.workDir,
+			});
+
+			const packageJsonPath = path.join(this.workDir, "package.json");
+			const packageJson = await fs
+				.readFile(packageJsonPath, "utf-8")
+				.catch(() => "{}");
+
+			let context = "--- Project Context ---\n";
+			context += "Directory Structure:\n";
+			context += directories.join("\n");
+			context += "\n\npackage.json:\n";
+			context += JSON.stringify(JSON.parse(packageJson), null, 2);
+
+			this.projectContext = context;
+		}
+		catch (error)
+		{
+			// Silently fail
+		}
+	}
+
 	getSystemPrompt(): string
 	{
-		return this.agentRules
-			? `${this.basePrompt}\n\n--- Project-Specific Instructions ---\n${this.agentRules}\n`
-			: this.basePrompt;
+		const parts = [this.basePrompt];
+
+		if (this.projectContext)
+		{
+			parts.push(this.projectContext);
+		}
+
+		if (this.agentRules)
+		{
+			parts.push(`--- Project-Specific Instructions ---\n${this.agentRules}`);
+		}
+
+		return parts.join("\n\n");
 	}
 
 	public static async create(session: IChatSession): Promise<PromptLoader>
 	{
 		const loader = new PromptLoader(session);
 
-		await loader.loadAgentRules();
+		await Promise.all([
+			loader.loadAgentRules(),
+			loader.loadProjectContext(),
+		]);
 
 		return loader;
 	}

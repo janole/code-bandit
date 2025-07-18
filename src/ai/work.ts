@@ -98,14 +98,25 @@ async function workInternal(props: WorkInternalProps)
 
     let aiMessage: AIMessageChunk | undefined = undefined;
 
-    for await (const chunk of stream)
+    try
     {
-        aiMessage = aiMessage !== undefined ? concat(aiMessage, chunk) : chunk;
-
-        if (!aiMessage?.tool_calls?.length && !aiMessage?.tool_call_chunks?.length)
+        for await (const chunk of stream)
         {
-            send([...messages, aiMessage]); // TODO: check for race conditions
+            aiMessage = aiMessage !== undefined ? concat(aiMessage, chunk) : chunk;
+
+            if (!aiMessage?.tool_calls?.length && !aiMessage?.tool_call_chunks?.length)
+            {
+                send([...messages, aiMessage]); // TODO: check for race conditions
+            }
         }
+    }
+    catch (error: any)
+    {
+        messages.push(new ErrorMessage(`ERROR: ${error?.message || error?.toString() || "for await (...) failed."}`, error));
+
+        send([...messages]);
+
+        return messages;
     }
 
     aiMessage && messages.push(aiMessage) && send([...messages]);

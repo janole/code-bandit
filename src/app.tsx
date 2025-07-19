@@ -3,7 +3,7 @@ import { Box, Key, Static, Text, useApp } from "ink";
 import React, { useEffect, useState } from "react";
 
 import { ChatSession } from "./ai/chat-session.js";
-import ErrorMessage from "./ai/error-message.js";
+import { ErrorMessage } from "./ai/messages.js";
 import { TMessage, work } from "./ai/work.js";
 import MemoMessage, { Message } from "./ui/message.js";
 import Spinner from "./ui/spinner.js";
@@ -110,7 +110,11 @@ function ChatApp(props: ChatAppProps)
 	const { chatServiceOptions } = session;
 
 	const [_message, setMessage] = useState("");
-	const [chatHistory, setChatHistory] = useState<TMessage[]>(session.messages);
+
+	const [__chatHistory, __setChatHistory] = useState<{ messages: TMessage[]; pointer: number }>({
+		messages: session.messages,
+		pointer: session.messages.length,
+	});
 
 	const [working, setWorking] = useState(false);
 
@@ -122,9 +126,9 @@ function ChatApp(props: ChatAppProps)
 		{
 			const humanMessage = new HumanMessage(_message);
 
-			const messages = [...chatHistory, humanMessage];
+			const messages = [...__chatHistory.messages, humanMessage];
+			__setChatHistory({ messages, pointer: messages.length });
 
-			setChatHistory(messages);
 			setMessage("");
 			setWorking(true);
 
@@ -133,15 +137,22 @@ function ChatApp(props: ChatAppProps)
 
 			work({
 				session,
-				send: (messages: TMessage[]) => setChatHistory(messages),
+				send: (messages: TMessage[]) => __setChatHistory({ messages, pointer: messages.length - 1 }),
 				signal: createAbortController().signal,
 			})
+				.then(messages => 
+				{
+					__setChatHistory({ messages, pointer: messages.length });
+				})
 				.catch(error => 
 				{
-					setChatHistory(messages => ([
-						...messages,
-						new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`),
-					]));
+					__setChatHistory(history => ({
+						messages: [
+							...history.messages,
+							new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`),
+						],
+						pointer: history.messages.length + 1,
+					}));
 				})
 				.finally(() => 
 				{
@@ -150,35 +161,33 @@ function ChatApp(props: ChatAppProps)
 		}
 	};
 
+	const { messages, pointer: historyPointer } = __chatHistory;
+
 	useEffect(() =>
 	{
-		!working && session.setMessages(chatHistory);
+		!working && session.setMessages(messages);
 	}, [
 		working,
 		session,
-		chatHistory,
+		messages,
 	]);
 
 	const terminalSize = useTerminalSize();
-
-	const { items, workingItem } = working
-		? { items: chatHistory.slice(0, -1), workingItem: chatHistory[chatHistory.length - 1] }
-		: { items: chatHistory };
 
 	return (
 		<Box flexDirection="column" width={terminalSize.columns}>
 
 			{/* Messages Area */}
-			<Box flexDirection="column" paddingX={1} width={terminalSize.columns}>
-				<Static items={items}>
+			<Box flexDirection="column" paddingRight={1} width={terminalSize.columns}>
+				<Static items={messages.slice(0, historyPointer)}>
 					{(message, index) => (
 						<MemoMessage key={index} msg={message} debug={debug} />
 					)}
 				</Static>
 
-				{!!workingItem &&
-					<Message msg={workingItem} />
-				}
+				{messages.slice(historyPointer).map((workingItem, index) => (
+					<Message key={index} msg={workingItem} debug={debug} />
+				))}
 			</Box>
 
 			{/* Input Field */}
@@ -206,6 +215,7 @@ function ChatApp(props: ChatAppProps)
 
 				<Text color={session.readOnly ? "blue" : "red"}>
 					{` [${session.readOnly ? "READ ONLY" : "WRITE MODE"}]`}
+					{` ${historyPointer}`}
 				</Text>
 			</Box>
 		</Box>

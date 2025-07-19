@@ -7,7 +7,7 @@ import { DynamicStructuredTool } from "langchain/tools";
 import tryCatch from "../utils/try-catch.js";
 import { ChatService } from "./chat-service.js";
 import { IChatSession } from "./chat-session.js";
-import ErrorMessage from "./error-message.js";
+import { ErrorMessage, ToolProgressMessage } from "./messages.js";
 import { getTools } from "./tools/loader.js";
 
 export type TMessage = BaseMessage;
@@ -21,29 +21,6 @@ async function getStream(llm: Runnable<TMessage[], AIMessageChunk>, messages: TM
     const { result: stream, error } = await tryCatch(llm.stream(preparedMessages, options));
 
     return { stream, error };
-}
-
-function addFailedToolCallMessage(error: string | Error, toolCall: { id?: string; name: string }, messages: TMessage[])
-{
-    const errorMessage = (error instanceof Error) ? error.message : error.toString();
-
-    const content = `ERROR: Tool invocation failed for tool ${toolCall.name} with error: ${errorMessage}.`;
-
-    if (toolCall.id)
-    {
-        messages.push(new ToolMessage({
-            tool_call_id: toolCall.id,
-            status: "error",
-            content,
-            response_metadata: {
-                error,
-            }
-        }));
-    }
-    else
-    {
-        messages.push(new ErrorMessage(content, (error instanceof Error) ? error : undefined));
-    }
 }
 
 interface WorkProps
@@ -126,13 +103,18 @@ async function workInternal(props: WorkInternalProps)
         return messages;
     }
 
-    for (const toolCall of aiMessage.tool_calls)
+    const toolProgressMessage = new ToolProgressMessage();
+
+    for (const [index, toolCall] of aiMessage.tool_calls.entries())
     {
         const selectedTool = tools[toolCall.name];
 
+        toolProgressMessage.pending(index, toolCall);
+        send([...messages, toolProgressMessage]);
+
         if (!selectedTool)
         {
-            addFailedToolCallMessage("Tool not found", toolCall, messages);
+            toolProgressMessage.fail(index, "Tool not found");
         }
         else
         {
@@ -140,16 +122,19 @@ async function workInternal(props: WorkInternalProps)
 
             if (result)
             {
+                toolProgressMessage.success(index, result);
                 messages.push(result);
             }
             else
             {
-                addFailedToolCallMessage(error || "Unknown Error", toolCall, messages);
+                toolProgressMessage.fail(index, error || "Unknown Error");
             }
         }
 
-        send([...messages]);
+        send([...messages, toolProgressMessage]);
     }
+
+    messages.push(toolProgressMessage);
 
     return workInternal({ ...props, session: { ...session, messages } });
 }

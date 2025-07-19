@@ -1,6 +1,11 @@
 import { BaseMessage, MessageType, ToolMessage } from "@langchain/core/messages";
 import { ToolCall } from "@langchain/core/messages/tool";
 
+export interface CustomMessage
+{
+    type: "custom";
+}
+
 class ErrorMessage extends BaseMessage
 {
     override _getType(): MessageType
@@ -21,7 +26,7 @@ interface IToolProgress
 {
     toolCall: ToolCall;
     status: "pending" | "success" | "error";
-    result?: { tool_call_id: string; name: string; content: ToolMessage["content"]; }
+    result?: { /* tool_call_id: string; name: string; */ content: ToolMessage["content"]; }
     error?: Error;
 }
 
@@ -52,16 +57,27 @@ class ToolProgressMessage extends BaseMessage
         this.response_metadata["toolCalls"][index] = { toolCall, status: "pending" };
     }
 
-    success(index: number, result: ToolMessage)
+    result(index: number, result: ToolMessage)
     {
         if (this.response_metadata["toolCalls"][index])
         {
+            const status = result?.content?.toString().startsWith("ERROR: ")
+                ? "error"
+                : result.status || "success";
+
+            if (status === "error")
+            {
+                this.fail(index, result.content.toString());
+
+                return;
+            }
+
             this.response_metadata["toolCalls"][index] = {
                 ...this.response_metadata["toolCalls"][index],
-                status: result.status || "success",
+                status,
                 result: {
-                    tool_call_id: result.tool_call_id,
-                    name: result.name || "(no name)",
+                    // tool_call_id: result.tool_call_id,
+                    // name: result.name || "(no name)",
                     content: result.content,
                 },
             };
@@ -85,7 +101,10 @@ class ToolProgressMessage extends BaseMessage
         }
     }
 
-    get items(): IToolProgress[] { return this.response_metadata["toolCalls"]; }
+    static items(msg: ToolProgressMessage): IToolProgress[] 
+    {
+        return msg.response_metadata["toolCalls"];
+    }
 }
 
 const getCustomMessageType = (message: BaseMessage) => message.additional_kwargs["__coba_type"] as ("error" | "tool-progress" | undefined);

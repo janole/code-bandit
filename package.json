@@ -32,6 +32,7 @@
 		"dist"
 	],
 	"dependencies": {
+		"@inkjs/ui": "^2.0.0",
 		"@langchain/anthropic": "^0.3.24",
 		"@langchain/core": "^0.3.62",
 		"@langchain/google-genai": "^0.2.14",

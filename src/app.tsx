@@ -111,9 +111,9 @@ function ChatApp(props: ChatAppProps)
 
 	const [_message, setMessage] = useState("");
 
-	const [__chatHistory, __setChatHistory] = useState<{ messages: TMessage[]; pointer: number }>({
+	const [chatHistory, setChatHistory] = useState<{ messages: TMessage[]; finished: number }>({
 		messages: session.messages,
-		pointer: session.messages.length,
+		finished: session.messages.length,
 	});
 
 	const [working, setWorking] = useState(false);
@@ -126,8 +126,8 @@ function ChatApp(props: ChatAppProps)
 		{
 			const humanMessage = new HumanMessage(_message);
 
-			const messages = [...__chatHistory.messages, humanMessage];
-			__setChatHistory({ messages, pointer: messages.length });
+			const messages = [...chatHistory.messages, humanMessage];
+			setChatHistory({ messages, finished: messages.length });
 
 			setMessage("");
 			setWorking(true);
@@ -137,21 +137,21 @@ function ChatApp(props: ChatAppProps)
 
 			work({
 				session,
-				send: (messages: TMessage[]) => __setChatHistory({ messages, pointer: messages.length - 1 }),
+				send: (messages: TMessage[]) => setChatHistory({ messages, finished: messages.length - 1 }),
 				signal: createAbortController().signal,
 			})
 				.then(messages => 
 				{
-					__setChatHistory({ messages, pointer: messages.length });
+					setChatHistory({ messages, finished: messages.length });
 				})
 				.catch(error => 
 				{
-					__setChatHistory(history => ({
+					setChatHistory(history => ({
 						messages: [
 							...history.messages,
 							new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`),
 						],
-						pointer: history.messages.length + 1,
+						finished: history.messages.length + 1,
 					}));
 				})
 				.finally(() => 
@@ -161,15 +161,13 @@ function ChatApp(props: ChatAppProps)
 		}
 	};
 
-	const { messages, pointer: historyPointer } = __chatHistory;
-
 	useEffect(() =>
 	{
-		!working && session.setMessages(messages);
+		!working && session.setMessages(chatHistory.messages);
 	}, [
 		working,
 		session,
-		messages,
+		chatHistory.messages,
 	]);
 
 	const terminalSize = useTerminalSize();
@@ -179,13 +177,13 @@ function ChatApp(props: ChatAppProps)
 
 			{/* Messages Area */}
 			<Box flexDirection="column" paddingRight={1} width={terminalSize.columns}>
-				<Static items={messages.slice(0, historyPointer)}>
+				<Static items={chatHistory.messages.slice(0, chatHistory.finished)}>
 					{(message, index) => (
 						<MemoMessage key={index} msg={message} debug={debug} />
 					)}
 				</Static>
 
-				{messages.slice(historyPointer).map((workingItem, index) => (
+				{chatHistory.messages.slice(chatHistory.finished).map((workingItem, index) => (
 					<Message key={index} msg={workingItem} debug={debug} />
 				))}
 			</Box>
@@ -215,7 +213,6 @@ function ChatApp(props: ChatAppProps)
 
 				<Text color={session.readOnly ? "blue" : "red"}>
 					{` [${session.readOnly ? "READ ONLY" : "WRITE MODE"}]`}
-					{` ${historyPointer}`}
 				</Text>
 			</Box>
 		</Box>

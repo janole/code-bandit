@@ -1,9 +1,9 @@
-import { AIMessage, MessageType } from "@langchain/core/messages";
-import { ToolCall } from "@langchain/core/messages/tool";
+import { Badge, OrderedList, Spinner, StatusMessage, UnorderedList } from "@inkjs/ui";
+import { MessageType } from "@langchain/core/messages";
 import { Box, Text } from "ink";
 import React, { memo } from "react";
 
-import ErrorMessage from "../ai/error-message.js";
+import { getCustomMessageType, ToolProgressMessage } from "../ai/messages.js";
 import { TMessage } from "../ai/work.js";
 import { Markdown } from "./markdown.js";
 
@@ -15,51 +15,6 @@ const colors = {
     error: "red",
 };
 
-function MessageText({ type, text }: { type: MessageType | "error"; text: string })
-{
-    const color = type in colors ? colors[type as keyof typeof colors] : "black";
-
-    if (type === "error")
-    {
-        return (
-            <Box borderStyle="double" borderColor={color} paddingX={1}>
-                <Text color={color}>{text}</Text>
-            </Box>
-        );
-    }
-
-    if (type === "ai")
-    {
-        return <Markdown>{text}</Markdown>;
-    }
-
-    return <Text color={color}>{text}</Text>;
-}
-
-function ToolCallDisplay({ toolCall }: { toolCall: ToolCall })
-{
-    return (
-        <Box borderStyle="round" borderColor={colors.tool} paddingX={1}>
-            <Text color={colors.tool}>
-                Tool: {toolCall.name}({Object.entries(toolCall.args).map(([name, value]) =>
-                    `${name}: ${value.toString().slice(0, 60)}`
-                ).join(", ")})
-            </Text>
-        </Box>
-    );
-}
-
-function ToolCalls({ toolCalls }: { toolCalls: ToolCall[] })
-{
-    return (
-        <Box flexDirection="column" paddingX={1}>
-            {toolCalls.map((toolCall, index) => (
-                <ToolCallDisplay key={toolCall.id + index.toString()} toolCall={toolCall} />
-            ))}
-        </Box>
-    );
-};
-
 function MessageDebugLog({ msg }: { msg: TMessage })
 {
     return (
@@ -69,15 +24,109 @@ function MessageDebugLog({ msg }: { msg: TMessage })
     );
 }
 
+function ToolMessage({ msg }: { msg: TMessage })
+{
+    const items = (msg as ToolProgressMessage).items;
+
+    return (
+        <Box flexDirection="row" marginBottom={1} width={process.stdout.columns - 2}>
+            <Box>
+                <Badge color={colors.tool}>{"> TOOLS"}</Badge>
+            </Box>
+            <Box paddingLeft={1}>
+                <OrderedList>
+                    {items.map((progress, index) => (
+                        <OrderedList.Item key={index}>
+                            <Box>
+                                {progress.status === "pending" ? <Spinner /> : <Text>{" "}</Text>}
+
+                                <StatusMessage variant={progress.status === "pending" ? "info" : progress.status}>
+                                    {progress.toolCall.name}
+                                </StatusMessage>
+
+                                {progress.result &&
+                                    <Text color="gray">
+                                        {" → "}({progress.result?.content?.length})
+                                    </Text>
+                                }
+                            </Box>
+                            <Box paddingLeft={4}>
+                                <UnorderedList>
+                                    {Object.entries(progress.toolCall?.args).map(([key, val]) => !!val && (
+                                        <UnorderedList.Item key={key}>
+                                            <Box width={process.stdout.columns / 2}>
+                                                <Text color="gray">{key}: </Text>
+                                                <Text color="blackBright">
+                                                    {val.length > 40
+                                                        ? val.slice(0, 10) + " ... " + val.slice(-20)
+                                                        : val
+                                                    }
+                                                </Text>
+                                            </Box>
+                                        </UnorderedList.Item>
+                                    ))}
+                                </UnorderedList>
+                            </Box>
+                        </OrderedList.Item>
+                    ))}
+                </OrderedList>
+            </Box>
+        </Box>
+    );
+}
+
+function ErrorMessage({ msg: { text } }: { msg: TMessage })
+{
+    const color = colors.error;
+
+    return (
+        <Box borderStyle="double" borderColor={color} paddingX={1}>
+            <Text color={color}>{text}</Text>
+        </Box>
+    );
+}
+
+function TextMessage({ msg: { text }, type }: { msg: TMessage; type: MessageType })
+{
+    const color = colors[type as keyof typeof colors];
+
+    return (
+        <Box width={process.stdout.columns - 2}>
+            <Box width={2}>
+                <Text color={color}>
+                    {type === "human"
+                        ? ">"
+                        : "✦"
+                    }
+                </Text>
+            </Box>
+            <Box width={process.stdout.columns - 2 - 2}>
+                {type === "ai"
+                    ? <Markdown>{text}</Markdown>
+                    : <Text color={color}>{text}</Text>
+                }
+            </Box>
+        </Box>
+    );
+}
+
 function Message({ msg, debug }: { msg: TMessage; debug?: boolean; })
 {
-    const type = (msg instanceof ErrorMessage) ? "error" : msg.getType();
+    const type = getCustomMessageType(msg) || msg.getType();
 
-    const hasText = ["human", "ai", "generic", "error"].includes(type) && msg.text.trim().length > 0;
+    if (type === "tool-progress")
+    {
+        return <ToolMessage msg={msg} />;
+    }
 
-    const toolCalls = (msg as AIMessage).tool_calls;
+    if (type === "error")
+    {
+        return <ErrorMessage msg={msg} />;
+    }
 
-    if (!debug && !hasText && !toolCalls)
+    const hasText = ["human", "ai", "generic"].includes(type) && msg.text.trim().length > 0;
+
+    if (!debug && !hasText)
     {
         return null;
     }
@@ -85,11 +134,7 @@ function Message({ msg, debug }: { msg: TMessage; debug?: boolean; })
     return (
         <Box flexDirection="column" marginBottom={1} width={process.stdout.columns - 2}>
             {hasText &&
-                <MessageText type={type} text={msg.text} />
-            }
-
-            {!!toolCalls &&
-                <ToolCalls toolCalls={toolCalls} />
+                <TextMessage type={type} msg={msg} />
             }
 
             {debug &&

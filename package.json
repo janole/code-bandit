@@ -1,6 +1,6 @@
 {
 	"name": "@janole/code-bandit",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"author": "Jan Ole Suhr <ole@janole.com> (https://janole.com)",
 	"homepage": "https://github.com/janole/code-bandit?#readme",
 	"repository": {
@@ -21,6 +21,7 @@
 		"typecheck": "npx tsc --noEmit -p tsconfig.json",
 		"lint": "eslint",
 		"lint:fix": "eslint --fix",
+		"ok": "npm run lint:fix && npm run typecheck",
 		"prebuild": "npm run genversion && patch-package",
 		"build": "rimraf dist && node esbuild.config.js",
 		"genversion": "COMMIT_HASH=$(git rev-parse --short HEAD) && echo \"export const VERSION = \\\"${npm_package_version}\\\";\\nexport const COMMIT_HASH = \\\"${COMMIT_HASH}\\\";\" > src/.version.ts",
@@ -31,6 +32,7 @@
 		"dist"
 	],
 	"dependencies": {
+		"@inkjs/ui": "^2.0.0",
 		"@langchain/anthropic": "^0.3.24",
 		"@langchain/core": "^0.3.62",
 		"@langchain/google-genai": "^0.2.14",

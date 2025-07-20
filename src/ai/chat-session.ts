@@ -1,4 +1,4 @@
-import { BaseMessage, mapChatMessagesToStoredMessages, mapStoredMessageToChatMessage } from "@langchain/core/messages";
+import { BaseMessage, mapChatMessagesToStoredMessages, mapStoredMessageToChatMessage, StoredMessage } from "@langchain/core/messages";
 import { mkdir, readFile } from "fs/promises";
 import { homedir } from "os";
 import { join } from "path";
@@ -6,7 +6,7 @@ import { ulid } from "ulid";
 import writeFileAtomic from "write-file-atomic";
 
 import { IChatServiceOptions } from "./chat-service.js";
-import { CustomMessage, getCustomMessageType,TMessage } from "./custom-messages.js";
+import { CustomMessage, isCustomMessage,TMessage } from "./custom-messages.js";
 
 export interface IChatSession
 {
@@ -94,11 +94,29 @@ class FileSessionStorage implements ISessionStorage
         this.sessionsDir = join(baseDir || homedir(), ".code-bandit", "sessions");
     }
 
-    private static fromObject(obj: any): TMessage | []
+    private static toObject(msg: TMessage): CustomMessage | StoredMessage | undefined
     {
         try
         {
-            if (getCustomMessageType(obj))
+            if (msg instanceof BaseMessage)
+            {
+                return mapChatMessagesToStoredMessages([msg])[0];
+            }
+
+            return msg;
+        }
+        catch (e)
+        {
+            // TODO: show warning
+            return undefined;
+        }
+    }
+
+    private static fromObject(obj: any): TMessage | undefined
+    {
+        try
+        {
+            if (isCustomMessage(obj))
             {
                 return CustomMessage.fromObject(obj);
             }
@@ -107,7 +125,8 @@ class FileSessionStorage implements ISessionStorage
         }
         catch (e)
         {
-            return [];
+            // TODO: show warning
+            return undefined;
         }
     }
 
@@ -120,7 +139,9 @@ class FileSessionStorage implements ISessionStorage
             workDir: data.workDir,
             readOnly: data.readOnly,
             chatServiceOptions: data.chatServiceOptions,
-            messages: data.messages.flatMap((m: any) => this.fromObject(m)),
+            messages: data.messages
+                .map((m: any) => FileSessionStorage.fromObject(m))
+                .filter((m: TMessage | undefined) => m),
         };
     }
 
@@ -134,10 +155,9 @@ class FileSessionStorage implements ISessionStorage
             id: session.id,
             workDir: session.workDir,
             chatServiceOptions: session.chatServiceOptions,
-            messages: session.messages.flatMap(m => getCustomMessageType(m)
-                ? m
-                : mapChatMessagesToStoredMessages([m] as BaseMessage[])[0]
-            ),
+            messages: session.messages
+                .map(m => FileSessionStorage.toObject(m))
+                .filter(m => m),
         };
 
         await writeFileAtomic(filePath, JSON.stringify(sessionData, null, 2), "utf-8");

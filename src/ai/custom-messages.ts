@@ -1,4 +1,4 @@
-import { BaseMessage, ToolMessage } from "@langchain/core/messages";
+import { BaseMessage } from "@langchain/core/messages";
 import { ToolCall } from "@langchain/core/messages/tool";
 
 export type TMessage = BaseMessage | CustomMessage;
@@ -29,10 +29,10 @@ export class CustomMessage
         }
         else if (obj._type === "tool-progress")
         {
-            return new ToolProgressMessage(obj.toolCalls);
+            return new ToolProgressMessage(obj.toolCall, obj.status, obj.content);
         }
 
-        throw new Error(`Type ${obj._type} not supported.`);
+        throw new Error(`Unknown custom message type: ${obj._type}`);
     }
 }
 
@@ -46,7 +46,7 @@ class ErrorMessage extends CustomMessage
         stack?: string;
     };
 
-    constructor(content: string, error?: Error)
+    constructor(content: string, error?: Error | ErrorMessage["error"])
     {
         super("error");
 
@@ -63,77 +63,57 @@ class ErrorMessage extends CustomMessage
     }
 }
 
-interface IToolProgress
+class ToolProgressMessage extends CustomMessage
 {
     toolCall: ToolCall;
     status: "pending" | "success" | "error";
-    result?: { content: ToolMessage["content"]; }
-    error?: Error;
-}
+    content?: string;
 
-class ToolProgressMessage extends CustomMessage
-{
-    toolCalls: IToolProgress[];
-
-    constructor(toolCalls?: IToolProgress[])
+    constructor(toolCall: ToolCall, status: ToolProgressMessage["status"], content?: string)
     {
         super("tool-progress");
 
-        this.toolCalls = toolCalls || [];
-    }
-
-    pending(index: number, toolCall: ToolCall)
-    {
-        this.toolCalls[index] = { toolCall, status: "pending" };
-    }
-
-    result(index: number, result: ToolMessage)
-    {
-        if (this.toolCalls[index])
-        {
-            const status = result?.content?.toString().startsWith("ERROR: ")
-                ? "error"
-                : result.status || "success";
-
-            if (status === "error")
-            {
-                this.fail(index, result.content.toString());
-
-                return;
-            }
-
-            this.toolCalls[index] = {
-                ...this.toolCalls[index],
-                status,
-                result: { content: result.content },
-            };
-        }
-    }
-
-    fail(index: number, _error: string | Error)
-    {
-        if (this.toolCalls[index])
-        {
-            const error = _error instanceof Error
-                ? JSON.parse(JSON.stringify(_error, Object.getOwnPropertyNames(_error)))
-                : { message: _error };
-
-            this.toolCalls[index] = {
-                ...this.toolCalls[index],
-                error,
-                status: "error",
-                result: undefined,
-            };
-        }
-    }
-
-    static items(msg: ToolProgressMessage): IToolProgress[] 
-    {
-        return msg.toolCalls;
+        this.toolCall = toolCall;
+        this.status = status;
+        this.content = content;
     }
 }
 
-const getCustomMessageType = (message: any) => message._type; // TODO: refactor
+/**
+ * @deprecated This function is deprecated and will be removed in a future version.
+ * Use the `isCustomMessage` type guard instead.
+ */
+const getCustomMessageType = (message: any): TCustomMessageType | undefined =>
+{
+    if (message instanceof CustomMessage)
+    {
+        return message.getType() as TCustomMessageType;
+    }
+    else if (message && typeof message === 'object' && '_type' in message)
+    {
+        const type = (message as any)._type;
+        if (type === "error" || type === "tool-progress")
+        {
+            return type;
+        }
+    }
+
+    return undefined;
+};
+
+/**
+ * A type guard to check if a message is a CustomMessage.
+ *
+ * @param message The message to check.
+ * @returns True if the message is a CustomMessage, false otherwise.
+ */
+export const isCustomMessage = (message: any): message is CustomMessage =>
+{
+    return message instanceof CustomMessage || (
+        message && typeof message === 'object' && '_type' in message &&
+        (message._type === "error" || message._type === "tool-progress")
+    );
+};
 
 export
 {

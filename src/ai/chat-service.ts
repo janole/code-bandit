@@ -143,7 +143,7 @@ class ChatService
 
         if (this.current.systemMessage)
         {
-            preparedMessages.unshift(this.current.systemMessage);
+            return [this.current.systemMessage, ...preparedMessages];
         }
 
         return preparedMessages;

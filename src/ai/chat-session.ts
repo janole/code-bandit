@@ -6,7 +6,44 @@ import { ulid } from "ulid";
 import writeFileAtomic from "write-file-atomic";
 
 import { IChatServiceOptions } from "./chat-service.js";
-import { CustomMessage, isCustomMessage,TMessage } from "./custom-messages.js";
+import { CustomMessage, isCustomMessage, TMessage } from "./custom-messages.js";
+
+function mapMessageToObject(msg: TMessage): CustomMessage | StoredMessage | undefined
+{
+    try
+    {
+        if (msg instanceof BaseMessage)
+        {
+            return mapChatMessagesToStoredMessages([msg])[0];
+        }
+
+        return msg;
+    }
+    catch (e)
+    {
+        // TODO: show warning
+        return undefined;
+    }
+}
+
+function mapObjectToMessage(obj: any): TMessage | undefined
+{
+    try
+    {
+        if (isCustomMessage(obj))
+        {
+            return CustomMessage.fromObject(obj);
+        }
+
+        return mapStoredMessageToChatMessage(obj);
+    }
+    catch (e)
+    {
+        // TODO: show warning
+        return undefined;
+    }
+}
+
 
 export interface IChatSession
 {
@@ -94,42 +131,6 @@ class FileSessionStorage implements ISessionStorage
         this.sessionsDir = join(baseDir || homedir(), ".code-bandit", "sessions");
     }
 
-    private static toObject(msg: TMessage): CustomMessage | StoredMessage | undefined
-    {
-        try
-        {
-            if (msg instanceof BaseMessage)
-            {
-                return mapChatMessagesToStoredMessages([msg])[0];
-            }
-
-            return msg;
-        }
-        catch (e)
-        {
-            // TODO: show warning
-            return undefined;
-        }
-    }
-
-    private static fromObject(obj: any): TMessage | undefined
-    {
-        try
-        {
-            if (isCustomMessage(obj))
-            {
-                return CustomMessage.fromObject(obj);
-            }
-
-            return mapStoredMessageToChatMessage(obj);
-        }
-        catch (e)
-        {
-            // TODO: show warning
-            return undefined;
-        }
-    }
-
     static async loadSession(filePath: string): Promise<IChatSession>
     {
         const data = JSON.parse(await readFile(filePath, "utf8"));
@@ -139,9 +140,7 @@ class FileSessionStorage implements ISessionStorage
             workDir: data.workDir,
             readOnly: data.readOnly,
             chatServiceOptions: data.chatServiceOptions,
-            messages: data.messages
-                .map((m: any) => FileSessionStorage.fromObject(m))
-                .filter((m: TMessage | undefined) => m),
+            messages: data.messages.map(mapObjectToMessage).filter((m: TMessage | undefined) => m),
         };
     }
 
@@ -155,9 +154,7 @@ class FileSessionStorage implements ISessionStorage
             id: session.id,
             workDir: session.workDir,
             chatServiceOptions: session.chatServiceOptions,
-            messages: session.messages
-                .map(m => FileSessionStorage.toObject(m))
-                .filter(m => m),
+            messages: session.messages.map(mapMessageToObject).filter(m => m),
         };
 
         await writeFileAtomic(filePath, JSON.stringify(sessionData, null, 2), "utf-8");

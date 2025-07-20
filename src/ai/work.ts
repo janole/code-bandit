@@ -21,6 +21,29 @@ async function getStream(llm: Runnable<TMessage[], AIMessageChunk>, messages: TM
     return { stream, error };
 }
 
+function addFailedToolCallMessage(error: string | Error, toolCall: { id?: string; name: string }, messages: TMessage[])
+{
+    const errorMessage = (error instanceof Error) ? error.message : error.toString();
+
+    const content = `ERROR: Tool invocation failed for tool ${toolCall.name} with error: ${errorMessage}.`;
+
+    if (toolCall.id)
+    {
+        messages.push(new ToolMessage({
+            tool_call_id: toolCall.id,
+            status: "error",
+            content,
+            response_metadata: {
+                error,
+            },
+        }));
+    }
+    else
+    {
+        messages.push(new ErrorMessage(content, (error instanceof Error) ? error : undefined));
+    }
+}
+
 interface WorkProps
 {
     session: IChatSession;
@@ -101,18 +124,18 @@ async function workInternal(props: WorkInternalProps)
         return messages;
     }
 
-    const toolProgressMessage = new ToolProgressMessage();
-
-    for (const [index, toolCall] of aiMessage.tool_calls.entries())
+    for (const toolCall of aiMessage.tool_calls)
     {
         const selectedTool = tools[toolCall.name];
 
-        toolProgressMessage.pending(index, toolCall);
+        const toolProgressMessage = new ToolProgressMessage(toolCall, "pending");
         send([...messages, toolProgressMessage]);
 
         if (!selectedTool)
         {
-            toolProgressMessage.fail(index, "Tool not found");
+            addFailedToolCallMessage("Tool not found", toolCall, messages);
+            toolProgressMessage.status = "error";
+            toolProgressMessage.content = "Tool not found";
         }
         else
         {
@@ -120,19 +143,21 @@ async function workInternal(props: WorkInternalProps)
 
             if (result)
             {
-                toolProgressMessage.result(index, result);
                 messages.push(result);
+                toolProgressMessage.content = result.text;
+                toolProgressMessage.status = result.text.startsWith("ERROR: ") ? "error" : (result.status || "success");
             }
             else
             {
-                toolProgressMessage.fail(index, error || "Unknown Error");
+                addFailedToolCallMessage(error || "Unknown Error", toolCall, messages);
+                toolProgressMessage.status = "error";
+                toolProgressMessage.content = error?.message || "Unknown Error";
             }
         }
 
-        send([...messages, toolProgressMessage]);
+        messages.push(toolProgressMessage);
+        send([...messages]);
     }
-
-    messages.push(toolProgressMessage);
 
     return workInternal({ ...props, session: { ...session, messages } });
 }

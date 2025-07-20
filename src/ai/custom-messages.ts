@@ -2,7 +2,9 @@ import { BaseMessage, ToolMessage } from "@langchain/core/messages";
 import { ToolCall } from "@langchain/core/messages/tool";
 
 export type TMessage = BaseMessage | CustomMessage;
-export type TCustomMessageType = "error" | "tool-progress";
+
+type TCustomMessageType = "error" | "tool-progress";
+
 export type TMessageType = ReturnType<BaseMessage["getType"]> | TCustomMessageType;
 
 export class CustomMessage

@@ -3,8 +3,7 @@ import { BaseMessage, MessageType } from "@langchain/core/messages";
 import { Box, Text } from "ink";
 import React, { memo } from "react";
 
-import { ErrorMessage, TMessageType, ToolProgressMessage } from "../ai/custom-messages.js";
-import { TMessage } from "../ai/work.js";
+import { ErrorMessage, TMessage, TMessageType, ToolProgressMessage } from "../ai/custom-messages.js";
 import { Markdown } from "./markdown.js";
 
 const colors = {

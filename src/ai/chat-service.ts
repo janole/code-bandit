@@ -132,7 +132,6 @@ class ChatService
                 allowPartial: false,
                 includeSystem: true,
                 startOn: ["system", "human"],
-                // endOn: ["tool", "ai"],
             }));
 
             if (result)

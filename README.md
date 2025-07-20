@@ -30,7 +30,7 @@ Code Bandit provides the AI with a set of tools to interact with your project.
 
 ### Command Execution (read-only)
 
-- `executeCommand`: Execute arbitrary shell commands like `git status`, `npm test`, or `ls -l`. This allows the agent to perform a wide range of tasks.
+- `executeCommandReadOnly`: Execute arbitrary shell commands like `git status`, `npm test`, or `ls -l`. This allows the agent to perform a wide range of tasks.
 
 ### Destructive Operations
 

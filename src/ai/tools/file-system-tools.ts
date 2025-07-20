@@ -159,6 +159,7 @@ function searchInFiles({ pattern, glob: globPattern, directory = ".", isCaseSens
         });
 
         const searchResults = [];
+        const regex = new RegExp(pattern, isCaseSensitive ? "" : "i");
 
         for (const file of files)
         {
@@ -168,10 +169,8 @@ function searchInFiles({ pattern, glob: globPattern, directory = ".", isCaseSens
             for (let i = 0; i < lines.length; i++)
             {
                 const line = lines[i] || "";
-                const lineToSearch = isCaseSensitive ? line : line.toLowerCase();
-                const patternToSearch = isCaseSensitive ? pattern : pattern.toLowerCase();
 
-                if (lineToSearch.includes(patternToSearch))
+                if (regex.test(line))
                 {
                     searchResults.push({
                         fileName: path.relative(workDir, file),

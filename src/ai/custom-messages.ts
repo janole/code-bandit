@@ -1,24 +1,63 @@
-import { BaseMessage, MessageType, ToolMessage } from "@langchain/core/messages";
+import { BaseMessage, ToolMessage } from "@langchain/core/messages";
 import { ToolCall } from "@langchain/core/messages/tool";
 
-export interface CustomMessage
+export type TMessage = BaseMessage | CustomMessage;
+export type TCustomMessageType = "error" | "tool-progress";
+export type TMessageType = ReturnType<BaseMessage["getType"]> | TCustomMessageType;
+
+export class CustomMessage
 {
-    type: "custom";
+    _type: TCustomMessageType;
+
+    constructor(type: TCustomMessageType)
+    {
+        this._type = type;
+    }
+
+    getType(): string
+    {
+        return this._type;
+    }
+
+    static fromObject(obj: any): CustomMessage
+    {
+        if (obj._type === "error")
+        {
+            return new ErrorMessage(obj.content, obj.error);
+        }
+        else if (obj._type === "tool-progress")
+        {
+            return new ToolProgressMessage(obj.toolCalls);
+        }
+
+        throw new Error(`Type ${obj._type} not supported.`);
+    }
 }
 
-class ErrorMessage extends BaseMessage
+class ErrorMessage extends CustomMessage
 {
-    override _getType(): MessageType
-    {
-        return "generic";
-    }
+    content: string;
+
+    error?: {
+        name: string;
+        message: string;
+        stack?: string;
+    };
 
     constructor(content: string, error?: Error)
     {
-        super({ content });
+        super("error");
 
-        this.additional_kwargs["__coba_type"] = "error";
-        this.response_metadata = { error };
+        this.content = content;
+
+        if (error)
+        {
+            this.error = {
+                name: error.name,
+                message: error.message,
+                stack: error.stack,
+            }
+        }
     }
 }
 
@@ -26,40 +65,29 @@ interface IToolProgress
 {
     toolCall: ToolCall;
     status: "pending" | "success" | "error";
-    result?: { /* tool_call_id: string; name: string; */ content: ToolMessage["content"]; }
+    result?: { content: ToolMessage["content"]; }
     error?: Error;
 }
 
-interface IToolProgressMetadata
+class ToolProgressMessage extends CustomMessage
 {
     toolCalls: IToolProgress[];
-}
 
-class ToolProgressMessage extends BaseMessage
-{
-    declare response_metadata: IToolProgressMetadata;
-
-    override _getType(): MessageType
+    constructor(toolCalls?: IToolProgress[])
     {
-        return "generic";
-    }
+        super("tool-progress");
 
-    constructor()
-    {
-        super({ content: "" });
-
-        this.additional_kwargs["__coba_type"] = "tool-progress";
-        this.response_metadata = { toolCalls: [] };
+        this.toolCalls = toolCalls || [];
     }
 
     pending(index: number, toolCall: ToolCall)
     {
-        this.response_metadata["toolCalls"][index] = { toolCall, status: "pending" };
+        this.toolCalls[index] = { toolCall, status: "pending" };
     }
 
     result(index: number, result: ToolMessage)
     {
-        if (this.response_metadata["toolCalls"][index])
+        if (this.toolCalls[index])
         {
             const status = result?.content?.toString().startsWith("ERROR: ")
                 ? "error"
@@ -72,28 +100,24 @@ class ToolProgressMessage extends BaseMessage
                 return;
             }
 
-            this.response_metadata["toolCalls"][index] = {
-                ...this.response_metadata["toolCalls"][index],
+            this.toolCalls[index] = {
+                ...this.toolCalls[index],
                 status,
-                result: {
-                    // tool_call_id: result.tool_call_id,
-                    // name: result.name || "(no name)",
-                    content: result.content,
-                },
+                result: { content: result.content },
             };
         }
     }
 
     fail(index: number, _error: string | Error)
     {
-        if (this.response_metadata["toolCalls"][index])
+        if (this.toolCalls[index])
         {
             const error = _error instanceof Error
                 ? JSON.parse(JSON.stringify(_error, Object.getOwnPropertyNames(_error)))
                 : { message: _error };
 
-            this.response_metadata["toolCalls"][index] = {
-                ...this.response_metadata["toolCalls"][index],
+            this.toolCalls[index] = {
+                ...this.toolCalls[index],
                 error,
                 status: "error",
                 result: undefined,
@@ -103,11 +127,11 @@ class ToolProgressMessage extends BaseMessage
 
     static items(msg: ToolProgressMessage): IToolProgress[] 
     {
-        return msg.response_metadata["toolCalls"];
+        return msg.toolCalls;
     }
 }
 
-const getCustomMessageType = (message: BaseMessage) => message.additional_kwargs["__coba_type"] as ("error" | "tool-progress" | undefined);
+const getCustomMessageType = (message: any) => message._type; // TODO: refactor
 
 export
 {

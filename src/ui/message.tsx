@@ -25,7 +25,10 @@ function MessageDebugLog({ msg }: { msg: TMessage })
 
 function ToolMessageView({ msg }: { msg: ToolProgressMessage })
 {
-    const items = msg.toolCalls;
+    if (!msg.toolCall)
+    {
+        return null;
+    }
 
     return (
         <Box width={process.stdout.columns - 2}>
@@ -33,54 +36,52 @@ function ToolMessageView({ msg }: { msg: ToolProgressMessage })
                 <Text color={colors.tool}>*</Text>
             </Box>
             <Box flexDirection="column" flexGrow={1} width={process.stdout.columns - 2 - 2}>
-                {items.map((progress, index) => (
-                    <Box key={index} marginBottom={1} flexDirection="column">
-                        <Box>
-                            <Text color={colors.tool}>
-                                {progress.toolCall.name}
+                <Box marginBottom={1} flexDirection="column">
+                    <Box>
+                        <Text color={colors.tool}>
+                            {msg.toolCall?.name}
+                        </Text>
+
+                        {msg.status === "pending" &&
+                            <Spinner />
+                        }
+
+                        {msg.content &&
+                            <Text color="gray">
+                                {" → "}
+
+                                {msg.status === "error"
+                                    ? <Badge color="red">FAIL</Badge>
+                                    : <Badge color="green">OK</Badge>
+                                }
+
+                                {` (${msg.content?.length})`}
                             </Text>
-
-                            {progress.status === "pending" &&
-                                <Spinner />
-                            }
-
-                            {progress.result &&
-                                <Text color="gray">
-                                    {" → "}
-
-                                    {progress.status === "error"
-                                        ? <Badge color="red">FAIL</Badge>
-                                        : <Badge color="green">OK</Badge>
-                                    }
-
-                                    {` (${progress.result?.content?.length})`}
-                                </Text>
-                            }
-                        </Box>
-                        <Box marginLeft={2}>
-                            <UnorderedList>
-                                {Object.entries(progress.toolCall?.args).map(([key, val]) => !!val && (
-                                    <UnorderedList.Item key={key}>
-                                        <Box width={process.stdout.columns / 2}>
-                                            <Text color="gray">{key}: </Text>
-                                            <Text color="blackBright">
-                                                {val.length > 40
-                                                    ? val.slice(0, 10) + " ... " + val.slice(-20)
-                                                    : val
-                                                }
-                                            </Text>
-                                        </Box>
-                                    </UnorderedList.Item>
-                                ))}
-                            </UnorderedList>
-                        </Box>
-                        {progress.status === "error" &&
-                            <Box marginLeft={2} borderStyle="double" borderColor={colors.error}>
-                                <Text>({progress.error?.message})</Text>
-                            </Box>
                         }
                     </Box>
-                ))}
+                    <Box marginLeft={2}>
+                        <UnorderedList>
+                            {Object.entries(msg.toolCall?.args).map(([key, val]) => !!val && (
+                                <UnorderedList.Item key={key}>
+                                    <Box width={process.stdout.columns / 2}>
+                                        <Text color="gray">{key}: </Text>
+                                        <Text color="blackBright">
+                                            {val.length > 40
+                                                ? val.slice(0, 10) + " ... " + val.slice(-20)
+                                                : val
+                                            }
+                                        </Text>
+                                    </Box>
+                                </UnorderedList.Item>
+                            ))}
+                        </UnorderedList>
+                    </Box>
+                    {msg.status === "error" &&
+                        <Box marginLeft={2} borderStyle="double" borderColor={colors.error}>
+                            <Text>({msg.content})</Text>
+                        </Box>
+                    }
+                </Box>
             </Box>
         </Box>
     );

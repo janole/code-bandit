@@ -35,7 +35,7 @@ function addFailedToolCallMessage(error: string | Error, toolCall: { id?: string
             content,
             response_metadata: {
                 error,
-            },
+            }
         }));
     }
     else

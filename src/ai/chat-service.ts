@@ -114,7 +114,7 @@ class ChatService
         return this.current.llm;
     }
 
-    async prepareMessages(messages: TMessage[])
+    async prepareMessages(messages: TMessage[]): Promise<BaseMessage[]>
     {
         if (!this.current)
         {

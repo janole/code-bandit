@@ -7,10 +7,8 @@ import { DynamicStructuredTool } from "langchain/tools";
 import tryCatch from "../utils/try-catch.js";
 import { ChatService } from "./chat-service.js";
 import { IChatSession } from "./chat-session.js";
-import { ErrorMessage, ToolProgressMessage } from "./messages.js";
+import { ErrorMessage, TMessage, ToolProgressMessage } from "./custom-messages.js";
 import { getTools } from "./tools/loader.js";
-
-export type TMessage = BaseMessage;
 
 const chatService = new ChatService();
 
@@ -51,7 +49,7 @@ async function work(props: WorkProps)
 
 interface WorkInternalProps extends Pick<WorkProps, "session" | "send" | "signal">
 {
-    llm: Runnable<TMessage[], AIMessageChunk>;
+    llm: Runnable<BaseMessage[], AIMessageChunk>;
     tools: { [key: string]: DynamicStructuredTool };
 }
 
@@ -122,7 +120,7 @@ async function workInternal(props: WorkInternalProps)
 
             if (result)
             {
-                toolProgressMessage.success(index, result);
+                toolProgressMessage.result(index, result);
                 messages.push(result);
             }
             else

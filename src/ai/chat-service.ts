@@ -8,8 +8,9 @@ import { ChatOpenAI } from "@langchain/openai";
 
 import tryCatch from "../utils/try-catch.js";
 import { IChatSession } from "./chat-session.js";
-import { getCustomMessageType } from "./messages.js";
+import { getCustomMessageType } from "./custom-messages.js";
 import { PromptLoader } from "./prompt-loader.js";
+import { TMessage } from "./work.js";
 
 export type TProvider = "ollama" | "openai" | "anthropic" | "gemini" | "openrouter" | "groq";
 
@@ -114,14 +115,14 @@ class ChatService
         return this.current.llm;
     }
 
-    async prepareMessages(messages: BaseMessage[])
+    async prepareMessages(messages: TMessage[])
     {
         if (!this.current)
         {
             throw new Error("ChatService is not initialized. Call getLLM() first.");
         }
 
-        let preparedMessages = messages.filter(msg => !getCustomMessageType(msg));
+        let preparedMessages = messages.filter(msg => !getCustomMessageType(msg)) as BaseMessage[]; // TODO: fix cast
 
         if (this.current.contextSize)
         {

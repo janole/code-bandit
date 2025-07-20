@@ -1,4 +1,4 @@
-import { BaseMessage, mapChatMessagesToStoredMessages, mapStoredMessageToChatMessage, StoredMessage } from "@langchain/core/messages";
+import { mapChatMessagesToStoredMessages, mapStoredMessageToChatMessage, StoredMessage } from "@langchain/core/messages";
 import { mkdir, readFile } from "fs/promises";
 import { homedir } from "os";
 import { join } from "path";
@@ -12,12 +12,7 @@ function mapMessageToObject(msg: TMessage): CustomMessage | StoredMessage | unde
 {
     try
     {
-        if (msg instanceof BaseMessage)
-        {
-            return mapChatMessagesToStoredMessages([msg])[0];
-        }
-
-        return msg;
+        return isCustomMessage(msg) ? msg : mapChatMessagesToStoredMessages([msg])[0];
     }
     catch (e)
     {
@@ -30,12 +25,7 @@ function mapObjectToMessage(obj: any): TMessage | undefined
 {
     try
     {
-        if (isCustomMessage(obj))
-        {
-            return CustomMessage.fromObject(obj);
-        }
-
-        return mapStoredMessageToChatMessage(obj);
+        return isCustomMessage(obj) ? CustomMessage.fromObject(obj) : mapStoredMessageToChatMessage(obj);
     }
     catch (e)
     {
@@ -43,7 +33,6 @@ function mapObjectToMessage(obj: any): TMessage | undefined
         return undefined;
     }
 }
-
 
 export interface IChatSession
 {

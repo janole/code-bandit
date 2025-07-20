@@ -3,8 +3,8 @@ import { Box, Key, Static, Text, useApp } from "ink";
 import React, { useEffect, useState } from "react";
 
 import { ChatSession } from "./ai/chat-session.js";
-import { ErrorMessage } from "./ai/custom-messages.js";
-import { TMessage, work } from "./ai/work.js";
+import { ErrorMessage,TMessage } from "./ai/custom-messages.js";
+import { work } from "./ai/work.js";
 import MemoMessage, { Message } from "./ui/message.js";
 import Spinner from "./ui/spinner.js";
 import TextInput from "./ui/text-input.js";

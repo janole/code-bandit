@@ -6,8 +6,7 @@ import { ulid } from "ulid";
 import writeFileAtomic from "write-file-atomic";
 
 import { IChatServiceOptions } from "./chat-service.js";
-import { CustomMessage, getCustomMessageType } from "./custom-messages.js";
-import { TMessage } from "./work.js";
+import { CustomMessage, getCustomMessageType,TMessage } from "./custom-messages.js";
 
 export interface IChatSession
 {

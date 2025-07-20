@@ -8,9 +8,8 @@ import { ChatOpenAI } from "@langchain/openai";
 
 import tryCatch from "../utils/try-catch.js";
 import { IChatSession } from "./chat-session.js";
-import { getCustomMessageType } from "./custom-messages.js";
+import { getCustomMessageType,TMessage } from "./custom-messages.js";
 import { PromptLoader } from "./prompt-loader.js";
-import { TMessage } from "./work.js";
 
 export type TProvider = "ollama" | "openai" | "anthropic" | "gemini" | "openrouter" | "groq";
 

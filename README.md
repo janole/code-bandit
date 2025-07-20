@@ -10,7 +10,7 @@ Code Bandit is an **AI-powered command-line assistant** for interacting with git
 
 - **Conversational codebase analysis**: Interact with your codebase through a chat-like CLI powered by popular AI models
 - **Supports multiple LLM providers** via [LangChain.js](https://github.com/langchain-ai/langchainjs):
-  - [Ollama](https://github.com/ollama/ollama), [OpenAI API](https://openai.com/api/), [Anthropic](https://www.anthropic.com/api), [Google Gemini](https://ai.google.dev/), and [Groq](https://groq.com/)
+  - [Ollama](https://github.com/ollama/ollama), [OpenAI API](https://openai.com/api/), [Anthropic](https://www.anthropic.com/api/), [Google Gemini](https://ai.google.dev/), and [Groq](https://groq.com/)
 - **Session management**:
   Conversations and history are stored per session for easy retrieval
 
@@ -90,10 +90,18 @@ coba -p gemini -m gemini-2.5-pro     # Requires GOOGLE_API_KEY env var set
 
 ## Architecture Overview
 
-- **src/app.tsx**: Main Ink-React app for terminal chat UI.
-- **src/ai/**: AI orchestration, tool implementations, and file-system sandbox.
-- **src/ui/**: UI components for chat messages, markdown, and spinners.
-- **Extensible tooling:** Add your own functions to `/ai/file-system-tools.ts`.
+- **`src/app.tsx`**: Main Ink-React app for terminal chat UI.
+- **`src/ai/**`**: AI orchestration, tool implementations, and session management.
+- **`src/ui/**`**: UI components for chat messages, markdown, and spinners.
+
+### Sandboxed Command Execution
+
+To ensure a secure environment, all commands executed by the AI via the `executeCommand` tool are run inside a temporary Docker container. This sandboxing prevents the agent from accessing files or services outside the current project directory.
+
+- **Isolated Environment**: A minimal Docker image (`janole/codebandit-node:0`) is used, containing common tools like `git`, `jq`, `curl`, `grep`, and `tree`.
+- **Volume Mounting**: The current working directory is mounted into the container's `/data` directory.
+- **Read-Only by Default**: In the default read-only mode, the directory is mounted with the `:ro` flag, preventing any modifications by the commands.
+- **Write Mode**: When write mode is enabled, the volume is mounted without the read-only flag, allowing commands like `npm install` or `git apply` to modify the project files.
 
 ---
 

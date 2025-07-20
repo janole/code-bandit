@@ -23,6 +23,17 @@ function MessageDebugLog({ msg }: { msg: TMessage })
     );
 }
 
+function ellipsizeVal(val: any | any[], limit: number = 50)
+{
+    const line = Array.isArray(val)
+        ? val.filter(a => a).map(a => a.toString().replace(/[\r\n]+/g, " ")).join(" ")
+        : val.toString().replace(/[\r\n]+/g, " ");
+
+    return line.length > limit
+        ? line.slice(0, 20) + " ... " + val.slice(-20)
+        : line;
+}
+
 function ToolMessageView({ msg }: { msg: ToolProgressMessage })
 {
     if (!msg.toolCall)
@@ -66,10 +77,7 @@ function ToolMessageView({ msg }: { msg: ToolProgressMessage })
                                     <Box width={process.stdout.columns / 2}>
                                         <Text color="gray">{key}: </Text>
                                         <Text color="blackBright">
-                                            {val.length > 40
-                                                ? val.slice(0, 10) + " ... " + val.slice(-20)
-                                                : val
-                                            }
+                                            {ellipsizeVal(val)}
                                         </Text>
                                     </Box>
                                 </UnorderedList.Item>

@@ -80,28 +80,6 @@ class ToolProgressMessage extends CustomMessage
 }
 
 /**
- * @deprecated This function is deprecated and will be removed in a future version.
- * Use the `isCustomMessage` type guard instead.
- */
-const getCustomMessageType = (message: any): TCustomMessageType | undefined =>
-{
-    if (message instanceof CustomMessage)
-    {
-        return message.getType() as TCustomMessageType;
-    }
-    else if (message && typeof message === 'object' && '_type' in message)
-    {
-        const type = (message as any)._type;
-        if (type === "error" || type === "tool-progress")
-        {
-            return type;
-        }
-    }
-
-    return undefined;
-};
-
-/**
  * A type guard to check if a message is a CustomMessage.
  *
  * @param message The message to check.
@@ -110,7 +88,7 @@ const getCustomMessageType = (message: any): TCustomMessageType | undefined =>
 export const isCustomMessage = (message: any): message is CustomMessage =>
 {
     return message instanceof CustomMessage || (
-        message && typeof message === 'object' && '_type' in message &&
+        message && typeof message === "object" && "_type" in message &&
         (message._type === "error" || message._type === "tool-progress")
     );
 };
@@ -118,6 +96,5 @@ export const isCustomMessage = (message: any): message is CustomMessage =>
 export
 {
     ErrorMessage,
-    getCustomMessageType,
     ToolProgressMessage,
 };

@@ -1,4 +1,4 @@
-import { mapChatMessagesToStoredMessages, mapStoredMessagesToChatMessages } from "@langchain/core/messages";
+import { BaseMessage, mapChatMessagesToStoredMessages, mapStoredMessageToChatMessage } from "@langchain/core/messages";
 import { mkdir, readFile } from "fs/promises";
 import { homedir } from "os";
 import { join } from "path";
@@ -6,6 +6,7 @@ import { ulid } from "ulid";
 import writeFileAtomic from "write-file-atomic";
 
 import { IChatServiceOptions } from "./chat-service.js";
+import { CustomMessage, getCustomMessageType } from "./custom-messages.js";
 import { TMessage } from "./work.js";
 
 export interface IChatSession
@@ -94,6 +95,23 @@ class FileSessionStorage implements ISessionStorage
         this.sessionsDir = join(baseDir || homedir(), ".code-bandit", "sessions");
     }
 
+    private static fromObject(obj: any): TMessage | []
+    {
+        try
+        {
+            if (getCustomMessageType(obj))
+            {
+                return CustomMessage.fromObject(obj);
+            }
+
+            return mapStoredMessageToChatMessage(obj);
+        }
+        catch (e)
+        {
+            return [];
+        }
+    }
+
     static async loadSession(filePath: string): Promise<IChatSession>
     {
         const data = JSON.parse(await readFile(filePath, "utf8"));
@@ -103,7 +121,7 @@ class FileSessionStorage implements ISessionStorage
             workDir: data.workDir,
             readOnly: data.readOnly,
             chatServiceOptions: data.chatServiceOptions,
-            messages: mapStoredMessagesToChatMessages(data.messages)
+            messages: data.messages.flatMap((m: any) => this.fromObject(m)),
         };
     }
 
@@ -117,7 +135,10 @@ class FileSessionStorage implements ISessionStorage
             id: session.id,
             workDir: session.workDir,
             chatServiceOptions: session.chatServiceOptions,
-            messages: mapChatMessagesToStoredMessages(session.messages),
+            messages: session.messages.flatMap(m => getCustomMessageType(m)
+                ? m
+                : mapChatMessagesToStoredMessages([m] as BaseMessage[])[0]
+            ),
         };
 
         await writeFileAtomic(filePath, JSON.stringify(sessionData, null, 2), "utf-8");

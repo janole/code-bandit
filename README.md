@@ -16,40 +16,6 @@ Code Bandit is an **AI-powered command-line assistant** for interacting with git
 
 ---
 
-## Capabilities
-
-Code Bandit provides the AI with a set of tools to interact with your project.
-
-### File System (read-only)
-
-- `listDirectory`: List files and folders.
-- `readFile`: Inspect the contents of a file.
-- `createDirectory`: Make new folders.
-- `findFiles`: Find files recursively by name or pattern (e.g., `**/*.ts`).
-- `searchInFiles`: Search for text or a regex pattern within a set of files.
-
-### Command Execution (read-only)
-
-- `executeCommandReadOnly`: Execute arbitrary shell commands like `git status`, `npm test`, or `ls -l`. This allows the agent to perform a wide range of tasks.
-
-### Destructive Operations
-
-The following tools can modify or delete your files and are only enabled in **write mode**:
-
-- `writeFile`: Create or **overwrite** files.
-- `deleteFile`: Permanently remove any file.
-- `moveFile`: Rename or move files.
-- `executeCommand`: When write mode is enabled, commands can modify the file system (e.g., `npm install`).
-
-> [!NOTE]
-> By default, Code Bandit starts in **read-only mode** to prevent accidental file modifications.
->
-> To enable destructive tools, you can either:
-> - Start the app with the `--write-mode` flag.
-> - Press `ctrl-w` during a session to toggle write mode on or off.
-
----
-
 ## Getting Started
 
 ### Installation
@@ -85,6 +51,40 @@ Example:
 ```bash
 coba -p gemini -m gemini-2.5-pro     # Requires GOOGLE_API_KEY env var set
 ```
+
+---
+
+## Capabilities
+
+Code Bandit provides the AI with a set of tools to interact with your project.
+
+### File System (read-only)
+
+- `listDirectory`: List files and folders.
+- `readFile`: Inspect the contents of a file.
+- `createDirectory`: Make new folders.
+- `findFiles`: Find files recursively by name or pattern (e.g., `**/*.ts`).
+- `searchInFiles`: Search for text or a regex pattern within a set of files.
+
+### Command Execution (read-only)
+
+- `executeCommandReadOnly`: Execute arbitrary shell commands like `git status`, `npm test`, or `ls -l`. This allows the agent to perform a wide range of tasks.
+
+### Destructive Operations
+
+The following tools can modify or delete your files and are only enabled in **write mode**:
+
+- `writeFile`: Create or **overwrite** files.
+- `deleteFile`: Permanently remove any file.
+- `moveFile`: Rename or move files.
+- `executeCommand`: When write mode is enabled, commands can modify the file system (e.g., `npm install`).
+
+> [!NOTE]
+> By default, Code Bandit starts in **read-only mode** to prevent accidental file modifications.
+>
+> To enable destructive tools, you can either:
+> - Start the app with the `--write-mode` flag.
+> - Press `ctrl-w` during a session to toggle write mode on or off.
 
 ---
 

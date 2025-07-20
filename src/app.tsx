@@ -3,7 +3,7 @@ import { Box, Key, Static, Text, useApp } from "ink";
 import React, { useEffect, useState } from "react";
 
 import { ChatSession } from "./ai/chat-session.js";
-import { ErrorMessage } from "./ai/messages.js";
+import { ErrorMessage } from "./ai/custom-messages.js";
 import { TMessage, work } from "./ai/work.js";
 import MemoMessage, { Message } from "./ui/message.js";
 import Spinner from "./ui/spinner.js";
@@ -149,7 +149,7 @@ function ChatApp(props: ChatAppProps)
 					setChatHistory(history => ({
 						messages: [
 							...history.messages,
-							new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`),
+							new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`, error),
 						],
 						finished: history.messages.length + 1,
 					}));

@@ -102,6 +102,7 @@ To ensure a secure environment, all commands executed by the AI via the `execute
 - **Volume Mounting**: The current working directory is mounted into the container's `/data` directory.
 - **Read-Only by Default**: In the default read-only mode, the directory is mounted with the `:ro` flag, preventing any modifications by the commands.
 - **Write Mode**: When write mode is enabled, the volume is mounted without the read-only flag, allowing commands like `npm install` or `git apply` to modify the project files.
+- **Timeout**: Commands are automatically terminated after 30 seconds to prevent long-running or hung processes.
 
 ---
 

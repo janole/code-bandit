@@ -38,7 +38,7 @@ async function executeCommand(props: ExecuteCommandProps): Promise<string>
 		const execCommand = "docker";
 		const execArgs = [
 			"run", "--rm", "-v", `${workDir}:/data${mountFlags === "rw" ? "" : ":ro"}`, dockerImage,
-			"timeout", 30, // make sure, long running commands terminate after 30 seconds
+			"timeout", "30", // make sure, long running commands terminate after 30 seconds
 			command, ...args,
 		];
 

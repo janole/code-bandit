@@ -38,7 +38,7 @@
 		"@langchain/google-genai": "^0.2.14",
 		"@langchain/groq": "^0.2.3",
 		"@langchain/ollama": "^0.2.3",
-		"@langchain/openai": "^0.5.18",
+		"@langchain/openai": "^0.6.2",
 		"commander": "^14.0.0",
 		"execa": "^9.6.0",
 		"fast-glob": "^3.3.3",

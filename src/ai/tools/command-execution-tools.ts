@@ -36,7 +36,11 @@ async function executeCommand(props: ExecuteCommandProps): Promise<string>
 		const workDir = resolveWithinWorkDir(".", config?.metadata?.["workDir"]);
 
 		const execCommand = "docker";
-		const execArgs = ["run", "--rm", "-v", `${workDir}:/data${mountFlags === "rw" ? "" : ":ro"}`, dockerImage, command, ...args];
+		const execArgs = [
+			"run", "--rm", "-v", `${workDir}:/data${mountFlags === "rw" ? "" : ":ro"}`, dockerImage,
+			"timeout", 30, // make sure, long running commands terminate after 30 seconds
+			command, ...args,
+		];
 
 		const { stdout, stderr, exitCode, failed } = await $(execCommand, execArgs, {
 			cwd: workDir,

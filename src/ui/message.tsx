@@ -1,6 +1,5 @@
-import { Badge, Spinner, UnorderedList } from "@inkjs/ui";
 import { BaseMessage, MessageType } from "@langchain/core/messages";
-import { Box, Text } from "ink";
+import { Box, Text, TextProps } from "ink";
 import React, { memo } from "react";
 
 import { ErrorMessage, TMessage, TMessageType, ToolProgressMessage } from "../ai/custom-messages.js";
@@ -14,6 +13,16 @@ const colors = {
     tool: "magenta",
     error: "red",
 };
+
+function Badge({ children, color }: { children: string; color: TextProps["backgroundColor"] })
+{
+    return (
+        <Text color="white" backgroundColor={color}>
+            {` ${children.trim()} `}
+        </Text>
+    );
+}
+
 
 function MessageDebugLog({ msg }: { msg: TMessage })
 {
@@ -71,23 +80,29 @@ function ToolMessageView({ msg }: { msg: ToolProgressMessage })
                             </Text>
                         }
                     </Box>
-                    <Box marginLeft={2}>
-                        <UnorderedList>
-                            {Object.entries(msg.toolCall?.args).map(([key, val]) => !!val && (
-                                <UnorderedList.Item key={key}>
-                                    <Box width={process.stdout.columns / 2}>
-                                        <Text color="gray">{key}: </Text>
-                                        <Text color="blackBright">
-                                            {ellipsizeVal(val)}
-                                        </Text>
-                                    </Box>
-                                </UnorderedList.Item>
-                            ))}
-                        </UnorderedList>
+                    <Box marginLeft={2} marginTop={1} flexDirection="column">
+                        {Object.entries(msg.toolCall?.args).map(([key, val]) => !!val && (
+                            <Box>
+                                <Box width={2}>
+                                    <Text color="blackBright">∙</Text>
+                                </Box>
+                                <Box>
+                                    <Text color="blackBright">{key}: </Text>
+                                    <Text color="blackBright">
+                                        {ellipsizeVal(val)}
+                                    </Text>
+                                </Box>
+                            </Box>
+                        ))}
                     </Box>
                     {msg.status === "error" &&
-                        <Box marginLeft={2} borderStyle="double" borderColor={colors.error}>
-                            <Text>({msg.content})</Text>
+                        <Box marginLeft={2} marginTop={1}>
+                            <Box width={2}>
+                                <Text color={colors.error}>✖</Text>
+                            </Box>
+                            <Box>
+                                <Text color="blackBright">{msg.content?.trim()}</Text>
+                            </Box>
                         </Box>
                     }
                 </Box>

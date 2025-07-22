@@ -5,6 +5,7 @@ import React, { memo } from "react";
 
 import { ErrorMessage, TMessage, TMessageType, ToolProgressMessage } from "../ai/custom-messages.js";
 import { Markdown } from "./markdown.js";
+import Spinner from "./spinner.js";
 
 const colors = {
     human: "green",
@@ -54,7 +55,7 @@ function ToolMessageView({ msg }: { msg: ToolProgressMessage })
                         </Text>
 
                         {msg.status === "pending" &&
-                            <Spinner />
+                            <Spinner variant="arrow" spacerLeft=" " />
                         }
 
                         {msg.content &&

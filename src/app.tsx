@@ -201,7 +201,7 @@ function ChatApp(props: ChatAppProps)
 
 			{/* Footer */}
 			<Box paddingX={1}>
-				<Spinner empty={!working} color={!working ? "gray" : "blue"}>
+				<Spinner empty={!working} color={!working ? "blackBright" : "blue"}>
 					{!working
 						? <Text color="green">{chatServiceOptions.provider}/{chatServiceOptions.model}</Text>
 						: "(working)"

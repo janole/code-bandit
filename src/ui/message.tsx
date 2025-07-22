@@ -17,7 +17,7 @@ const colors = {
 function MessageDebugLog({ msg }: { msg: TMessage })
 {
     return (
-        <Text color="gray">
+        <Text color="blackBright">
             {JSON.stringify(msg, null, 2)}
         </Text>
     );
@@ -58,7 +58,7 @@ function ToolMessageView({ msg }: { msg: ToolProgressMessage })
                         }
 
                         {msg.content &&
-                            <Text color="gray">
+                            <Text color="blackBright">
                                 {" → "}
 
                                 {msg.status === "error"

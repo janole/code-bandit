@@ -8,7 +8,7 @@ import writeFileAtomic from "write-file-atomic";
 import { IChatServiceOptions } from "./chat-service.js";
 import { CustomMessage, isCustomMessage, TMessage } from "./custom-messages.js";
 
-function mapMessageToObject(msg: TMessage): CustomMessage | StoredMessage | undefined
+export function mapMessageToObject(msg: TMessage): CustomMessage | StoredMessage | undefined
 {
     try
     {
@@ -21,7 +21,7 @@ function mapMessageToObject(msg: TMessage): CustomMessage | StoredMessage | unde
     }
 }
 
-function mapObjectToMessage(obj: any): TMessage | undefined
+export function mapObjectToMessage(obj: any): TMessage | undefined
 {
     try
     {
@@ -32,6 +32,27 @@ function mapObjectToMessage(obj: any): TMessage | undefined
         // TODO: show warning
         return undefined;
     }
+}
+
+export function mapSessionToSessionData(session: IChatSession)
+{
+    return {
+        id: session.id,
+        workDir: session.workDir,
+        chatServiceOptions: session.chatServiceOptions,
+        messages: session.messages.map(mapMessageToObject).filter(m => m),
+    };
+}
+
+export function mapSessionDataToSession(data: any): IChatSession
+{
+    return {
+        id: data.id,
+        workDir: data.workDir,
+        readOnly: data.readOnly,
+        chatServiceOptions: data.chatServiceOptions,
+        messages: data.messages.map(mapObjectToMessage).filter((m: TMessage | undefined) => m),
+    };
 }
 
 export interface IChatSession
@@ -124,13 +145,7 @@ class FileSessionStorage implements ISessionStorage
     {
         const data = JSON.parse(await readFile(filePath, "utf8"));
 
-        return {
-            id: data.id,
-            workDir: data.workDir,
-            readOnly: data.readOnly,
-            chatServiceOptions: data.chatServiceOptions,
-            messages: data.messages.map(mapObjectToMessage).filter((m: TMessage | undefined) => m),
-        };
+        return mapSessionDataToSession(data);
     }
 
     async saveSession(session: ChatSession): Promise<void>
@@ -139,12 +154,7 @@ class FileSessionStorage implements ISessionStorage
 
         const filePath = this.getSessionFilePath(session.id);
 
-        const sessionData = {
-            id: session.id,
-            workDir: session.workDir,
-            chatServiceOptions: session.chatServiceOptions,
-            messages: session.messages.map(mapMessageToObject).filter(m => m),
-        };
+        const sessionData = mapSessionToSessionData(session);
 
         await writeFileAtomic(filePath, JSON.stringify(sessionData, null, 2), "utf-8");
     }

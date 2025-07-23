@@ -40,7 +40,7 @@ function ellipsizeVal(val: any | any[], limit: number = 50)
         : val.toString().replace(/[\r\n]+/g, " ");
 
     return line.length > limit
-        ? line.slice(0, 20) + " ... " + val.slice(-20)
+        ? line.slice(0, 20) + " ... " + line.slice(-20)
         : line;
 }
 

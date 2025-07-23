@@ -6,29 +6,28 @@ import { builtinModules } from "module";
 const packageJson = JSON.parse(fs.readFileSync("package.json", "utf-8"));
 const deps = Object.keys(packageJson.dependencies || {});
 
-// Mark everything external except '@langchain/ollama'
-const externalDeps = [
-    ...builtinModules, // Node built-in modules
-    ...deps.filter(dep => dep !== "@langchain/ollama"),
-];
-
 const buildOptions = {
     bundle: true,
     platform: "node",
     sourcemap: true,
     format: "esm",
-    external: externalDeps,
     logLevel: "info",
 };
 
 await Promise.all([
     esbuild.build({
         ...buildOptions,
+        // Mark everything external except '@langchain/ollama'
+        external: [
+            ...builtinModules,
+            ...deps.filter(dep => dep !== "@langchain/ollama"),
+        ],
         entryPoints: ["src/coba.tsx"],
         outfile: "dist/coba.js",
     }),
     esbuild.build({
         ...buildOptions,
+        // Mark everything external
         external: [
             ...builtinModules,
             ...deps,

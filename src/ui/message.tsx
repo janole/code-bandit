@@ -81,8 +81,8 @@ function ToolMessageView({ msg }: { msg: ToolProgressMessage })
                         }
                     </Box>
                     <Box marginLeft={2} marginTop={1} flexDirection="column">
-                        {Object.entries(msg.toolCall?.args).map(([key, val]) => !!val && (
-                            <Box>
+                        {Object.entries(msg.toolCall?.args).map(([key, val], index) => !!val && (
+                            <Box key={index}>
                                 <Box width={2}>
                                     <Text color="blackBright">∙</Text>
                                 </Box>

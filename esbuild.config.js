@@ -29,6 +29,10 @@ await Promise.all([
     }),
     esbuild.build({
         ...buildOptions,
+        external: [
+            ...builtinModules,
+            ...deps,
+        ],
         entryPoints: ["src/index.ts"],
         outfile: "dist/index.js",
     })

@@ -34,7 +34,7 @@
 		"lint:fix": "eslint --fix",
 		"ok": "npm run lint:fix && npm run typecheck",
 		"prebuild": "npm run genversion && patch-package",
-		"build": "rimraf dist && node esbuild.config.js",
+		"build": "rimraf dist && tsc -p tsconfig.dts.json && node esbuild.config.js",
 		"genversion": "COMMIT_HASH=$(git rev-parse --short HEAD) && echo \"export const VERSION = \\\"${npm_package_version}\\\";\\nexport const COMMIT_HASH = \\\"${COMMIT_HASH}\\\";\" > src/.version.ts",
 		"clean": "rimraf dist",
 		"prepack": "npm run build"
@@ -49,7 +49,6 @@
 		"@langchain/groq": "^0.2.3",
 		"@langchain/ollama": "^0.2.3",
 		"@langchain/openai": "^0.6.2",
-		"@supabase/supabase-js": "^2.52.0",
 		"commander": "^14.0.0",
 		"eslint-plugin-unicorn": "^60.0.0",
 		"execa": "^9.6.0",
@@ -61,7 +60,6 @@
 		"marked-terminal": "^7.3.0",
 		"react": "^19.1.0",
 		"ulid": "^3.0.1",
-		"uuid": "^11.1.0",
 		"write-file-atomic": "^6.0.0"
 	},
 	"devDependencies": {

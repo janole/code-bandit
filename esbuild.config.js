@@ -12,15 +12,26 @@ const externalDeps = [
     ...deps.filter(dep => dep !== "@langchain/ollama"),
 ];
 
-await esbuild.build({
-    entryPoints: ["src/coba.tsx"],
-    outfile: "dist/coba.js",
+const buildOptions = {
     bundle: true,
     platform: "node",
     sourcemap: true,
     format: "esm",
     external: externalDeps,
     logLevel: "info",
-});
+};
+
+await Promise.all([
+    esbuild.build({
+        ...buildOptions,
+        entryPoints: ["src/coba.tsx"],
+        outfile: "dist/coba.js",
+    }),
+    esbuild.build({
+        ...buildOptions,
+        entryPoints: ["src/index.ts"],
+        outfile: "dist/index.js",
+    })
+]);
 
 console.log("Build completed.");

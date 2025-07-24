@@ -108,9 +108,6 @@ async function workInternal(props: WorkInternalProps)
     catch (error: any)
     {
         messages.push(new ErrorMessage(`ERROR: ${error?.message || error?.toString() || "for await (...) failed."}`, error));
-
-        send([...messages]);
-
         return messages;
     }
 

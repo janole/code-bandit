@@ -88,9 +88,6 @@ async function workInternal(props: WorkInternalProps)
     if (!stream)
     {
         messages.push(new ErrorMessage(`ERROR: ${error?.message || error?.toString() || "llm.stream(...) failed."}`, error));
-
-        send([...messages]);
-
         return messages;
     }
 

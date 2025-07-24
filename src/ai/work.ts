@@ -94,27 +94,25 @@ async function workInternal(props: WorkInternalProps)
     let aiMessage: AIMessageChunk | undefined = undefined;
     let toolProgressMessages: ToolProgressMessage[] = [];
 
-    try
+    for await (const chunk of stream)
     {
-        for await (const chunk of stream)
+        aiMessage = aiMessage !== undefined ? concat(aiMessage, chunk) : chunk;
+
+        if (!aiMessage?.tool_calls?.length && !aiMessage?.tool_call_chunks?.length)
         {
-            aiMessage = aiMessage !== undefined ? concat(aiMessage, chunk) : chunk;
+            send([...messages, aiMessage]); // TODO: check for race conditions
+        }
+        else
+        {
+            toolProgressMessages = aiMessage.tool_calls?.map(toolCall => new ToolProgressMessage(toolCall, "pending")) || [];
 
-            if (!aiMessage?.tool_calls?.length && !aiMessage?.tool_call_chunks?.length)
+            if (toolProgressMessages.length)
             {
-                send([...messages, aiMessage]); // TODO: check for race conditions
-            }
-            else
-            {
-                toolProgressMessages = aiMessage.tool_calls?.map(toolCall => new ToolProgressMessage(toolCall, "pending")) || [];
-
-                if (toolProgressMessages.length)
-                {
-                    send([...messages, aiMessage, ...toolProgressMessages]);
-                }
+                send([...messages, aiMessage, ...toolProgressMessages]);
             }
         }
     }
+
     catch (error: any)
     {
         messages.push(new ErrorMessage(`ERROR: ${error?.message || error?.toString() || "for await (...) failed."}`, error));

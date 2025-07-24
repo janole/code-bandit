@@ -69,6 +69,10 @@ class ToolProgressMessage extends CustomMessage
     status: "pending" | "success" | "error";
     content?: string;
 
+    /**
+     * Attempts to create a ToolProgressMessage from a streaming chunk.
+     * Gracefully handles incomplete JSON in the arguments.
+     */
     static createFromChunk(toolCallChunk: ToolCallChunk)
     {
         if (!toolCallChunk.name)
@@ -86,12 +90,16 @@ class ToolProgressMessage extends CustomMessage
             }
             catch (e)
             {
+                // Ignore parsing errors for incomplete JSON
             }
         }
 
         return new ToolProgressMessage({ name: toolCallChunk.name, args: {} });
     }
 
+    /**
+     * Creates a list of ToolProgressMessages from a list of chunks.
+     */
     static createFromChunks(toolCallChunks?: ToolCallChunk[])
     {
         return toolCallChunks?.map(i => ToolProgressMessage.createFromChunk(i)).filter(i => !!i) || [];

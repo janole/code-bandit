@@ -113,18 +113,18 @@ async function workInternal(props: WorkInternalProps)
         }
     }
 
-    catch (error: any)
+    if (aiMessage)
     {
-        messages.push(new ErrorMessage(`ERROR: ${error?.message || error?.toString() || "for await (...) failed."}`, error));
-        return messages;
+        messages.push(aiMessage);
     }
-
-    aiMessage && messages.push(aiMessage) && send([...messages]);
 
     if (!aiMessage?.tool_calls?.length)
     {
         return messages;
     }
+
+    // messages.push(...toolProgressMessages);
+    // send([...messages]);
 
     for (let i = 0; i < toolProgressMessages.length; i++) // const toolProgressMessage of toolProgressMessages)
     {

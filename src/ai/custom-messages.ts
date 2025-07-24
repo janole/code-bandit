@@ -1,5 +1,5 @@
 import { BaseMessage } from "@langchain/core/messages";
-import { ToolCall } from "@langchain/core/messages/tool";
+import { ToolCall, ToolCallChunk } from "@langchain/core/messages/tool";
 
 export type TMessage = BaseMessage | CustomMessage;
 
@@ -69,12 +69,40 @@ class ToolProgressMessage extends CustomMessage
     status: "pending" | "success" | "error";
     content?: string;
 
-    constructor(toolCall: ToolCall, status: ToolProgressMessage["status"], content?: string)
+    static createFromChunk(toolCallChunk: ToolCallChunk)
+    {
+        if (!toolCallChunk.name)
+        {
+            return null;
+        }
+
+        if (toolCallChunk.args?.trim().endsWith("}"))
+        {
+            try
+            {
+                const args = JSON.parse(toolCallChunk.args) || {};
+
+                return new ToolProgressMessage({ name: toolCallChunk.name, args });
+            }
+            catch (e)
+            {
+            }
+        }
+
+        return new ToolProgressMessage({ name: toolCallChunk.name, args: {} });
+    }
+
+    static createFromChunks(toolCallChunks?: ToolCallChunk[])
+    {
+        return toolCallChunks?.map(i => ToolProgressMessage.createFromChunk(i)).filter(i => !!i) || [];
+    }
+
+    constructor(toolCall: ToolCall, status?: ToolProgressMessage["status"], content?: string)
     {
         super("tool-progress");
 
         this.toolCall = toolCall;
-        this.status = status;
+        this.status = status || "pending";
         this.content = content;
     }
 }

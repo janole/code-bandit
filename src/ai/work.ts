@@ -104,7 +104,7 @@ async function workInternal(props: WorkInternalProps)
         }
         else
         {
-            toolProgressMessages = aiMessage.tool_calls?.map(toolCall => new ToolProgressMessage(toolCall, "pending")) || [];
+            toolProgressMessages = ToolProgressMessage.createFromChunks(aiMessage.tool_call_chunks);
 
             if (toolProgressMessages.length)
             {
@@ -123,22 +123,18 @@ async function workInternal(props: WorkInternalProps)
         return messages;
     }
 
-    // messages.push(...toolProgressMessages);
-    // send([...messages]);
+    toolProgressMessages = aiMessage.tool_calls.map(toolCall => new ToolProgressMessage(toolCall)) || [];
+    send([...messages, ...toolProgressMessages]);
 
-    for (let i = 0; i < toolProgressMessages.length; i++) // const toolProgressMessage of toolProgressMessages)
+    for (let i = 0; i < toolProgressMessages.length; i++)
     {
-        // const toolProgressMessage = toolProgressMessages[i]!;
-
-        const toolCall = toolProgressMessages[i]!.toolCall;
+        const toolCall = toolProgressMessages[i]!.toolCall!;
         const selectedTool = tools[toolCall.name];
 
         if (!selectedTool)
         {
             addFailedToolCallMessage("Tool not found", toolCall, messages);
             toolProgressMessages[i] = new ToolProgressMessage(toolCall, "error", "Tool not found");
-            // toolProgressMessages[i]!.status = "error";
-            // toolProgressMessages[i]!.content = "Tool not found";
         }
         else
         {
@@ -148,15 +144,11 @@ async function workInternal(props: WorkInternalProps)
             {
                 messages.push(result);
                 toolProgressMessages[i] = new ToolProgressMessage(toolCall, result.text.startsWith("ERROR: ") ? "error" : (result.status || "success"), result.text);
-                // toolProgressMessages[i]!.content = result.text;
-                // toolProgressMessages[i]!.status = result.text.startsWith("ERROR: ") ? "error" : (result.status || "success");
             }
             else
             {
                 addFailedToolCallMessage(error || "Unknown Error", toolCall, messages);
                 toolProgressMessages[i] = new ToolProgressMessage(toolCall, "error", error?.message || "Unknown Error");
-                // toolProgressMessages[i]!.status = "error";
-                // toolProgressMessages[i]!.content = error?.message || "Unknown Error";
             }
         }
 

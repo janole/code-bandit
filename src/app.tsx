@@ -137,7 +137,7 @@ function ChatApp(props: ChatAppProps)
 
 			work({
 				session,
-				send: (messages: TMessage[]) => setChatHistory({ messages, finished: messages.length - 1 }),
+				send: (messages: TMessage[]) => setChatHistory(history => ({ ...history, messages })),
 				signal: createAbortController().signal,
 			})
 				.then(messages => 

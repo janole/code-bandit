@@ -44,6 +44,7 @@ coba [git-repo-path] [options]
 - `-m, --model <model>`: Pick a language model (e.g. `gpt-4.1-mini` or `magistral:24b`)
 - `-k, --api-key <key>`: Supply API key for remote providers
 - `-u, --api-url <url>`: Set custom API URL
+- `--max-messages <count>`: Limit the number of messages kept in history (default: 10)
 - `-C, --continue-session <file>`: Continue a saved conversation
 - `--write-mode`: Enable write mode from the start
 

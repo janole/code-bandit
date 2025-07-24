@@ -19,6 +19,7 @@ export interface IChatServiceOptions
     model: string;
 
     contextSize?: number; // in tokens
+    maxMessages?: number;
     disableAgentRules?: boolean;
 
     apiKey?: string;
@@ -34,15 +35,16 @@ class ChatService
         model: string;
 
         contextSize?: number;
+        maxMessages?: number;
         systemMessage?: SystemMessage;
     };
 
     async getLLM(session: IChatSession): Promise<BaseChatModel>
     {
-        const { provider, model, contextSize, apiUrl, apiKey } = session.chatServiceOptions;
+        const { provider, model, contextSize, maxMessages, apiUrl, apiKey } = session.chatServiceOptions;
 
         // TODO: compare all relevant attributes like apiUrl, apiKey, ... !?
-        if (this.current?.provider === provider && this.current.model === model && this.current.contextSize === contextSize)
+        if (this.current?.provider === provider && this.current.model === model && this.current.contextSize === contextSize && this.current.maxMessages === maxMessages)
         {
             return this.current.llm;
         }
@@ -107,6 +109,7 @@ class ChatService
             model,
 
             contextSize,
+            maxMessages,
 
             systemMessage: new SystemMessage(systemPrompt),
         };
@@ -123,6 +126,25 @@ class ChatService
 
         let preparedMessages: BaseMessage[] = messages.filter(msg => msg instanceof BaseMessage);
 
+        // Stage 1: Trim by message count
+        if (this.current.maxMessages)
+        {
+            const { result } = await tryCatch(trimMessages(preparedMessages, {
+                tokenCounter: () => 1,
+                maxTokens: this.current.maxMessages,
+                strategy: "last",
+                allowPartial: false,
+                includeSystem: false, // System message is handled separately
+                startOn: "human",
+            }));
+
+            if (result)
+            {
+                preparedMessages = result;
+            }
+        }
+
+        // Stage 2: Trim by token count as a safeguard
         if (this.current.contextSize)
         {
             const { result } = await tryCatch(trimMessages(preparedMessages, {
@@ -130,8 +152,8 @@ class ChatService
                 maxTokens: this.current.contextSize,
                 strategy: "last",
                 allowPartial: false,
-                includeSystem: true,
-                startOn: ["system", "human"],
+                includeSystem: false, // System message is handled separately
+                startOn: "human",
             }));
 
             if (result)

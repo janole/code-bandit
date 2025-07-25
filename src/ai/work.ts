@@ -48,13 +48,12 @@ interface WorkProps
 {
     session: IChatSession;
     send: (messages: TMessage[]) => void;
-    confirmToolUse: (tool: DynamicStructuredTool) => Promise<boolean>;
     signal: AbortSignal;
 }
 
 async function work(props: WorkProps)
 {
-    const { session, send, confirmToolUse, signal } = props;
+    const { session, send, signal } = props;
 
     const tools = getTools({ includeDestructiveTools: !session.readOnly });
 
@@ -68,10 +67,10 @@ async function work(props: WorkProps)
         return llm.bindTools(Object.values(tools)); // .withFallbacks([llm]);
     });
 
-    return workInternal({ session, llm, tools, send, confirmToolUse, signal });
+    return workInternal({ session, llm, tools, send, signal });
 }
 
-interface WorkInternalProps extends Pick<WorkProps, "session" | "send" | "confirmToolUse" | "signal">
+interface WorkInternalProps extends Pick<WorkProps, "session" | "send" | "signal">
 {
     llm: Runnable<BaseMessage[], AIMessageChunk>;
     tools: { [key: string]: DynamicStructuredTool };
@@ -79,9 +78,15 @@ interface WorkInternalProps extends Pick<WorkProps, "session" | "send" | "confir
 
 async function workInternal(props: WorkInternalProps)
 {
-    const { session, llm, tools, send, signal } = props;
+    const { session, llm, send, signal } = props;
 
-    const messages = [...session.messages];
+    const messages = await workTools({ ...props, session });
+
+    if (needsToolConfirmation(messages))
+    {
+        return messages;
+    }
+
     const metadata = { workDir: session.workDir };
 
     let { stream, error } = await getStream(llm, messages, { metadata, signal });
@@ -124,29 +129,50 @@ async function workInternal(props: WorkInternalProps)
         return messages;
     }
 
+    // add pending toolCall(s)
     toolProgressMessages = aiMessage.tool_calls.map(toolCall => new ToolProgressMessage(toolCall)) || [];
+    messages.push(...toolProgressMessages);
 
-    for (let i = 0; i < toolProgressMessages.length; i++)
+    return workInternal({ ...props, session: { ...session, messages } });
+}
+
+interface WorkToolsProps extends Pick<WorkInternalProps, "session" | "tools" | "send" | "signal">
+{
+}
+
+async function workTools(props: WorkToolsProps)
+{
+    const { session: { workDir, messages }, tools, send } = props;
+
+    const toolProgressMessages = messages.filter(m => ToolProgressMessage.isTypeOf(m) && (m.status === "pending" || m.status === "confirmed")) as ToolProgressMessage[];
+
+    if (toolProgressMessages.length === 0)
     {
-        const toolCall = toolProgressMessages[i]!.toolCall!;
+        return messages;
+    }
+
+    const metadata = { workDir };
+
+    for (const toolProgressMessage of toolProgressMessages)
+    {
+        const toolCall = toolProgressMessage.toolCall!;
         const selectedTool = tools[toolCall.name];
 
-        send([...messages, ...toolProgressMessages]);
+        send([...messages]);
 
         if (!selectedTool)
         {
             addFailedToolCallMessage("Tool not found", toolCall, messages);
-            toolProgressMessages[i] = new ToolProgressMessage(toolCall, "error", "Tool not found");
+
+            toolProgressMessage.status = "error";
+            toolProgressMessage.content = "Tool not found";
 
             continue;
         }
 
-        const confirm = await tryCatch<boolean>(props.confirmToolUse(selectedTool));
-
-        if (!confirm.result)
+        if (toolProgressMessage.status === "pending") // "destructive"])
         {
-            addFailedToolCallMessage("Tool execution declined by user!", toolCall, messages);
-            toolProgressMessages[i] = new ToolProgressMessage(toolCall, "error", "Tool execution declined!");
+            toolProgressMessage.status = "pending-confirmation";
 
             continue;
         }
@@ -156,19 +182,25 @@ async function workInternal(props: WorkInternalProps)
         if (result)
         {
             messages.push(result);
-            toolProgressMessages[i] = new ToolProgressMessage(toolCall, result.text.startsWith("ERROR: ") ? "error" : (result.status || "success"), result.text);
+
+            toolProgressMessage.status = result.text.startsWith("ERROR: ") ? "error" : (result.status || "success");
+            toolProgressMessage.content = result.text;
+
+            continue;
         }
-        else
-        {
-            addFailedToolCallMessage(error || "Unknown Error", toolCall, messages);
-            toolProgressMessages[i] = new ToolProgressMessage(toolCall, "error", error?.message || "Unknown Error");
-        }
+
+        addFailedToolCallMessage(error || "Unknown Error", toolCall, messages);
+
+        toolProgressMessage.status = "error";
+        toolProgressMessage.content = error?.message || "Unknown Error";
     }
 
-    messages.push(...toolProgressMessages);
-    send([...messages]);
+    return [...messages];
+}
 
-    return workInternal({ ...props, session: { ...session, messages } });
+export function needsToolConfirmation(messages: TMessage[])
+{
+    return messages.find(m => ToolProgressMessage.isTypeOf(m) && m.status === "pending-confirmation");
 }
 
 export { work };

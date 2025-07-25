@@ -66,7 +66,7 @@ class ErrorMessage extends CustomMessage
 class ToolProgressMessage extends CustomMessage
 {
     toolCall: ToolCall;
-    status: "pending" | "success" | "error";
+    status: "pending" | "success" | "error" | "confirmation";
     content?: string;
 
     /**

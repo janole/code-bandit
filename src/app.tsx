@@ -9,6 +9,7 @@ import MemoMessage, { Message } from "./ui/message.js";
 import Spinner from "./ui/spinner.js";
 import TextInput from "./ui/text-input.js";
 import useTerminalSize from "./utils/use-terminal-size.js";
+import { DynamicStructuredTool } from "langchain/tools";
 
 interface UseAppInputHandlerProps
 {
@@ -98,6 +99,11 @@ function useAppInputHandler(props: UseAppInputHandlerProps)
 	};
 }
 
+type ConfirmationRequest = {
+	tool: DynamicStructuredTool;
+	resolve: (value: boolean) => void; // resolve with user answer
+};
+
 interface ChatAppProps
 {
 	session: ChatSession;
@@ -120,6 +126,31 @@ function ChatApp(props: ChatAppProps)
 
 	const { handleInput, action, createAbortController } = useAppInputHandler({ session, working });
 
+	const [confReq, setConfReq] = useState<ConfirmationRequest | null>(null);
+	const confirmToolUse = async (tool: DynamicStructuredTool): Promise<boolean> => 
+	{
+		return new Promise((resolve) =>
+		{
+			setConfReq({ tool, resolve });
+		});
+	};
+
+	useEffect(() =>
+	{
+		if (confReq)
+		{
+			if (_message === "y" || _message === "n")
+			{
+				confReq.resolve(_message === "y");
+				setConfReq(null);
+				setMessage("");
+			}
+		}
+	}, [
+		_message,
+		confReq,
+	]);
+
 	const handleSendMessage = () =>
 	{
 		if (_message.trim() && !working)
@@ -138,6 +169,7 @@ function ChatApp(props: ChatAppProps)
 			work({
 				session,
 				send: (messages: TMessage[]) => setChatHistory(history => ({ ...history, messages })),
+				confirmToolUse,
 				signal: createAbortController().signal,
 			})
 				.then(messages => 

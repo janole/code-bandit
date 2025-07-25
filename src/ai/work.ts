@@ -48,12 +48,13 @@ interface WorkProps
 {
     session: IChatSession;
     send: (messages: TMessage[]) => void;
+    confirmToolUse: (tool: DynamicStructuredTool) => Promise<boolean>;
     signal: AbortSignal;
 }
 
 async function work(props: WorkProps)
 {
-    const { session, send, signal } = props;
+    const { session, send, confirmToolUse, signal } = props;
 
     const tools = getTools({ includeDestructiveTools: !session.readOnly });
 
@@ -67,10 +68,10 @@ async function work(props: WorkProps)
         return llm.bindTools(Object.values(tools)); // .withFallbacks([llm]);
     });
 
-    return workInternal({ session, llm, tools, send, signal });
+    return workInternal({ session, llm, tools, send, confirmToolUse, signal });
 }
 
-interface WorkInternalProps extends Pick<WorkProps, "session" | "send" | "signal">
+interface WorkInternalProps extends Pick<WorkProps, "session" | "send" | "confirmToolUse" | "signal">
 {
     llm: Runnable<BaseMessage[], AIMessageChunk>;
     tools: { [key: string]: DynamicStructuredTool };
@@ -124,38 +125,48 @@ async function workInternal(props: WorkInternalProps)
     }
 
     toolProgressMessages = aiMessage.tool_calls.map(toolCall => new ToolProgressMessage(toolCall)) || [];
-    send([...messages, ...toolProgressMessages]);
 
     for (let i = 0; i < toolProgressMessages.length; i++)
     {
         const toolCall = toolProgressMessages[i]!.toolCall!;
         const selectedTool = tools[toolCall.name];
 
+        send([...messages, ...toolProgressMessages]);
+
         if (!selectedTool)
         {
             addFailedToolCallMessage("Tool not found", toolCall, messages);
             toolProgressMessages[i] = new ToolProgressMessage(toolCall, "error", "Tool not found");
+
+            continue;
+        }
+
+        const confirm = await tryCatch<boolean>(props.confirmToolUse(selectedTool));
+
+        if (!confirm.result)
+        {
+            addFailedToolCallMessage("Tool execution declined by user!", toolCall, messages);
+            toolProgressMessages[i] = new ToolProgressMessage(toolCall, "error", "Tool execution declined!");
+
+            continue;
+        }
+
+        const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, { metadata }));
+
+        if (result)
+        {
+            messages.push(result);
+            toolProgressMessages[i] = new ToolProgressMessage(toolCall, result.text.startsWith("ERROR: ") ? "error" : (result.status || "success"), result.text);
         }
         else
         {
-            const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, { metadata }));
-
-            if (result)
-            {
-                messages.push(result);
-                toolProgressMessages[i] = new ToolProgressMessage(toolCall, result.text.startsWith("ERROR: ") ? "error" : (result.status || "success"), result.text);
-            }
-            else
-            {
-                addFailedToolCallMessage(error || "Unknown Error", toolCall, messages);
-                toolProgressMessages[i] = new ToolProgressMessage(toolCall, "error", error?.message || "Unknown Error");
-            }
+            addFailedToolCallMessage(error || "Unknown Error", toolCall, messages);
+            toolProgressMessages[i] = new ToolProgressMessage(toolCall, "error", error?.message || "Unknown Error");
         }
-
-        send([...messages, ...toolProgressMessages]);
     }
 
     messages.push(...toolProgressMessages);
+    send([...messages]);
 
     return workInternal({ ...props, session: { ...session, messages } });
 }

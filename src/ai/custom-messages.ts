@@ -71,6 +71,11 @@ class ToolProgressMessage extends CustomMessage
 
     static isTypeOf = (m: any) => m instanceof ToolProgressMessage;
 
+    clone({ status }: { status: ToolProgressMessage["status"] })
+    {
+        return new ToolProgressMessage(this.toolCall, status, this.content);
+    }
+
     /**
      * Attempts to create a ToolProgressMessage from a streaming chunk.
      * Gracefully handles incomplete JSON in the arguments.

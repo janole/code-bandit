@@ -59,7 +59,6 @@ function useAppInputHandler(props: UseAppInputHandlerProps)
 		if (key.ctrl && input === "w")
 		{
 			setReadOnly(readOnly => (session.readOnly = !readOnly));
-
 			return true;
 		}
 

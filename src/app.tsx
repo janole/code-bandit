@@ -6,10 +6,10 @@ import { ChatSession, TToolMode } from "./ai/chat-session.js";
 import { ErrorMessage, TMessage, ToolProgressMessage } from "./ai/custom-messages.js";
 import { needsToolConfirmation, work } from "./ai/work.js";
 import MemoMessage, { Message } from "./ui/messages/message.js";
+import { Badge } from "./ui/messages/types.js";
 import Spinner from "./ui/spinner.js";
 import TextInput from "./ui/text-input.js";
 import useTerminalSize from "./utils/use-terminal-size.js";
-import { Badge } from "./ui/messages/types.js";
 
 interface UseAppInputHandlerProps
 {
@@ -252,7 +252,7 @@ function ChatApp(props: ChatAppProps)
 				</Spinner>
 
 				{session.toolMode !== "confirm" && <>
-					<Text>{` `}</Text>
+					<Text>{" "}</Text>
 					<Badge
 						color={session.toolMode === "yolo" ? "red" : "whiteBright"}
 						textColor={session.toolMode === "yolo" ? "white" : "blue"}

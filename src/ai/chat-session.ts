@@ -8,6 +8,8 @@ import writeFileAtomic from "write-file-atomic";
 import { IChatServiceOptions } from "./chat-service.js";
 import { CustomMessage, isCustomMessage, TMessage } from "./custom-messages.js";
 
+export type TToolMode = "confirm" | "read-only" | "yolo";
+
 export function mapMessageToObject(msg: TMessage): CustomMessage | StoredMessage | undefined
 {
     try
@@ -39,6 +41,7 @@ export function mapSessionToSessionData(session: IChatSession)
     return {
         id: session.id,
         workDir: session.workDir,
+        toolMode: session.toolMode || "confirm",
         chatServiceOptions: session.chatServiceOptions,
         messages: session.messages.map(mapMessageToObject).filter(m => m),
         finished: session.finished,
@@ -50,7 +53,7 @@ export function mapSessionDataToSession(data: any): IChatSession
     return {
         id: data.id,
         workDir: data.workDir,
-        readOnly: data.readOnly,
+        toolMode: data.toolMode || "confirm",
         chatServiceOptions: data.chatServiceOptions,
         messages: data.messages.map(mapObjectToMessage).filter((m: TMessage | undefined) => m),
         finished: data.finished,
@@ -62,7 +65,7 @@ export interface IChatSession
     id: string;
 
     workDir: string;
-    readOnly: boolean;
+    toolMode: TToolMode;
     chatServiceOptions: IChatServiceOptions;
 
     messages: TMessage[];
@@ -74,7 +77,7 @@ export class ChatSession implements IChatSession
     id: string;
 
     workDir: string;
-    readOnly: boolean;
+    toolMode: TToolMode;
     chatServiceOptions: IChatServiceOptions;
 
     messages: TMessage[] = [];
@@ -86,14 +89,14 @@ export class ChatSession implements IChatSession
     {
         this.id = props.id;
         this.workDir = props.workDir;
-        this.readOnly = props.readOnly;
+        this.toolMode = props.toolMode || "confirm";
         this.chatServiceOptions = props.chatServiceOptions;
         this.messages = props.messages;
 
         this.storage = new FileSessionStorage(this.workDir);
     }
 
-    static create(props: Pick<IChatSession, "workDir" | "readOnly" | "chatServiceOptions">)
+    static create(props: Pick<IChatSession, "workDir" | "toolMode" | "chatServiceOptions">)
     {
         const chatSession = new ChatSession({
             id: ulid(),

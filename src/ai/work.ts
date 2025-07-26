@@ -136,11 +136,7 @@ async function workInternal(props: WorkInternalProps)
     return workInternal({ ...props, session: { ...session, messages } });
 }
 
-interface WorkToolsProps extends Pick<WorkInternalProps, "session" | "tools" | "send" | "signal">
-{
-}
-
-async function workTools(props: WorkToolsProps)
+async function workTools(props: Pick<WorkInternalProps, "session" | "tools" | "send" | "signal">)
 {
     const { session: { workDir, messages }, tools, send } = props;
 

@@ -14,15 +14,14 @@ const colors = {
     error: "red",
 };
 
-function Badge({ children, color }: { children: string; color: TextProps["backgroundColor"] })
+function Badge({ children, color, textColor = "white" }: { children: string; color: TextProps["backgroundColor"]; textColor?: TextProps["backgroundColor"] })
 {
     return (
-        <Text color="white" backgroundColor={color}>
+        <Text color={textColor} backgroundColor={color}>
             {` ${children.trim()} `}
         </Text>
     );
 }
-
 
 function MessageDebugLog({ msg }: { msg: TMessage })
 {

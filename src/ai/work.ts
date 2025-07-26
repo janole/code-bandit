@@ -144,7 +144,7 @@ async function workTools(props: WorkToolsProps)
 {
     const { session: { workDir, messages }, tools, send } = props;
 
-    const toolProgressMessages = messages.filter(m => ToolProgressMessage.isTypeOf(m) && (m.status === "pending" || m.status === "confirmed")) as ToolProgressMessage[];
+    const toolProgressMessages = messages.filter(m => ToolProgressMessage.isTypeOf(m) && (m.status === "pending" || m.status === "confirmed" || m.status === "declined")) as ToolProgressMessage[];
 
     if (toolProgressMessages.length === 0)
     {
@@ -176,6 +176,17 @@ async function workTools(props: WorkToolsProps)
 
             continue;
         }
+
+        if (toolProgressMessage.status === "declined")
+        {
+            addFailedToolCallMessage("User declined tool call", toolCall, messages);
+
+            toolProgressMessage.status = "error";
+            toolProgressMessage.content = "User declined tool call";
+
+            continue;
+        }
+
 
         const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, { metadata }));
 

@@ -2,13 +2,14 @@ import { HumanMessage } from "@langchain/core/messages";
 import { Box, Key, Static, Text, useApp } from "ink";
 import React, { useEffect, useState } from "react";
 
-import { ChatSession } from "./ai/chat-session.js";
+import { ChatSession, TToolMode } from "./ai/chat-session.js";
 import { ErrorMessage, TMessage, ToolProgressMessage } from "./ai/custom-messages.js";
 import { needsToolConfirmation, work } from "./ai/work.js";
 import MemoMessage, { Message } from "./ui/messages/message.js";
 import Spinner from "./ui/spinner.js";
 import TextInput from "./ui/text-input.js";
 import useTerminalSize from "./utils/use-terminal-size.js";
+import { Badge } from "./ui/messages/types.js";
 
 interface UseAppInputHandlerProps
 {
@@ -25,7 +26,7 @@ function useAppInputHandler(props: UseAppInputHandlerProps)
 	const [abortController, setAbortController] = useState<AbortController>();
 	const [ctrlC, setCtrlC] = useState(false);
 
-	const [_, setReadOnly] = useState(session.readOnly);
+	const [_, setToolMode] = useState(session.toolMode);
 
 	const selected = session.messages.findIndex(m => ToolProgressMessage.isTypeOf(m) && m.status === "pending-confirmation");
 	const confirm = selected !== -1;
@@ -60,11 +61,11 @@ function useAppInputHandler(props: UseAppInputHandlerProps)
 
 		if (key.ctrl && input === "w")
 		{
-			setReadOnly(readOnly => (session.readOnly = !readOnly));
+			setToolMode(toolMode => session.toolMode = (toolMode === "confirm" ? "read-only" : toolMode === "read-only" ? "yolo" : "confirm"));
 			return true;
 		}
 
-		return false;
+		return !!confirm; // do not allow input as long as tool-confirmation is needed
 	};
 
 	const createAbortController = () => 
@@ -99,8 +100,8 @@ function useAppInputHandler(props: UseAppInputHandlerProps)
 		handleInput,
 		action,
 		createAbortController,
-		confirm,
 		selected,
+		setToolMode,
 	};
 }
 
@@ -124,7 +125,7 @@ function ChatApp(props: ChatAppProps)
 
 	const [working, setWorking] = useState(false);
 
-	const { handleInput, action, createAbortController, selected } = useAppInputHandler({ session, working });
+	const { handleInput, action, createAbortController, selected, setToolMode } = useAppInputHandler({ session, working });
 
 	const handleSendHistory = (messages: TMessage[], finished?: number) =>
 	{
@@ -220,6 +221,7 @@ function ChatApp(props: ChatAppProps)
 
 						selected={selected === index + chatHistory.finished}
 						updateMessage={(msg: TMessage) => !working && updateMessage(index + chatHistory.finished, msg)}
+						setToolMode={(toolMode: TToolMode) => setToolMode(session.toolMode = toolMode)}
 
 						debug={debug}
 					/>
@@ -249,9 +251,15 @@ function ChatApp(props: ChatAppProps)
 					}
 				</Spinner>
 
-				<Text color={session.readOnly ? "blue" : "red"}>
-					{` [${session.readOnly ? "READ ONLY" : "WRITE MODE"}]`}
-				</Text>
+				{session.toolMode !== "confirm" && <>
+					<Text>{` `}</Text>
+					<Badge
+						color={session.toolMode === "yolo" ? "red" : "whiteBright"}
+						textColor={session.toolMode === "yolo" ? "white" : "blue"}
+					>
+						{session.toolMode.toLocaleUpperCase()}
+					</Badge>
+				</>}
 			</Box>
 		</Box>
 	);

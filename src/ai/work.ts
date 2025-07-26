@@ -154,8 +154,6 @@ async function workTools(props: Pick<WorkInternalProps, "session" | "tools" | "s
         const toolCall = toolProgressMessage.toolCall!;
         const selectedTool = tools[toolCall.name];
 
-        send([...messages]);
-
         if (!selectedTool)
         {
             addFailedToolCallMessage("Tool not found", toolCall, messages);
@@ -183,6 +181,7 @@ async function workTools(props: Pick<WorkInternalProps, "session" | "tools" | "s
             continue;
         }
 
+        send([...messages]);
 
         const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, { metadata }));
 
@@ -201,6 +200,8 @@ async function workTools(props: Pick<WorkInternalProps, "session" | "tools" | "s
         toolProgressMessage.status = "error";
         toolProgressMessage.content = error?.message || "Unknown Error";
     }
+
+    send([...messages]);
 
     return [...messages];
 }

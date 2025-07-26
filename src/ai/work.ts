@@ -55,7 +55,7 @@ async function work(props: WorkProps)
 {
     const { session, send, signal } = props;
 
-    const tools = getTools({ includeDestructiveTools: !session.readOnly });
+    const tools = getTools({ includeDestructiveTools: session.toolMode !== "read-only" });
 
     const llm = await chatService.getLLM(session).then(llm => 
     {
@@ -138,7 +138,7 @@ async function workInternal(props: WorkInternalProps)
 
 async function workTools(props: Pick<WorkInternalProps, "session" | "tools" | "send" | "signal">)
 {
-    const { session: { workDir, messages }, tools, send } = props;
+    const { session: { workDir, messages, toolMode }, tools, send } = props;
 
     const toolProgressMessages = messages.filter(m => ToolProgressMessage.isTypeOf(m) && (m.status === "pending" || m.status === "confirmed" || m.status === "declined")) as ToolProgressMessage[];
 
@@ -156,27 +156,39 @@ async function workTools(props: Pick<WorkInternalProps, "session" | "tools" | "s
 
         if (!selectedTool)
         {
-            addFailedToolCallMessage("Tool not found", toolCall, messages);
-
             toolProgressMessage.status = "error";
             toolProgressMessage.content = "Tool not found";
+
+            addFailedToolCallMessage(toolProgressMessage.content, toolCall, messages);
 
             continue;
         }
 
-        if (toolProgressMessage.status === "pending") // "destructive"])
+        if (toolProgressMessage.status === "pending" && selectedTool.metadata?.["destructive"])
         {
-            toolProgressMessage.status = "pending-confirmation";
+            if (toolMode === "read-only")
+            {
+                toolProgressMessage.status = "error";
+                toolProgressMessage.content = "Tool call denied by security policy";
 
-            continue;
+                addFailedToolCallMessage(toolProgressMessage.content, toolCall, messages);
+
+                continue;
+            }
+            else if (toolMode !== "yolo")
+            {
+                toolProgressMessage.status = "pending-confirmation";
+
+                continue;
+            }
         }
 
         if (toolProgressMessage.status === "declined")
         {
-            addFailedToolCallMessage("User declined tool call", toolCall, messages);
-
             toolProgressMessage.status = "error";
             toolProgressMessage.content = "User declined tool call";
+
+            addFailedToolCallMessage(toolProgressMessage.content, toolCall, messages);
 
             continue;
         }

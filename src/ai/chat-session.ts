@@ -123,7 +123,7 @@ export class ChatSession implements IChatSession
 
         if (autoSave && !empty)
         {
-            this.save();
+            return this.save();
         }
     }
 

@@ -152,13 +152,25 @@ function BaseMessageView({ msg: { text }, type }: { msg: BaseMessage; type: TMes
     );
 }
 
-function Message({ msg, debug }: { msg: TMessage; debug?: boolean; })
+interface MessageProps
 {
+    msg: TMessage;
+
+    selected?: boolean;
+    updateMessage?: (msg: TMessage) => void;
+
+    debug?: boolean;
+}
+
+function Message(props: MessageProps)
+{
+    const { msg, debug } = props;
+
     const type = msg.getType();
 
     if (type === "tool-progress")
     {
-        return <ToolMessageView msg={msg as ToolProgressMessage} />;
+        return <ToolMessageView msg={msg as ToolProgressMessage} selected={props.selected} updateMessage={props.updateMessage} />;
     }
 
     if (type === "error")

@@ -8,7 +8,7 @@ import { Badge, colors, MessageProps } from "./types.js";
 const STATES = ["yes", "no", "all", "none"] as const;
 type TState = typeof STATES[number];
 
-const STATE_CONFIG /* : { [key in TState]: { color: ForegroundColorName } } */ = {
+const STATE_CONFIG = {
     yes: { color: "green", symbol: "✔" },
     no: { color: "red", symbol: "✖" },
     all: { color: "green", symbol: "✔" },
@@ -28,7 +28,7 @@ function ellipsizeVal(val: any | any[], limit: number = 50)
 
 export function ToolMessageView(props: MessageProps)
 {
-    const { selected, updateMessage } = props;
+    const { selected, updateMessage, setToolMode } = props;
 
     const msg = props.msg as ToolProgressMessage;
 
@@ -48,7 +48,16 @@ export function ToolMessageView(props: MessageProps)
 
         if (key.return)
         {
-            updateMessage?.(msg.clone({ status: state === "yes" ? "confirmed" : "declined" }));
+            if (state === "none")
+            {
+                setToolMode?.("read-only");
+            }
+            else if (state === "all")
+            {
+                setToolMode?.("yolo");
+            }
+
+            updateMessage?.(msg.clone({ status: (state === "yes" || state === "all") ? "confirmed" : "declined" }));
         }
     }, {
         isActive: selected,

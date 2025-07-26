@@ -5,14 +5,14 @@ import { ToolProgressMessage } from "../../ai/custom-messages.js";
 import Spinner from "../spinner.js";
 import { Badge, colors, MessageProps } from "./types.js";
 
-const STATES = ["yes", "no", "all", "none"] as const;
+const STATES = ["no", "yes", "none", "all"] as const;
 type TState = typeof STATES[number];
 
 const STATE_CONFIG = {
-    yes: { color: "green", symbol: "✔" },
-    no: { color: "red", symbol: "✖" },
-    all: { color: "green", symbol: "✔" },
-    none: { color: "red", symbol: "✖" },
+    yes: { color: "green", symbol: "✔", label: "Yes" },
+    no: { color: "red", symbol: "✖", label: "No" },
+    all: { color: "green", symbol: "✔", label: "Allow All (YOLO)" },
+    none: { color: "red", symbol: "✖", label: "Deny All (Read-Only)" },
 }
 
 function ellipsizeVal(val: any | any[], limit: number = 50)
@@ -24,6 +24,45 @@ function ellipsizeVal(val: any | any[], limit: number = 50)
     return line.length > limit
         ? line.slice(0, 20) + " ... " + line.slice(-20)
         : line;
+}
+
+function StateButton(props: { currentState: TState, option: TState, selected: boolean })
+{
+    const { currentState, option, selected } = props;
+
+    const [frame, setFrame] = useState(0);
+
+    useEffect(() => 
+    {
+        if (!selected)
+        {
+            return undefined;
+        }
+
+        const id = setInterval(() => { setFrame(frame => frame + 1); }, 500);
+
+        return () => { clearInterval(id); };
+    }, [
+        selected,
+        setFrame,
+    ]);
+
+    const label = (STATE_CONFIG[option].label || option);
+
+    if (option === currentState)
+    {
+        return (
+            <Badge color={STATE_CONFIG[option].color}>
+                {`${(frame % 2) ? `>· ${label} ·<` : `·> ${label} <·`}`}
+            </Badge>
+        );
+    }
+
+    return (
+        <Text>
+            {`  ${label}  `}
+        </Text>
+    );
 }
 
 export function ToolMessageView(props: MessageProps)
@@ -62,23 +101,6 @@ export function ToolMessageView(props: MessageProps)
     }, {
         isActive: selected,
     });
-
-    const [frame, setFrame] = useState(0);
-
-    useEffect(() => 
-    {
-        if (!selected)
-        {
-            return undefined;
-        }
-
-        const id = setInterval(() => { setFrame(frame => frame + 1); }, 500);
-
-        return () => { clearInterval(id); };
-    }, [
-        selected,
-        setFrame,
-    ]);
 
     if (!msg.toolCall)
     {
@@ -174,12 +196,7 @@ export function ToolMessageView(props: MessageProps)
                                 {" → "}
 
                                 {STATES.map(option => (
-                                    <Text key={option}>
-                                        {option === state
-                                            ? <Badge color={STATE_CONFIG[option].color}>{`${(frame % 2) ? `>· ${option.toLocaleUpperCase()} ·<` : `·> ${option.toLocaleUpperCase()} <·`}`}</Badge>
-                                            : <Text>{`  ${option.toLocaleUpperCase()}  `}</Text>
-                                        }
-                                    </Text>
+                                    <StateButton key={option} currentState={state} option={option} selected={selected} />
                                 ))}
                             </Text>
                         </Box>

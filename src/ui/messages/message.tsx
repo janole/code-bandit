@@ -15,7 +15,7 @@ function Message(props: MessageProps)
 
     if (type === "tool-progress")
     {
-        return <ToolMessageView msg={msg as ToolProgressMessage} selected={props.selected} updateMessage={props.updateMessage} />;
+        return <ToolMessageView {...props} msg={msg as ToolProgressMessage} />;
     }
 
     if (type === "error")

@@ -123,7 +123,7 @@ function ToolMessageView(props: MessageProps)
                                 </Box>
                                 <Box>
                                     <Text color="blackBright">{key}: </Text>
-                                    <Text color="blackBright">
+                                    <Text color="black">
                                         {ellipsizeVal(val)}
                                     </Text>
                                 </Box>

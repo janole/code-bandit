@@ -1,6 +1,6 @@
 import { BaseMessage, MessageType } from "@langchain/core/messages";
-import { Box, Text, TextProps } from "ink";
-import React, { memo } from "react";
+import { Box, Key, Text, TextProps, useInput } from "ink";
+import React, { memo, useState } from "react";
 
 import { ErrorMessage, TMessage, TMessageType, ToolProgressMessage } from "../ai/custom-messages.js";
 import { Markdown } from "./markdown.js";
@@ -43,8 +43,29 @@ function ellipsizeVal(val: any | any[], limit: number = 50)
         : line;
 }
 
-function ToolMessageView({ msg }: { msg: ToolProgressMessage })
+function ToolMessageView(props: MessageProps)
 {
+    const { selected, updateMessage } = props;
+
+    const msg = props.msg as ToolProgressMessage;
+
+    const [state, setState] = useState<"yes" | "no">("no");
+
+    useInput((_input: string, key: Key) =>
+    {
+        if (key.leftArrow || key.rightArrow)
+        {
+            setState(state => state === "yes" ? "no" : "yes");
+        }
+
+        if (key.return)
+        {
+            updateMessage?.(msg.clone({ status: state === "yes" ? "confirmed" : "declined" }));
+        }
+    }, {
+        isActive: selected,
+    });
+
     if (!msg.toolCall)
     {
         return null;
@@ -52,10 +73,25 @@ function ToolMessageView({ msg }: { msg: ToolProgressMessage })
 
     return (
         <Box width={process.stdout.columns - 2}>
-            <Box flexShrink={0} width={2}>
-                <Text color={colors.tool}>*</Text>
-            </Box>
-            <Box flexDirection="column" flexGrow={1} width={process.stdout.columns - 2 - 2}>
+            {selected &&
+                <Box
+                    flexShrink={0}
+                    width={2}
+                    borderStyle="bold"
+                    borderColor={colors.tool}
+                    borderRight={false}
+                    borderTop={false}
+                    borderBottom={false}
+                    marginBottom={1}
+                    borderDimColor
+                />
+            }
+            {!selected &&
+                <Box flexShrink={0} width={2}>
+                    <Text color={colors.tool}>*</Text>
+                </Box>
+            }
+            <Box flexDirection="column" flexGrow={1} width={process.stdout.columns - 2 - 2 - 2}>
                 <Box marginBottom={1} flexDirection="column">
                     <Box>
                         <Text color={colors.tool}>
@@ -102,6 +138,35 @@ function ToolMessageView({ msg }: { msg: ToolProgressMessage })
                             <Box>
                                 <Text color="blackBright">{msg.content?.trim()}</Text>
                             </Box>
+                        </Box>
+                    }
+                    {msg.status === "pending-confirmation" &&
+                        <Box marginTop={1}>
+                            <Text>
+                                {state === "yes" &&
+                                    <Text color="green">✔ </Text>
+                                }
+
+                                {state === "no" &&
+                                    <Text color={colors.error}>✖ </Text>
+                                }
+
+                                <Badge color="black">
+                                    {`Execute command ${msg.toolCall?.name}?`}
+                                </Badge>
+
+                                {" → "}
+
+                                {state === "yes"
+                                    ? <Badge color="green">[Yes]</Badge>
+                                    : <Text>{"  Yes  "}</Text>
+                                }
+
+                                {state === "no"
+                                    ? <Badge color={colors.error}>[No]</Badge>
+                                    : <Text>{"  No  "}</Text>
+                                }
+                            </Text>
                         </Box>
                     }
                 </Box>

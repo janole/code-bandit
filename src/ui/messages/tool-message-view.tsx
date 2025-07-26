@@ -5,6 +5,16 @@ import { ToolProgressMessage } from "../../ai/custom-messages.js";
 import Spinner from "../spinner.js";
 import { Badge, colors, MessageProps } from "./types.js";
 
+const STATES = ["yes", "no", "all", "none"] as const;
+type TState = typeof STATES[number];
+
+const STATE_CONFIG /* : { [key in TState]: { color: ForegroundColorName } } */ = {
+    yes: { color: "green", symbol: "✔" },
+    no: { color: "red", symbol: "✖" },
+    all: { color: "green", symbol: "✔" },
+    none: { color: "red", symbol: "✖" },
+}
+
 function ellipsizeVal(val: any | any[], limit: number = 50)
 {
     const line = Array.isArray(val)
@@ -22,13 +32,18 @@ export function ToolMessageView(props: MessageProps)
 
     const msg = props.msg as ToolProgressMessage;
 
-    const [state, setState] = useState<"yes" | "no">("no");
+    const [state, setState] = useState<TState>("no");
 
     useInput((_input: string, key: Key) =>
     {
-        if (key.leftArrow || key.rightArrow)
+        if (key.leftArrow)
         {
-            setState(state => state === "yes" ? "no" : "yes");
+            setState(state => STATES[(((STATES.indexOf(state) - 1) % STATES.length) + STATES.length) % STATES.length]!);
+        }
+
+        if (key.rightArrow)
+        {
+            setState(state => STATES[(STATES.indexOf(state) + 1) % STATES.length]!);
         }
 
         if (key.return)
@@ -139,13 +154,9 @@ export function ToolMessageView(props: MessageProps)
                     {msg.status === "pending-confirmation" && !!selected &&
                         <Box marginTop={1}>
                             <Text>
-                                {state === "yes" &&
-                                    <Text color="green">✔ </Text>
-                                }
-
-                                {state === "no" &&
-                                    <Text color={colors.error}>✖ </Text>
-                                }
+                                <Text color={STATE_CONFIG[state].color}>
+                                    {`${STATE_CONFIG[state].symbol} `}
+                                </Text>
 
                                 <Badge color="black">
                                     {`Execute command ${msg.toolCall?.name}?`}
@@ -153,15 +164,14 @@ export function ToolMessageView(props: MessageProps)
 
                                 {" → "}
 
-                                {state === "yes"
-                                    ? <Badge color="green">{`${(frame % 2) ? ">· YES ·<" : "·> YES <·"}`}</Badge>
-                                    : <Text>{"  Yes  "}</Text>
-                                }
-
-                                {state === "no"
-                                    ? <Badge color="red">{`${(frame % 2) ? ">· NO ·<" : "·> NO <·"}`}</Badge>
-                                    : <Text>{"  No  "}</Text>
-                                }
+                                {STATES.map(option => (
+                                    <Text key={option}>
+                                        {option === state
+                                            ? <Badge color={STATE_CONFIG[option].color}>{`${(frame % 2) ? `>· ${option.toLocaleUpperCase()} ·<` : `·> ${option.toLocaleUpperCase()} <·`}`}</Badge>
+                                            : <Text>{`  ${option.toLocaleUpperCase()}  `}</Text>
+                                        }
+                                    </Text>
+                                ))}
                             </Text>
                         </Box>
                     }

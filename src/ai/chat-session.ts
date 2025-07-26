@@ -41,6 +41,7 @@ export function mapSessionToSessionData(session: IChatSession)
         workDir: session.workDir,
         chatServiceOptions: session.chatServiceOptions,
         messages: session.messages.map(mapMessageToObject).filter(m => m),
+        finished: session.finished,
     };
 }
 
@@ -52,6 +53,7 @@ export function mapSessionDataToSession(data: any): IChatSession
         readOnly: data.readOnly,
         chatServiceOptions: data.chatServiceOptions,
         messages: data.messages.map(mapObjectToMessage).filter((m: TMessage | undefined) => m),
+        finished: data.finished,
     };
 }
 
@@ -64,6 +66,7 @@ export interface IChatSession
     chatServiceOptions: IChatServiceOptions;
 
     messages: TMessage[];
+    finished: number;
 }
 
 export class ChatSession implements IChatSession
@@ -75,6 +78,7 @@ export class ChatSession implements IChatSession
     chatServiceOptions: IChatServiceOptions;
 
     messages: TMessage[] = [];
+    finished: number = 0;
 
     storage: ISessionStorage;
 
@@ -94,6 +98,7 @@ export class ChatSession implements IChatSession
         const chatSession = new ChatSession({
             id: ulid(),
             messages: [],
+            finished: 0,
             ...props,
         });
 
@@ -109,11 +114,12 @@ export class ChatSession implements IChatSession
         return chatSession;
     }
 
-    async setMessages(messages: TMessage[], autoSave: boolean = true): Promise<void>
+    async setMessages(messages: TMessage[], finished: number, autoSave: boolean = true): Promise<void>
     {
         const empty = messages.length === 0 && this.messages.length === 0;
 
         this.messages = messages;
+        this.finished = finished;
 
         if (autoSave && !empty)
         {

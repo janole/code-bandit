@@ -55,6 +55,29 @@ const FRAMES = {
     ],
 };
 
+export function useFrames(delay: number, enabled: boolean = true)
+{
+    const [frame, setFrame] = useState(0);
+
+    useEffect(() => 
+    {
+        if (!enabled)
+        {
+            return undefined;
+        }
+
+        const id = setInterval(() => { setFrame(frame => frame + 1); }, delay);
+
+        return () => { clearInterval(id); };
+    }, [
+        enabled,
+        delay,
+        setFrame,
+    ]);
+
+    return { frame };
+}
+
 interface SpinnerProps extends TextProps
 {
     empty?: boolean;
@@ -76,24 +99,9 @@ export default function Spinner(props: SpinnerProps)
         ...textProps
     } = props;
 
-    const [frame, setFrame] = useState(0);
-
     const frames = FRAMES[variant];
 
-    useEffect(() => 
-    {
-        if (empty)
-        {
-            return undefined;
-        }
-
-        const id = setInterval(() => { setFrame(frame => frame + 1); }, 80);
-
-        return () => { clearInterval(id); };
-    }, [
-        empty,
-        setFrame,
-    ]);
+    const { frame } = useFrames(80, !empty);
 
     return (
         <Text {...textProps}>

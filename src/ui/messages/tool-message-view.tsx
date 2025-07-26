@@ -2,7 +2,7 @@ import { Box, Key, Text, useInput } from "ink";
 import React, { useEffect, useState } from "react";
 
 import { ToolProgressMessage } from "../../ai/custom-messages.js";
-import Spinner from "../spinner.js";
+import Spinner, { useFrames } from "../spinner.js";
 import { Badge, colors, MessageProps } from "./types.js";
 
 const STATES = ["no", "yes", "none", "all"] as const;
@@ -30,22 +30,7 @@ function StateButton(props: { currentState: TState, option: TState, selected: bo
 {
     const { currentState, option, selected } = props;
 
-    const [frame, setFrame] = useState(0);
-
-    useEffect(() => 
-    {
-        if (!selected)
-        {
-            return undefined;
-        }
-
-        const id = setInterval(() => { setFrame(frame => frame + 1); }, 500);
-
-        return () => { clearInterval(id); };
-    }, [
-        selected,
-        setFrame,
-    ]);
+    const { frame } = useFrames(500, !!selected);
 
     const label = (STATE_CONFIG[option].label || option);
 
@@ -62,6 +47,31 @@ function StateButton(props: { currentState: TState, option: TState, selected: bo
         <Text>
             {`  ${label}  `}
         </Text>
+    );
+}
+
+function ConfirmationDialog(props: { state: TState; msg: ToolProgressMessage; })
+{
+    const { state, msg } = props;
+
+    return (
+        <Box marginTop={1}>
+            <Text>
+                <Text color={STATE_CONFIG[state].color}>
+                    {`${STATE_CONFIG[state].symbol} `}
+                </Text>
+
+                <Badge color="black">
+                    {`Execute command ${msg.toolCall?.name}?`}
+                </Badge>
+
+                {" → "}
+
+                {STATES.map(option => (
+                    <StateButton key={option} currentState={state} option={option} selected />
+                ))}
+            </Text>
+        </Box>
     );
 }
 
@@ -183,23 +193,7 @@ export function ToolMessageView(props: MessageProps)
                         </Box>
                     }
                     {msg.status === "pending-confirmation" && !!selected &&
-                        <Box marginTop={1}>
-                            <Text>
-                                <Text color={STATE_CONFIG[state].color}>
-                                    {`${STATE_CONFIG[state].symbol} `}
-                                </Text>
-
-                                <Badge color="black">
-                                    {`Execute command ${msg.toolCall?.name}?`}
-                                </Badge>
-
-                                {" → "}
-
-                                {STATES.map(option => (
-                                    <StateButton key={option} currentState={state} option={option} selected={selected} />
-                                ))}
-                            </Text>
-                        </Box>
+                        <ConfirmationDialog state={state} msg={msg} />
                     }
                 </Box>
             </Box>

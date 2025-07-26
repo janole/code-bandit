@@ -3,13 +3,12 @@ import { Box, Key, Static, Text, useApp } from "ink";
 import React, { useEffect, useState } from "react";
 
 import { ChatSession } from "./ai/chat-session.js";
-import { ErrorMessage, TMessage } from "./ai/custom-messages.js";
-import { work } from "./ai/work.js";
+import { ErrorMessage, TMessage, ToolProgressMessage } from "./ai/custom-messages.js";
+import { needsToolConfirmation, work } from "./ai/work.js";
 import MemoMessage, { Message } from "./ui/message.js";
 import Spinner from "./ui/spinner.js";
 import TextInput from "./ui/text-input.js";
 import useTerminalSize from "./utils/use-terminal-size.js";
-import { DynamicStructuredTool } from "langchain/tools";
 
 interface UseAppInputHandlerProps
 {
@@ -27,6 +26,9 @@ function useAppInputHandler(props: UseAppInputHandlerProps)
 	const [ctrlC, setCtrlC] = useState(false);
 
 	const [_, setReadOnly] = useState(session.readOnly);
+
+	const selected = session.messages.findIndex(m => ToolProgressMessage.isTypeOf(m) && m.status === "pending-confirmation");
+	const confirm = selected !== -1;
 
 	const handleInput = (input: string, key: Key): boolean =>
 	{
@@ -89,19 +91,18 @@ function useAppInputHandler(props: UseAppInputHandlerProps)
 				? "Cancelled. Please wait ..."
 				: "Cancel? Press Ctrl-C again ..."
 			: "Quit? Press Ctrl-C again ..."
-		: undefined;
+		: confirm
+			? "Please confirm the tool ..."
+			: undefined;
 
 	return {
 		handleInput,
 		action,
 		createAbortController,
+		confirm,
+		selected,
 	};
 }
-
-type ConfirmationRequest = {
-	tool: DynamicStructuredTool;
-	resolve: (value: boolean) => void; // resolve with user answer
-};
 
 interface ChatAppProps
 {
@@ -118,83 +119,81 @@ function ChatApp(props: ChatAppProps)
 
 	const [chatHistory, setChatHistory] = useState<{ messages: TMessage[]; finished: number }>({
 		messages: session.messages,
-		finished: session.messages.length,
+		finished: session.finished || 0,
 	});
 
 	const [working, setWorking] = useState(false);
 
-	const { handleInput, action, createAbortController } = useAppInputHandler({ session, working });
+	const { handleInput, action, createAbortController, selected } = useAppInputHandler({ session, working });
 
-	const [confReq, setConfReq] = useState<ConfirmationRequest | null>(null);
-	const confirmToolUse = async (tool: DynamicStructuredTool): Promise<boolean> => 
+	const handleSendHistory = (messages: TMessage[], finished?: number) =>
 	{
-		return new Promise((resolve) =>
-		{
-			setConfReq({ tool, resolve });
-		});
-	};
+		setChatHistory(history => ({ messages, finished: Math.max(finished || 0, history.finished) }));
+		setWorking(true);
 
-	useEffect(() =>
-	{
-		if (confReq)
-		{
-			if (_message === "y" || _message === "n")
+		// TODO: refactor session.messages and setMessage/setState handling
+		session.setMessages(messages, messages.length, false);
+
+		work({
+			session,
+			send: (messages: TMessage[]) => setChatHistory(history => ({ ...history, messages })),
+			signal: createAbortController().signal,
+		})
+			.then(messages => 
 			{
-				confReq.resolve(_message === "y");
-				setConfReq(null);
-				setMessage("");
-			}
-		}
-	}, [
-		_message,
-		confReq,
-	]);
+				if (needsToolConfirmation(messages))
+				{
+					setChatHistory(history => ({ ...history, messages }));
+				}
+				else
+				{
+					setChatHistory({ messages, finished: messages.length });
+				}
+			})
+			.catch(error => 
+			{
+				setChatHistory(history => ({
+					messages: [
+						...history.messages,
+						new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`, error),
+					],
+					finished: history.messages.length + 1,
+				}));
+			})
+			.finally(() => 
+			{
+				setWorking(false);
+			});
+	}
+
+	const updateMessage = (index: number, msg: TMessage) =>
+	{
+		const messages = [...chatHistory.messages];
+		// TODO: fix inline editing, create new item instead
+		messages[index] = msg;
+
+		handleSendHistory(messages);
+	};
 
 	const handleSendMessage = () =>
 	{
+		if (selected !== -1)
+		{
+			// confirmTool();
+			return;
+		}
+
 		if (_message.trim() && !working)
 		{
-			const humanMessage = new HumanMessage(_message);
-
-			const messages = [...chatHistory.messages, humanMessage];
-			setChatHistory({ messages, finished: messages.length });
-
+			const messages = [...chatHistory.messages, new HumanMessage(_message)];
+			handleSendHistory(messages, messages.length);
 			setMessage("");
-			setWorking(true);
-
-			// TODO: refactor session.messages and setMessage/setState handling
-			session.setMessages(messages, false);
-
-			work({
-				session,
-				send: (messages: TMessage[]) => setChatHistory(history => ({ ...history, messages })),
-				confirmToolUse,
-				signal: createAbortController().signal,
-			})
-				.then(messages => 
-				{
-					setChatHistory({ messages, finished: messages.length });
-				})
-				.catch(error => 
-				{
-					setChatHistory(history => ({
-						messages: [
-							...history.messages,
-							new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`, error),
-						],
-						finished: history.messages.length + 1,
-					}));
-				})
-				.finally(() => 
-				{
-					setWorking(false);
-				});
 		}
 	};
 
 	useEffect(() =>
 	{
-		!working && session.setMessages(chatHistory.messages);
+		!working && session.setMessages(chatHistory.messages, chatHistory.finished);
 	}, [
 		working,
 		session,
@@ -215,7 +214,15 @@ function ChatApp(props: ChatAppProps)
 				</Static>
 
 				{chatHistory.messages.slice(chatHistory.finished).map((workingItem, index) => (
-					<Message key={index} msg={workingItem} debug={debug} />
+					<Message
+						key={index}
+						msg={workingItem}
+
+						selected={selected === index + chatHistory.finished}
+						updateMessage={(msg: TMessage) => !working && updateMessage(index + chatHistory.finished, msg)}
+
+						debug={debug}
+					/>
 				))}
 			</Box>
 

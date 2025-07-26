@@ -1,36 +1,9 @@
-import { BaseMessage, MessageType } from "@langchain/core/messages";
-import { Box, Key, Text, TextProps, useInput } from "ink";
-import React, { memo, useState } from "react";
+import { Box, Key, Text, useInput } from "ink";
+import React, { useEffect, useState } from "react";
 
-import { ErrorMessage, TMessage, TMessageType, ToolProgressMessage } from "../ai/custom-messages.js";
-import { Markdown } from "./markdown.js";
-import Spinner from "./spinner.js";
-
-const colors = {
-    human: "green",
-    ai: "black",
-    generic: "black",
-    tool: "magenta",
-    error: "red",
-};
-
-function Badge({ children, color, textColor = "white" }: { children: string; color: TextProps["backgroundColor"]; textColor?: TextProps["backgroundColor"] })
-{
-    return (
-        <Text color={textColor} backgroundColor={color}>
-            {` ${children.trim()} `}
-        </Text>
-    );
-}
-
-function MessageDebugLog({ msg }: { msg: TMessage })
-{
-    return (
-        <Text color="blackBright">
-            {JSON.stringify(msg, null, 2)}
-        </Text>
-    );
-}
+import { ToolProgressMessage } from "../../ai/custom-messages.js";
+import Spinner from "../spinner.js";
+import { Badge, colors, MessageProps } from "./types.js";
 
 function ellipsizeVal(val: any | any[], limit: number = 50)
 {
@@ -43,7 +16,7 @@ function ellipsizeVal(val: any | any[], limit: number = 50)
         : line;
 }
 
-function ToolMessageView(props: MessageProps)
+export function ToolMessageView(props: MessageProps)
 {
     const { selected, updateMessage } = props;
 
@@ -66,6 +39,23 @@ function ToolMessageView(props: MessageProps)
         isActive: selected,
     });
 
+    const [frame, setFrame] = useState(0);
+
+    useEffect(() => 
+    {
+        if (!selected)
+        {
+            return undefined;
+        }
+
+        const id = setInterval(() => { setFrame(frame => frame + 1); }, 500);
+
+        return () => { clearInterval(id); };
+    }, [
+        selected,
+        setFrame,
+    ]);
+
     if (!msg.toolCall)
     {
         return null;
@@ -73,7 +63,7 @@ function ToolMessageView(props: MessageProps)
 
     return (
         <Box width={process.stdout.columns - 2}>
-            {selected &&
+            {msg.status === "pending-confirmation" &&
                 <Box
                     flexShrink={0}
                     width={2}
@@ -83,10 +73,10 @@ function ToolMessageView(props: MessageProps)
                     borderTop={false}
                     borderBottom={false}
                     marginBottom={1}
-                    borderDimColor
+                    borderDimColor={!selected}
                 />
             }
-            {!selected &&
+            {msg.status !== "pending-confirmation" &&
                 <Box flexShrink={0} width={2}>
                     <Text color={colors.tool}>*</Text>
                 </Box>
@@ -100,6 +90,12 @@ function ToolMessageView(props: MessageProps)
 
                         {msg.status === "pending" &&
                             <Spinner variant="arrow" spacerLeft=" " />
+                        }
+
+                        {msg.status === "pending-confirmation" &&
+                            <Text color="blackBright">
+                                {" → "}<Badge color="whiteBright" textColor="blackBright">pending confirmation</Badge>
+                            </Text>
                         }
 
                         {msg.content &&
@@ -140,7 +136,7 @@ function ToolMessageView(props: MessageProps)
                             </Box>
                         </Box>
                     }
-                    {msg.status === "pending-confirmation" &&
+                    {msg.status === "pending-confirmation" && !!selected &&
                         <Box marginTop={1}>
                             <Text>
                                 {state === "yes" &&
@@ -158,12 +154,12 @@ function ToolMessageView(props: MessageProps)
                                 {" → "}
 
                                 {state === "yes"
-                                    ? <Badge color="green">[Yes]</Badge>
+                                    ? <Badge color="green">{`${(frame % 2) ? ">· YES ·<" : "·> YES <·"}`}</Badge>
                                     : <Text>{"  Yes  "}</Text>
                                 }
 
                                 {state === "no"
-                                    ? <Badge color={colors.error}>[No]</Badge>
+                                    ? <Badge color="red">{`${(frame % 2) ? ">· NO ·<" : "·> NO <·"}`}</Badge>
                                     : <Text>{"  No  "}</Text>
                                 }
                             </Text>
@@ -174,89 +170,3 @@ function ToolMessageView(props: MessageProps)
         </Box>
     );
 }
-
-function ErrorMessageView({ msg: { content } }: { msg: ErrorMessage })
-{
-    const color = colors.error;
-
-    return (
-        <Box borderStyle="double" borderColor={color} paddingX={1} marginBottom={1}>
-            <Text color={color}>{content}</Text>
-        </Box>
-    );
-}
-
-function BaseMessageView({ msg: { text }, type }: { msg: BaseMessage; type: TMessageType })
-{
-    const hasText = ["human", "ai", "generic"].includes(type) && text.trim().length > 0;
-
-    if (!hasText)
-    {
-        return null;
-    }
-
-    const color = colors[type as keyof typeof colors];
-
-    return (
-        <Box width={process.stdout.columns - 2} marginBottom={1}>
-            <Box width={2}>
-                <Text color={color}>
-                    {type === "human"
-                        ? ">"
-                        : "✦"
-                    }
-                </Text>
-            </Box>
-            <Box width={process.stdout.columns - 2 - 2}>
-                {type === "ai"
-                    ? <Markdown>{text}</Markdown>
-                    : <Text color={color}>{text}</Text>
-                }
-            </Box>
-        </Box>
-    );
-}
-
-interface MessageProps
-{
-    msg: TMessage;
-
-    selected?: boolean;
-    updateMessage?: (msg: TMessage) => void;
-
-    debug?: boolean;
-}
-
-function Message(props: MessageProps)
-{
-    const { msg, debug } = props;
-
-    const type = msg.getType();
-
-    if (type === "tool-progress")
-    {
-        return <ToolMessageView msg={msg as ToolProgressMessage} selected={props.selected} updateMessage={props.updateMessage} />;
-    }
-
-    if (type === "error")
-    {
-        return <ErrorMessageView msg={msg as ErrorMessage} />;
-    }
-
-    return (<>
-
-        {(msg instanceof BaseMessage) &&
-            <BaseMessageView msg={msg} type={type as MessageType} />}
-
-        {debug &&
-            <MessageDebugLog msg={msg} />
-        }
-
-    </>);
-}
-
-const MemoMessage = memo(Message);
-
-export default MemoMessage;
-
-export { Message };

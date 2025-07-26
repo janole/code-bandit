@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { ChatSession } from "./ai/chat-session.js";
 import { ErrorMessage, TMessage, ToolProgressMessage } from "./ai/custom-messages.js";
 import { needsToolConfirmation, work } from "./ai/work.js";
-import MemoMessage, { Message } from "./ui/message.js";
+import MemoMessage, { Message } from "./ui/messages/message.js";
 import Spinner from "./ui/spinner.js";
 import TextInput from "./ui/text-input.js";
 import useTerminalSize from "./utils/use-terminal-size.js";

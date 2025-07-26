@@ -1,5 +1,5 @@
 import { Box, Key, Text, useInput } from "ink";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 import { ToolProgressMessage } from "../../ai/custom-messages.js";
 import Spinner, { useFrames } from "../spinner.js";

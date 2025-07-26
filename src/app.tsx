@@ -2,10 +2,11 @@ import { HumanMessage } from "@langchain/core/messages";
 import { Box, Key, Static, Text, useApp } from "ink";
 import React, { useEffect, useState } from "react";
 
-import { ChatSession } from "./ai/chat-session.js";
-import { ErrorMessage, TMessage } from "./ai/custom-messages.js";
-import { work } from "./ai/work.js";
-import MemoMessage, { Message } from "./ui/message.js";
+import { ChatSession, TToolMode } from "./ai/chat-session.js";
+import { ErrorMessage, TMessage, ToolProgressMessage } from "./ai/custom-messages.js";
+import { needsToolConfirmation, work } from "./ai/work.js";
+import MemoMessage, { Message } from "./ui/messages/message.js";
+import { Badge } from "./ui/messages/types.js";
 import Spinner from "./ui/spinner.js";
 import TextInput from "./ui/text-input.js";
 import useTerminalSize from "./utils/use-terminal-size.js";
@@ -25,7 +26,10 @@ function useAppInputHandler(props: UseAppInputHandlerProps)
 	const [abortController, setAbortController] = useState<AbortController>();
 	const [ctrlC, setCtrlC] = useState(false);
 
-	const [_, setReadOnly] = useState(session.readOnly);
+	const [_, setToolMode] = useState(session.toolMode);
+
+	const selected = session.messages.findIndex(m => ToolProgressMessage.isTypeOf(m) && m.status === "pending-confirmation");
+	const confirm = selected !== -1;
 
 	const handleInput = (input: string, key: Key): boolean =>
 	{
@@ -57,12 +61,11 @@ function useAppInputHandler(props: UseAppInputHandlerProps)
 
 		if (key.ctrl && input === "w")
 		{
-			setReadOnly(readOnly => (session.readOnly = !readOnly));
-
+			setToolMode(toolMode => session.toolMode = (toolMode === "confirm" ? "read-only" : toolMode === "read-only" ? "yolo" : "confirm"));
 			return true;
 		}
 
-		return false;
+		return !!confirm; // do not allow input as long as tool-confirmation is needed
 	};
 
 	const createAbortController = () => 
@@ -89,12 +92,16 @@ function useAppInputHandler(props: UseAppInputHandlerProps)
 				? "Cancelled. Please wait ..."
 				: "Cancel? Press Ctrl-C again ..."
 			: "Quit? Press Ctrl-C again ..."
-		: undefined;
+		: confirm
+			? "Please confirm the tool ..."
+			: undefined;
 
 	return {
 		handleInput,
 		action,
 		createAbortController,
+		selected,
+		setToolMode,
 	};
 }
 
@@ -113,57 +120,81 @@ function ChatApp(props: ChatAppProps)
 
 	const [chatHistory, setChatHistory] = useState<{ messages: TMessage[]; finished: number }>({
 		messages: session.messages,
-		finished: session.messages.length,
+		finished: session.finished || 0,
 	});
 
 	const [working, setWorking] = useState(false);
 
-	const { handleInput, action, createAbortController } = useAppInputHandler({ session, working });
+	const { handleInput, action, createAbortController, selected, setToolMode } = useAppInputHandler({ session, working });
+
+	const handleSendHistory = (messages: TMessage[], finished?: number) =>
+	{
+		setChatHistory(history => ({ messages, finished: Math.max(finished || 0, history.finished) }));
+		setWorking(true);
+
+		// TODO: refactor session.messages and setMessage/setState handling
+		session.setMessages(messages, messages.length, false);
+
+		work({
+			session,
+			send: (messages: TMessage[]) => setChatHistory(history => ({ ...history, messages })),
+			signal: createAbortController().signal,
+		})
+			.then(messages => 
+			{
+				if (needsToolConfirmation(messages))
+				{
+					setChatHistory(history => ({ ...history, messages }));
+				}
+				else
+				{
+					setChatHistory({ messages, finished: messages.length });
+				}
+			})
+			.catch(error => 
+			{
+				setChatHistory(history => ({
+					messages: [
+						...history.messages,
+						new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`, error),
+					],
+					finished: history.messages.length + 1,
+				}));
+			})
+			.finally(() => 
+			{
+				setWorking(false);
+			});
+	}
+
+	const updateMessage = (index: number, msg: TMessage) =>
+	{
+		const messages = [...chatHistory.messages];
+		// TODO: fix inline editing, create new item instead
+		messages[index] = msg;
+
+		handleSendHistory(messages);
+	};
 
 	const handleSendMessage = () =>
 	{
+		if (selected !== -1)
+		{
+			// confirmTool();
+			return;
+		}
+
 		if (_message.trim() && !working)
 		{
-			const humanMessage = new HumanMessage(_message);
-
-			const messages = [...chatHistory.messages, humanMessage];
-			setChatHistory({ messages, finished: messages.length });
-
+			const messages = [...chatHistory.messages, new HumanMessage(_message)];
+			handleSendHistory(messages, messages.length);
 			setMessage("");
-			setWorking(true);
-
-			// TODO: refactor session.messages and setMessage/setState handling
-			session.setMessages(messages, false);
-
-			work({
-				session,
-				send: (messages: TMessage[]) => setChatHistory(history => ({ ...history, messages })),
-				signal: createAbortController().signal,
-			})
-				.then(messages => 
-				{
-					setChatHistory({ messages, finished: messages.length });
-				})
-				.catch(error => 
-				{
-					setChatHistory(history => ({
-						messages: [
-							...history.messages,
-							new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`, error),
-						],
-						finished: history.messages.length + 1,
-					}));
-				})
-				.finally(() => 
-				{
-					setWorking(false);
-				});
 		}
 	};
 
 	useEffect(() =>
 	{
-		!working && session.setMessages(chatHistory.messages);
+		!working && session.setMessages(chatHistory.messages, chatHistory.finished);
 	}, [
 		working,
 		session,
@@ -184,7 +215,16 @@ function ChatApp(props: ChatAppProps)
 				</Static>
 
 				{chatHistory.messages.slice(chatHistory.finished).map((workingItem, index) => (
-					<Message key={index} msg={workingItem} debug={debug} />
+					<Message
+						key={index}
+						msg={workingItem}
+
+						selected={selected === index + chatHistory.finished}
+						updateMessage={(msg: TMessage) => !working && updateMessage(index + chatHistory.finished, msg)}
+						setToolMode={(toolMode: TToolMode) => setToolMode(session.toolMode = toolMode)}
+
+						debug={debug}
+					/>
 				))}
 			</Box>
 
@@ -211,9 +251,15 @@ function ChatApp(props: ChatAppProps)
 					}
 				</Spinner>
 
-				<Text color={session.readOnly ? "blue" : "red"}>
-					{` [${session.readOnly ? "READ ONLY" : "WRITE MODE"}]`}
-				</Text>
+				{session.toolMode !== "confirm" && <>
+					<Text>{" "}</Text>
+					<Badge
+						color={session.toolMode === "yolo" ? "red" : "whiteBright"}
+						textColor={session.toolMode === "yolo" ? "white" : "blue"}
+					>
+						{session.toolMode.toLocaleUpperCase()}
+					</Badge>
+				</>}
 			</Box>
 		</Box>
 	);

@@ -66,8 +66,15 @@ class ErrorMessage extends CustomMessage
 class ToolProgressMessage extends CustomMessage
 {
     toolCall: ToolCall;
-    status: "pending" | "success" | "error";
+    status: "pending" | "pending-confirmation" | "confirmed" | "declined" | "success" | "error";
     content?: string;
+
+    static isTypeOf = (m: any) => m instanceof ToolProgressMessage;
+
+    clone({ status }: { status: ToolProgressMessage["status"] })
+    {
+        return new ToolProgressMessage(this.toolCall, status, this.content);
+    }
 
     /**
      * Attempts to create a ToolProgressMessage from a streaming chunk.

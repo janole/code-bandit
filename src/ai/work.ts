@@ -55,7 +55,7 @@ async function work(props: WorkProps)
 {
     const { session, send, signal } = props;
 
-    const tools = getTools({ includeDestructiveTools: !session.readOnly });
+    const tools = getTools({ includeDestructiveTools: session.toolMode !== "read-only" });
 
     const llm = await chatService.getLLM(session).then(llm => 
     {
@@ -78,9 +78,15 @@ interface WorkInternalProps extends Pick<WorkProps, "session" | "send" | "signal
 
 async function workInternal(props: WorkInternalProps)
 {
-    const { session, llm, tools, send, signal } = props;
+    const { session, llm, send, signal } = props;
 
-    const messages = [...session.messages];
+    const messages = await workTools({ ...props, session });
+
+    if (needsToolConfirmation(messages))
+    {
+        return messages;
+    }
+
     const metadata = { workDir: session.workDir };
 
     let { stream, error } = await getStream(llm, messages, { metadata, signal });
@@ -123,41 +129,98 @@ async function workInternal(props: WorkInternalProps)
         return messages;
     }
 
+    // add pending toolCall(s)
     toolProgressMessages = aiMessage.tool_calls.map(toolCall => new ToolProgressMessage(toolCall)) || [];
-    send([...messages, ...toolProgressMessages]);
+    messages.push(...toolProgressMessages);
 
-    for (let i = 0; i < toolProgressMessages.length; i++)
+    return workInternal({ ...props, session: { ...session, messages } });
+}
+
+async function workTools(props: Pick<WorkInternalProps, "session" | "tools" | "send" | "signal">)
+{
+    const { session: { workDir, messages, toolMode }, tools, send } = props;
+
+    const toolProgressMessages = messages.filter(m => ToolProgressMessage.isTypeOf(m) && (m.status === "pending" || m.status === "confirmed" || m.status === "declined")) as ToolProgressMessage[];
+
+    if (toolProgressMessages.length === 0)
     {
-        const toolCall = toolProgressMessages[i]!.toolCall!;
+        return messages;
+    }
+
+    const metadata = { workDir };
+
+    for (const toolProgressMessage of toolProgressMessages)
+    {
+        const toolCall = toolProgressMessage.toolCall!;
         const selectedTool = tools[toolCall.name];
 
         if (!selectedTool)
         {
-            addFailedToolCallMessage("Tool not found", toolCall, messages);
-            toolProgressMessages[i] = new ToolProgressMessage(toolCall, "error", "Tool not found");
+            toolProgressMessage.status = "error";
+            toolProgressMessage.content = "Tool not found";
+
+            addFailedToolCallMessage(toolProgressMessage.content, toolCall, messages);
+
+            continue;
         }
-        else
+
+        if (toolProgressMessage.status === "pending" && selectedTool.metadata?.["destructive"])
         {
-            const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, { metadata }));
+            if (toolMode === "read-only")
+            {
+                toolProgressMessage.status = "error";
+                toolProgressMessage.content = "Tool call denied by security policy";
 
-            if (result)
-            {
-                messages.push(result);
-                toolProgressMessages[i] = new ToolProgressMessage(toolCall, result.text.startsWith("ERROR: ") ? "error" : (result.status || "success"), result.text);
+                addFailedToolCallMessage(toolProgressMessage.content, toolCall, messages);
+
+                continue;
             }
-            else
+            else if (toolMode !== "yolo")
             {
-                addFailedToolCallMessage(error || "Unknown Error", toolCall, messages);
-                toolProgressMessages[i] = new ToolProgressMessage(toolCall, "error", error?.message || "Unknown Error");
+                toolProgressMessage.status = "pending-confirmation";
+
+                continue;
             }
         }
 
-        send([...messages, ...toolProgressMessages]);
+        if (toolProgressMessage.status === "declined")
+        {
+            toolProgressMessage.status = "error";
+            toolProgressMessage.content = "User declined tool call";
+
+            addFailedToolCallMessage(toolProgressMessage.content, toolCall, messages);
+
+            continue;
+        }
+
+        send([...messages]);
+
+        const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, { metadata }));
+
+        if (result)
+        {
+            messages.push(result);
+
+            toolProgressMessage.status = result.text.startsWith("ERROR: ") ? "error" : (result.status || "success");
+            toolProgressMessage.content = result.text;
+
+            continue;
+        }
+
+        addFailedToolCallMessage(error || "Unknown Error", toolCall, messages);
+
+        toolProgressMessage.status = "error";
+        toolProgressMessage.content = error?.message || "Unknown Error";
     }
 
-    messages.push(...toolProgressMessages);
+    send([...messages]);
 
-    return workInternal({ ...props, session: { ...session, messages } });
+    return [...messages];
+}
+
+export function needsToolConfirmation(messages: TMessage[])
+{
+    return messages.find(m => ToolProgressMessage.isTypeOf(m) && m.status === "pending-confirmation");
 }
 
 export { work };

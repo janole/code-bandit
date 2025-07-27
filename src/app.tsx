@@ -2,7 +2,7 @@ import { HumanMessage } from "@langchain/core/messages";
 import { Box, Key, Static, Text, useApp } from "ink";
 import React, { useEffect, useState } from "react";
 
-import { ChatSession, TToolMode } from "./ai/chat-session.js";
+import { ChatSession } from "./ai/chat-session.js";
 import { ErrorMessage, TMessage, ToolProgressMessage } from "./ai/custom-messages.js";
 import { needsToolConfirmation, work } from "./ai/work.js";
 import MemoMessage, { Message } from "./ui/messages/message.js";
@@ -14,118 +14,28 @@ import useTerminalSize from "./utils/use-terminal-size.js";
 interface UseAppInputHandlerProps
 {
 	session: ChatSession;
-	working: boolean;
 }
 
 function useAppInputHandler(props: UseAppInputHandlerProps)
 {
-	const { session, working } = props;
+	const { session } = props;
 
 	const { exit } = useApp();
+
+	const [working, setWorking] = useState(false);
 
 	const [abortController, setAbortController] = useState<AbortController>();
 	const [ctrlC, setCtrlC] = useState(false);
 
 	const [_, setToolMode] = useState(session.toolMode);
 
-	const selected = session.messages.findIndex(m => ToolProgressMessage.isTypeOf(m) && m.status === "pending-confirmation");
-	const confirm = selected !== -1;
-
-	const handleInput = (input: string, key: Key): boolean =>
-	{
-		if (key.ctrl && input === "c")
-		{
-			if (!ctrlC)
-			{
-				setCtrlC(true);
-			}
-			else if (abortController)
-			{
-				abortController.abort("Ctrl-C");
-				setAbortController(undefined);
-			}
-			else
-			{
-				exit();
-				process.exit();
-			}
-
-			return true;
-		}
-
-		if (ctrlC)
-		{
-			setCtrlC(false);
-			return true;
-		}
-
-		if (key.ctrl && input === "w")
-		{
-			setToolMode(toolMode => session.toolMode = (toolMode === "confirm" ? "read-only" : toolMode === "read-only" ? "yolo" : "confirm"));
-			return true;
-		}
-
-		return !!confirm; // do not allow input as long as tool-confirmation is needed
-	};
-
-	const createAbortController = () => 
-	{
-		const abortController = new AbortController();
-		setAbortController(abortController);
-		return abortController;
-	}
-
-	useEffect(() =>
-	{
-		if (!working)
-		{
-			setAbortController(undefined);
-			setCtrlC(false);
-		}
-	}, [
-		working,
-	]);
-
-	const action = ctrlC
-		? working
-			? abortController === null
-				? "Cancelled. Please wait ..."
-				: "Cancel? Press Ctrl-C again ..."
-			: "Quit? Press Ctrl-C again ..."
-		: confirm
-			? "Please confirm the tool ..."
-			: undefined;
-
-	return {
-		handleInput,
-		action,
-		createAbortController,
-		selected,
-		setToolMode,
-	};
-}
-
-interface ChatAppProps
-{
-	session: ChatSession;
-	debug?: boolean;
-}
-
-function ChatApp(props: ChatAppProps)
-{
-	const { session, debug } = props;
-	const { chatServiceOptions } = session;
-
-	const [_message, setMessage] = useState("");
-
 	const [chatHistory, setChatHistory] = useState<{ messages: TMessage[]; finished: number }>({
 		messages: session.messages,
 		finished: session.finished || 0,
 	});
 
-	const [working, setWorking] = useState(false);
-
-	const { handleInput, action, createAbortController, selected, setToolMode } = useAppInputHandler({ session, working });
+	const selectedIndex = chatHistory.messages.findIndex(m => ToolProgressMessage.isTypeOf(m) && m.status === "pending-confirmation");
+	const confirm = selectedIndex !== -1;
 
 	const handleSendHistory = (messages: TMessage[], finished?: number) =>
 	{
@@ -167,23 +77,150 @@ function ChatApp(props: ChatAppProps)
 			});
 	}
 
-	const updateMessage = (index: number, msg: TMessage) =>
+	const handleInput = (input: string, key: Key): boolean =>
 	{
-		const messages = [...chatHistory.messages];
-		// TODO: fix inline editing, create new item instead
-		messages[index] = msg;
+		if (key.ctrl && input === "c")
+		{
+			if (!ctrlC)
+			{
+				setCtrlC(true);
+			}
+			else if (abortController)
+			{
+				abortController.abort("Ctrl-C");
+				setAbortController(undefined);
+			}
+			else
+			{
+				exit();
+				process.exit();
+			}
 
-		handleSendHistory(messages);
+			return true;
+		}
+
+		if (ctrlC)
+		{
+			setCtrlC(false);
+			return true;
+		}
+
+		if (confirm)
+		{
+			if (key.leftArrow || key.rightArrow)
+			{
+				const direction = key.leftArrow ? -1 : 1;
+
+				setChatHistory(history => ({
+					...history,
+					messages: [
+						...history.messages.slice(0, selectedIndex),
+						(history.messages[selectedIndex] as ToolProgressMessage).toggleConfirmState({ direction }),
+						...history.messages.slice(selectedIndex + 1)
+					]
+				}));
+			}
+
+			if (key.return)
+			{
+				const confirmState = (chatHistory.messages[selectedIndex] as ToolProgressMessage).confirmState;
+
+				if (confirmState === "none")
+				{
+					setToolMode?.("read-only");
+				}
+				else if (confirmState === "all")
+				{
+					setToolMode?.("yolo");
+				}
+
+				handleSendHistory([
+					...chatHistory.messages.slice(0, selectedIndex),
+					(chatHistory.messages[selectedIndex] as ToolProgressMessage).clone({
+						status: (confirmState === "yes" || confirmState === "all") ? "confirmed" : "declined",
+						confirmState,
+					}),
+					...chatHistory.messages.slice(selectedIndex + 1)
+				]);
+			}
+
+			return true;
+		}
+
+		if (key.ctrl && input === "w")
+		{
+			setToolMode(toolMode => session.toolMode = (toolMode === "confirm" ? "read-only" : toolMode === "read-only" ? "yolo" : "confirm"));
+			return true;
+		}
+
+		return !!confirm; // do not allow input as long as tool-confirmation is needed
 	};
+
+	const createAbortController = () => 
+	{
+		const abortController = new AbortController();
+		setAbortController(abortController);
+		return abortController;
+	}
+
+	useEffect(() =>
+	{
+		if (!working)
+		{
+			setAbortController(undefined);
+			setCtrlC(false);
+		}
+	}, [
+		working,
+	]);
+
+	const action = ctrlC
+		? working
+			? abortController === null
+				? "Cancelled. Please wait ..."
+				: "Cancel? Press Ctrl-C again ..."
+			: "Quit? Press Ctrl-C again ..."
+		: confirm
+			? "Please confirm the tool ..."
+			: undefined;
+
+	return {
+		working,
+		handleInput,
+		action,
+		selected: selectedIndex,
+		setToolMode,
+		chatHistory,
+		handleSendHistory,
+	};
+}
+
+interface ChatAppProps
+{
+	session: ChatSession;
+	debug?: boolean;
+}
+
+function ChatApp(props: ChatAppProps)
+{
+	const { session, debug } = props;
+	const { chatServiceOptions } = session;
+
+	const [_message, setMessage] = useState("");
+
+	const {
+		working,
+		handleInput,
+		action,
+		selected,
+		chatHistory,
+		handleSendHistory,
+	} = useAppInputHandler({
+		session,
+	});
 
 	const handleSendMessage = () =>
 	{
-		if (selected !== -1)
-		{
-			// confirmTool();
-			return;
-		}
-
 		if (_message.trim() && !working)
 		{
 			const messages = [...chatHistory.messages, new HumanMessage(_message)];
@@ -218,11 +255,7 @@ function ChatApp(props: ChatAppProps)
 					<Message
 						key={index}
 						msg={workingItem}
-
 						selected={selected === index + chatHistory.finished}
-						updateMessage={(msg: TMessage) => !working && updateMessage(index + chatHistory.finished, msg)}
-						setToolMode={(toolMode: TToolMode) => setToolMode(session.toolMode = toolMode)}
-
 						debug={debug}
 					/>
 				))}

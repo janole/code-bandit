@@ -11,12 +11,12 @@ import Spinner from "./ui/spinner.js";
 import TextInput from "./ui/text-input.js";
 import useTerminalSize from "./utils/use-terminal-size.js";
 
-interface UseAppInputHandlerProps
+interface UseAppEngineProps
 {
 	session: ChatSession;
 }
 
-function useAppInputHandler(props: UseAppInputHandlerProps)
+function useAppEngine(props: UseAppEngineProps)
 {
 	const { session } = props;
 
@@ -215,7 +215,7 @@ function ChatApp(props: ChatAppProps)
 		selected,
 		chatHistory,
 		handleSendHistory,
-	} = useAppInputHandler({
+	} = useAppEngine({
 		session,
 	});
 

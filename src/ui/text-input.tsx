@@ -1,4 +1,4 @@
-import chalk from "chalk";
+import chalk, { ChalkInstance } from "chalk";
 import { Key, Text, useInput } from "ink";
 import React, { useEffect, useState } from "react";
 
@@ -10,6 +10,11 @@ interface TextInputProps
      * Text to display when `value` is empty.
      */
     readonly placeholder?: string;
+
+    /**
+     * Color of placeholder.
+     */
+    readonly placeholderColor?: ChalkInstance;
 
     /**
      * Listen to user's input. Useful in case there are multiple input components
@@ -58,6 +63,7 @@ function TextInput(props: TextInputProps)
     const {
         value: originalValue,
         placeholder = "",
+        placeholderColor = chalk.grey,
         focus = true,
         mask,
         highlightPastedText = false,
@@ -105,13 +111,13 @@ function TextInput(props: TextInputProps)
 
     const value = mask ? mask.repeat(originalValue.length) : originalValue;
     let renderedValue = value;
-    let renderedPlaceholder = placeholder ? chalk.grey(placeholder) : undefined;
+    let renderedPlaceholder = placeholder ? placeholderColor(placeholder) : undefined;
 
     // Fake mouse cursor, because it's too inconvenient to deal with actual cursor and ansi escapes
     if (showCursor && focus)
     {
         renderedPlaceholder = placeholder.length > 0
-            ? chalk.inverse(placeholder[0]) + chalk.grey(placeholder.slice(1))
+            ? chalk.inverse(placeholder[0]) + placeholderColor(placeholder.slice(1))
             : chalk.inverse(" ");
 
         renderedValue = value.length > 0 ? "" : chalk.inverse(" ");

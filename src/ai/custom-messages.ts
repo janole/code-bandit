@@ -79,6 +79,15 @@ class ToolProgressMessage extends CustomMessage
         return new ToolProgressMessage(this.toolCall, status, this.content, confirmState);
     }
 
+    toggleConfirmState({ direction }: { direction: number })
+    {
+        const confirmStateIndex = ToolProgressMessage.CONFIRM_STATES.indexOf(this.confirmState) + direction;
+
+        const confirmState = ToolProgressMessage.CONFIRM_STATES[((confirmStateIndex % ToolProgressMessage.CONFIRM_STATES.length) + ToolProgressMessage.CONFIRM_STATES.length) % ToolProgressMessage.CONFIRM_STATES.length] || "no";
+
+        return this.clone({ status: "pending-confirmation", confirmState });
+    }
+
     /**
      * Attempts to create a ToolProgressMessage from a streaming chunk.
      * Gracefully handles incomplete JSON in the arguments.

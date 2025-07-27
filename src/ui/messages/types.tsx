@@ -1,7 +1,6 @@
 import { Text, TextProps } from "ink";
 import React from "react";
 
-import { TToolMode } from "../../ai/chat-session.js";
 import { TMessage } from "../../ai/custom-messages.js";
 
 export const colors = {
@@ -15,12 +14,7 @@ export const colors = {
 export interface MessageProps
 {
     msg: TMessage;
-
     selected?: boolean;
-
-    updateMessage?: (msg: TMessage) => void;
-    setToolMode?: (toolMode: TToolMode) => void;
-
     debug?: boolean;
 }
 

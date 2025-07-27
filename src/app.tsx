@@ -1,4 +1,5 @@
 import { HumanMessage } from "@langchain/core/messages";
+import chalk from "chalk";
 import { Box, Key, Static, Text, useApp } from "ink";
 import React, { useEffect, useState } from "react";
 
@@ -181,7 +182,7 @@ function useAppEngine(props: UseAppEngineProps)
 				: "Cancel? Press Ctrl-C again ..."
 			: "Quit? Press Ctrl-C again ..."
 		: confirm
-			? "Please confirm the tool ..."
+			? "Use ← → arrow keys to select, Enter ↵ to confirm"
 			: undefined;
 
 	return {
@@ -268,6 +269,7 @@ function ChatApp(props: ChatAppProps)
 					onChange={setMessage}
 					onSubmit={handleSendMessage}
 					placeholder={`> ${action || "How can I help you?"}`}
+					placeholderColor={action ? chalk.red : chalk.blackBright}
 					onHandleInput={handleInput}
 				/>
 			</Box>

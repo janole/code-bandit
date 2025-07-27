@@ -141,7 +141,7 @@ export function ToolMessageView(props: MessageProps)
                                 </Box>
                                 <Box>
                                     <Text color="blackBright">{key}: </Text>
-                                    <Text color="black">
+                                    <Text>
                                         {ellipsizeVal(val)}
                                     </Text>
                                 </Box>

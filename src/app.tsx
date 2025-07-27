@@ -127,11 +127,11 @@ function useAppEngine(props: UseAppEngineProps)
 
 				if (confirmState === "none")
 				{
-					setToolMode?.("read-only");
+					setToolMode?.(session.toolMode = "read-only");
 				}
 				else if (confirmState === "all")
 				{
-					setToolMode?.("yolo");
+					setToolMode?.(session.toolMode = "yolo");
 				}
 
 				handleSendHistory([

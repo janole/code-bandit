@@ -1,12 +1,12 @@
-import { Box, Key, Text, useInput } from "ink";
-import React, { useState } from "react";
+import { Box, Text } from "ink";
+import React from "react";
 
 import { ToolProgressMessage } from "../../ai/custom-messages.js";
 import Spinner, { useFrames } from "../spinner.js";
 import { Badge, colors, MessageProps } from "./types.js";
 
 const STATES = ["no", "yes", "none", "all"] as const;
-type TState = typeof STATES[number];
+export type TToolConfirmationState = typeof STATES[number];
 
 const STATE_CONFIG = {
     yes: { color: "green", symbol: "✔", label: "Yes" },
@@ -26,7 +26,7 @@ function ellipsizeVal(val: any | any[], limit: number = 50)
         : line;
 }
 
-function StateButton(props: { currentState: TState, option: TState, selected: boolean })
+function StateButton(props: { currentState: TToolConfirmationState, option: TToolConfirmationState, selected: boolean })
 {
     const { currentState, option, selected } = props;
 
@@ -50,7 +50,7 @@ function StateButton(props: { currentState: TState, option: TState, selected: bo
     );
 }
 
-function ConfirmationDialog(props: { state: TState; msg: ToolProgressMessage; })
+function ConfirmationDialog(props: { state: TToolConfirmationState; msg: ToolProgressMessage; })
 {
     const { state, msg } = props;
 

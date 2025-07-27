@@ -71,7 +71,10 @@ class ChatService
         }
         else if (provider === "anthropic")
         {
-            llm = new ChatAnthropic({ model });
+            llm = new ChatAnthropic({
+                model,
+                maxTokens: 16384,
+            });
         }
         else if (provider === "gemini")
         {

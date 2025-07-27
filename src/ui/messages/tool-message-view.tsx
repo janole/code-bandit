@@ -77,40 +77,9 @@ function ConfirmationDialog(props: { state: TToolConfirmationState; msg: ToolPro
 
 export function ToolMessageView(props: MessageProps)
 {
-    const { selected, updateMessage, setToolMode } = props;
+    const { selected } = props;
 
     const msg = props.msg as ToolProgressMessage;
-
-    const [state, setState] = useState<TState>("no");
-
-    useInput((_input: string, key: Key) =>
-    {
-        if (key.leftArrow)
-        {
-            setState(state => STATES[(((STATES.indexOf(state) - 1) % STATES.length) + STATES.length) % STATES.length]!);
-        }
-
-        if (key.rightArrow)
-        {
-            setState(state => STATES[(STATES.indexOf(state) + 1) % STATES.length]!);
-        }
-
-        if (key.return)
-        {
-            if (state === "none")
-            {
-                setToolMode?.("read-only");
-            }
-            else if (state === "all")
-            {
-                setToolMode?.("yolo");
-            }
-
-            updateMessage?.(msg.clone({ status: (state === "yes" || state === "all") ? "confirmed" : "declined" }));
-        }
-    }, {
-        isActive: selected,
-    });
 
     if (!msg.toolCall)
     {
@@ -193,7 +162,7 @@ export function ToolMessageView(props: MessageProps)
                         </Box>
                     }
                     {msg.status === "pending-confirmation" && !!selected &&
-                        <ConfirmationDialog state={state} msg={msg} />
+                        <ConfirmationDialog state={msg.confirmState} msg={msg} />
                     }
                 </Box>
             </Box>

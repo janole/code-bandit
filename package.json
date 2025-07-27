@@ -38,6 +38,7 @@
 		"@langchain/groq": "^0.2.3",
 		"@langchain/ollama": "^0.2.3",
 		"@langchain/openai": "^0.6.2",
+		"chalk": "^5.4.1",
 		"commander": "^14.0.0",
 		"eslint-plugin-unicorn": "^60.0.0",
 		"execa": "^9.6.0",

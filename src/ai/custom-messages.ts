@@ -29,7 +29,7 @@ export class CustomMessage
         }
         else if (obj._type === "tool-progress")
         {
-            return new ToolProgressMessage(obj.toolCall, obj.status, obj.content);
+            return new ToolProgressMessage(obj.toolCall, obj.status, obj.content, obj.confirmState);
         }
 
         throw new Error(`Unknown custom message type: ${obj._type}`);

@@ -65,15 +65,18 @@ class ErrorMessage extends CustomMessage
 
 class ToolProgressMessage extends CustomMessage
 {
+    static readonly CONFIRM_STATES = ["no", "yes", "none", "all"] as const;
+
     toolCall: ToolCall;
     status: "pending" | "pending-confirmation" | "confirmed" | "declined" | "success" | "error";
     content?: string;
+    confirmState: typeof ToolProgressMessage.CONFIRM_STATES[number];
 
     static isTypeOf = (m: any) => m instanceof ToolProgressMessage;
 
-    clone({ status }: { status: ToolProgressMessage["status"] })
+    clone({ status, confirmState }: Pick<ToolProgressMessage, "status" | "confirmState">)
     {
-        return new ToolProgressMessage(this.toolCall, status, this.content);
+        return new ToolProgressMessage(this.toolCall, status, this.content, confirmState);
     }
 
     /**
@@ -112,13 +115,14 @@ class ToolProgressMessage extends CustomMessage
         return toolCallChunks?.map(i => ToolProgressMessage.createFromChunk(i)).filter(i => !!i) || [];
     }
 
-    constructor(toolCall: ToolCall, status?: ToolProgressMessage["status"], content?: string)
+    constructor(toolCall: ToolCall, status?: ToolProgressMessage["status"], content?: string, confirmState?: ToolProgressMessage["confirmState"])
     {
         super("tool-progress");
 
         this.toolCall = toolCall;
         this.status = status || "pending";
         this.content = content;
+        this.confirmState = confirmState || "no";
     }
 }
 

@@ -5,9 +5,6 @@ import { ToolProgressMessage } from "../../ai/custom-messages.js";
 import Spinner, { useFrames } from "../spinner.js";
 import { Badge, colors, MessageProps } from "./types.js";
 
-const STATES = ["no", "yes", "none", "all"] as const;
-export type TToolConfirmationState = typeof STATES[number];
-
 const STATE_CONFIG = {
     yes: { color: "green", symbol: "✔", label: "Yes" },
     no: { color: "red", symbol: "✖", label: "No" },
@@ -26,18 +23,18 @@ function ellipsizeVal(val: any | any[], limit: number = 50)
         : line;
 }
 
-function StateButton(props: { currentState: TToolConfirmationState, option: TToolConfirmationState, selected: boolean })
+function StateButton(props: { currentState: ToolProgressMessage["confirmState"], state: ToolProgressMessage["confirmState"], selected: boolean })
 {
-    const { currentState, option, selected } = props;
+    const { currentState, state, selected } = props;
 
     const { frame } = useFrames(500, !!selected);
 
-    const label = (STATE_CONFIG[option].label || option);
+    const label = (STATE_CONFIG[state].label || state);
 
-    if (option === currentState)
+    if (state === currentState)
     {
         return (
-            <Badge color={STATE_CONFIG[option].color}>
+            <Badge color={STATE_CONFIG[state].color}>
                 {`${(frame % 2) ? `>· ${label} ·<` : `·> ${label} <·`}`}
             </Badge>
         );
@@ -50,15 +47,15 @@ function StateButton(props: { currentState: TToolConfirmationState, option: TToo
     );
 }
 
-function ConfirmationDialog(props: { state: TToolConfirmationState; msg: ToolProgressMessage; })
+function ConfirmationDialog(props: { currentState: ToolProgressMessage["confirmState"]; msg: ToolProgressMessage; })
 {
-    const { state, msg } = props;
+    const { currentState, msg } = props;
 
     return (
         <Box marginTop={1}>
             <Text>
-                <Text color={STATE_CONFIG[state].color}>
-                    {`${STATE_CONFIG[state].symbol} `}
+                <Text color={STATE_CONFIG[currentState].color}>
+                    {`${STATE_CONFIG[currentState].symbol} `}
                 </Text>
 
                 <Badge color="black">
@@ -67,8 +64,8 @@ function ConfirmationDialog(props: { state: TToolConfirmationState; msg: ToolPro
 
                 {" → "}
 
-                {STATES.map(option => (
-                    <StateButton key={option} currentState={state} option={option} selected />
+                {ToolProgressMessage.CONFIRM_STATES.map(state => (
+                    <StateButton key={state} currentState={currentState} state={state} selected />
                 ))}
             </Text>
         </Box>
@@ -162,7 +159,7 @@ export function ToolMessageView(props: MessageProps)
                         </Box>
                     }
                     {msg.status === "pending-confirmation" && !!selected &&
-                        <ConfirmationDialog state={msg.confirmState} msg={msg} />
+                        <ConfirmationDialog currentState={msg.confirmState} msg={msg} />
                     }
                 </Box>
             </Box>

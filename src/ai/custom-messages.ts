@@ -79,11 +79,11 @@ class ToolProgressMessage extends CustomMessage
         return new ToolProgressMessage(this.toolCall, status, this.content, confirmState);
     }
 
-    toggleConfirmState({ direction }: { direction: number })
+    toggleConfirmState({ direction }: { direction: -1 | 1 })
     {
-        const confirmStateIndex = ToolProgressMessage.CONFIRM_STATES.indexOf(this.confirmState) + direction;
+        const { CONFIRM_STATES: CS } = ToolProgressMessage;
 
-        const confirmState = ToolProgressMessage.CONFIRM_STATES[((confirmStateIndex % ToolProgressMessage.CONFIRM_STATES.length) + ToolProgressMessage.CONFIRM_STATES.length) % ToolProgressMessage.CONFIRM_STATES.length] || "no";
+        const confirmState = CS[(CS.indexOf(this.confirmState) + direction + CS.length) % CS.length] || "no";
 
         return this.clone({ status: "pending-confirmation", confirmState });
     }

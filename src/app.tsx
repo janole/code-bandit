@@ -12,12 +12,12 @@ import Spinner from "./ui/spinner.js";
 import TextInput from "./ui/text-input.js";
 import useTerminalSize from "./utils/use-terminal-size.js";
 
-interface UseAppEngineProps
+interface UseChatControllerProps
 {
 	session: ChatSession;
 }
 
-function useAppEngine(props: UseAppEngineProps)
+function useChatController(props: UseChatControllerProps)
 {
 	const { session } = props;
 
@@ -43,13 +43,16 @@ function useAppEngine(props: UseAppEngineProps)
 		setChatHistory(history => ({ messages, finished: Math.max(finished || 0, history.finished) }));
 		setWorking(true);
 
+		const abortController = new AbortController();
+		setAbortController(abortController);
+
 		// TODO: refactor session.messages and setMessage/setState handling
 		session.setMessages(messages, messages.length, false);
 
 		work({
 			session,
 			send: (messages: TMessage[]) => setChatHistory(history => ({ ...history, messages })),
-			signal: createAbortController().signal,
+			signal: abortController.signal,
 		})
 			.then(messages => 
 			{
@@ -157,13 +160,6 @@ function useAppEngine(props: UseAppEngineProps)
 		return !!confirm; // do not allow input as long as tool-confirmation is needed
 	};
 
-	const createAbortController = () => 
-	{
-		const abortController = new AbortController();
-		setAbortController(abortController);
-		return abortController;
-	}
-
 	useEffect(() =>
 	{
 		if (!working)
@@ -173,6 +169,15 @@ function useAppEngine(props: UseAppEngineProps)
 		}
 	}, [
 		working,
+	]);
+
+	useEffect(() =>
+	{
+		!working && session.setMessages(chatHistory.messages, chatHistory.finished);
+	}, [
+		working,
+		session,
+		chatHistory.messages,
 	]);
 
 	const action = ctrlC
@@ -216,7 +221,7 @@ function ChatApp(props: ChatAppProps)
 		selected,
 		chatHistory,
 		handleSendHistory,
-	} = useAppEngine({
+	} = useChatController({
 		session,
 	});
 
@@ -229,15 +234,6 @@ function ChatApp(props: ChatAppProps)
 			setMessage("");
 		}
 	};
-
-	useEffect(() =>
-	{
-		!working && session.setMessages(chatHistory.messages, chatHistory.finished);
-	}, [
-		working,
-		session,
-		chatHistory.messages,
-	]);
 
 	const terminalSize = useTerminalSize();
 

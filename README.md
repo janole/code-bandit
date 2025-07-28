@@ -1,128 +1,220 @@
-# Code Bandit
+# 🏴‍☠️ Code Bandit
 
-Code Bandit is an **AI-powered command-line assistant** for interacting with git repositories using AI models.
+> **Your AI-powered codebase companion that speaks your language**
+
+[![npm version](https://badge.fury.io/js/@janole%2Fcode-bandit.svg)](https://badge.fury.io/js/@janole%2Fcode-bandit)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+**Code Bandit** transforms how you interact with your codebase. Instead of memorizing complex commands or digging through documentation, just tell your AI assistant what you want to do in plain English – and watch the magic happen.
 
 ![Code Bandit Demo](docs/demo.webp)
 
 ---
 
-## Features
+## 🚀 Why Code Bandit?
 
-- **Conversational codebase analysis**: Interact with your codebase through a chat-like CLI powered by popular AI models
-- **Supports multiple LLM providers** via [LangChain.js](https://github.com/langchain-ai/langchainjs):
-  - [Ollama](https://github.com/ollama/ollama), [OpenAI API](https://openai.com/api/), [Anthropic](https://www.anthropic.com/api/), [Google Gemini](https://ai.google.dev/), and [Groq](https://groq.com/)
-- **Session management**:
-  Conversations and history are stored per session for easy retrieval
+**Stop context switching. Start conversing.**
+
+- 💬 **Chat with your codebase** — Ask questions like "What does this function do?" or "Add error handling to this API"
+- 🔍 **Instant code analysis** — "Find all unused imports" or "Show me the database schema"
+- ⚡ **AI-powered refactoring** — "Convert this class to TypeScript" or "Add unit tests for this module"
+- 🛠️ **Smart automation** — "Set up ESLint" or "Generate API documentation"
+- 🔒 **Safe by default** — Built-in confirmation prompts and Docker sandboxing
+
+**Perfect for:**
+- 🧑‍💻 Developers exploring new codebases
+- 🏗️ Code reviews and refactoring sessions  
+- 📚 Learning from existing projects
+- 🐛 Debugging and troubleshooting
+- 📝 Documentation and analysis
 
 ---
 
-## Getting Started
+## ⚡ Quick Start
 
-### Installation
-
-Install the CLI globally:
+### 1. Install globally
 ```bash
 npm install -g @janole/code-bandit
 ```
 
-Or run directly with `npx`:
+### 2. Jump into any project
+```bash
+cd your-awesome-project
+coba -p ollama -m llama3.2:3b
+```
+
+### 3. Start chatting!
+```
+You: Show me the main entry points of this project
+AI: I found 3 main entry points...
+
+You: Add error handling to the API routes
+AI: I'll add comprehensive error handling. Let me update the files...
+```
+
+---
+
+## 🛠️ Installation & Setup
+
+### Global Installation
+```bash
+npm install -g @janole/code-bandit
+```
+
+### One-time Usage
 ```bash
 npx @janole/code-bandit -p ollama -m magistral:24b
 ```
 
-### Usage
+### Quick Examples
 
-Basic invocation:
+**With OpenAI:**
 ```bash
-coba [git-repo-path] [options]
+# Set your API key
+export OPENAI_API_KEY="your-key-here"
+coba -p openai -m gpt-4-turbo
 ```
-- If you omit `git-repo-path`, it uses the current directory.
 
-#### Common Options
-
-- `-p, --provider <provider>`: Choose your LLM backend (e.g. `openai` or `ollama`)
-- `-m, --model <model>`: Pick a language model (e.g. `gpt-4.1-mini` or `magistral:24b`)
-- `-k, --api-key <key>`: Supply API key for remote providers
-- `-u, --api-url <url>`: Set custom API URL
-- `--max-messages <count>`: Limit the number of messages kept in history (default: 10)
-- `-C, --continue-session <file>`: Continue a saved conversation
-- `--read-only`: Starts the session in `read-only` mode, disabling any file system modifications.
-- `--write-mode`: Starts the session in `yolo` mode, allowing the AI to execute all tools without confirmation.
-
-Example:
+**With Ollama (local):**
 ```bash
-coba -p gemini -m gemini-2.5-pro     # Requires GOOGLE_API_KEY env var set
+# Install Ollama first: https://ollama.ai
+ollama pull llama3.2:3b
+coba -p ollama -m llama3.2:3b
+```
+
+**With Google Gemini:**
+```bash
+export GOOGLE_API_KEY="your-key-here"
+coba -p gemini -m gemini-2.5-pro
 ```
 
 ---
 
-## Capabilities
+## 🎯 What Can Code Bandit Do?
 
-Code Bandit provides the AI with a set of tools to interact with your project. The availability of these tools depends on the current [Tool Mode](#tool-modes--safety).
+### 🔍 **Code Analysis & Exploration**
+```
+You: "What's the architecture of this project?"
+You: "Find all TODO comments"
+You: "Explain this complex function in simple terms"
+```
 
-### Always-Available Tools
+### ✏️ **Smart Code Generation**
+```
+You: "Add TypeScript types to this JavaScript file"
+You: "Generate unit tests for the user service"
+You: "Create a README for this component"
+```
 
-These tools do not modify the file system and are always available to the AI.
+### 🔧 **Refactoring & Cleanup**
+```
+You: "Extract this logic into a reusable utility"
+You: "Remove unused imports from all files"
+You: "Convert this callback to async/await"
+```
 
-- `listDirectory`: List files and folders.
-- `readFile`: Inspect the contents of a file.
-- `findFiles`: Find files recursively by name or pattern (e.g., `**/*.ts`).
-- `searchInFiles`: Search for text or a regex pattern within a set of files.
-- `executeCommandReadOnly`: Execute arbitrary, non-destructive shell commands like `git status`, `npm test`, or `ls -l`.
-
-### Destructive Tools
-
-The following tools can modify or delete your files. They are only available when the Tool Mode is set to `yolo` (`--write-mode`) or when explicitly approved in the `confirm` mode.
-
-- `writeFile`: Create or **overwrite** files.
-- `deleteFile`: Permanently remove any file.
-- `moveFile`: Rename or move files.
-- `createDirectory`: Make new folders.
-- `executeCommand`: Execute arbitrary shell commands that **can** modify the file system (e.g., `npm install` or `git apply`).
-
----
-
-### Tool Modes & Safety
-
-Code Bandit operates in one of three tool modes to ensure user control and safety. If no mode is specified, it defaults to `confirm`.
-
--   **`confirm` (Default)**: By default, Code Bandit will ask for your permission before executing a destructive tool (like `writeFile` or `executeCommand`). An interactive prompt will appear, allowing you to approve or deny the action. The `executeCommandReadOnly` tool is always available.
--   **`read-only`**: This mode disables all destructive tools, including `executeCommand`. Only safe, read-only tools like `readFile` and `executeCommandReadOnly` are available. You can enable this mode by starting the application with the `--read-only` flag.
--   **`yolo`**: This mode allows the AI to execute all tools, including destructive ones, without asking for confirmation. This is powerful but can be risky. Use with caution. You can enable this mode by starting the application with the `--write-mode` flag.
+### 🚀 **Project Setup & Tooling**
+```
+You: "Set up ESLint with TypeScript"
+You: "Add a pre-commit hook for formatting"
+You: "Configure Jest for testing"
+```
 
 ---
 
-## Architecture Overview
+## 🎛️ Command Options
 
-- **`src/app.tsx`**: Main Ink-React app for terminal chat UI.
-- **`src/ai/**`**: AI orchestration, tool implementations, and session management.
-- **`src/ui/**`**: UI components for chat messages, markdown, and spinners.
-
-### Sandboxed Command Execution
-
-To ensure a secure environment, all shell commands are run inside a temporary Docker container. This sandboxing prevents the agent from accessing files or services outside the current project directory.
-
-- **Isolated Environment**: A minimal Docker image (`janole/codebandit-node:0`) is used, containing common tools like `git`, `jq`, `curl`, `grep`, and `tree`.
-- **Volume Mounting**: The current working directory is mounted into the container's `/data` directory.
-- **Read-Only by Default**: The `executeCommandReadOnly` tool mounts the directory with the `:ro` flag, preventing any modifications by the commands.
-- **Write Access**: The `executeCommand` tool mounts the volume without the read-only flag, allowing commands like `npm install` to modify project files. This tool is only available in `yolo` mode or after explicit user confirmation in `confirm` mode.
-- **Timeout**: Commands are automatically terminated after 30 seconds to prevent long-running or hung processes.
+| Option | Description | Example |
+|--------|-------------|---------|
+| `-p, --provider` | Choose AI provider | `ollama`, `openai`, `anthropic`, `gemini`, `groq` |
+| `-m, --model` | Select model | `gpt-4-turbo`, `llama3.2:3b`, `claude-3-5-sonnet` |
+| `-k, --api-key` | API key for remote providers | Your API key |
+| `-u, --api-url` | Custom API URL | For self-hosted models |
+| `--max-messages` | Chat history limit | Default: 10 |
+| `-C, --continue-session` | Resume previous chat | `--continue-session ./my-session.json` |
+| `--read-only` | Safe mode (no file changes) | Perfect for exploration |
+| `--write-mode` | Full access mode | ⚠️ Use with caution! |
 
 ---
 
-## Security & Responsibility
+## 🔒 Safety First
 
-- Code Bandit is powerful. When in write mode, it can overwrite or delete files. It is highly recommended to use it in a version-controlled (`git`) directory to safeguard your work.
-- Always review changes made by the assistant before committing. `git diff` is your friend.
+Code Bandit is designed with safety in mind:
+
+### 🛡️ **Three Safety Modes**
+
+- **`confirm` (Default)** — Asks permission before any file changes
+- **`read-only`** — Pure analysis mode, no modifications allowed  
+- **`yolo`** — Full automation mode (use in git repositories!)
+
+### 🐳 **Docker Sandboxing**
+All shell commands run in isolated Docker containers, protecting your system from potentially harmful operations.
+
+### 📋 **Always Available Tools**
+- `listDirectory` — Browse project structure
+- `readFile` — Examine file contents
+- `findFiles` — Search by patterns (`**/*.ts`, `src/**/*.js`)
+- `searchInFiles` — Find text across your codebase
+- `executeCommandReadOnly` — Safe commands (`git status`, `npm test`)
+
+### ⚠️ **Destructive Tools** *(with confirmation)*
+- `writeFile` — Create or modify files
+- `deleteFile` — Remove files permanently
+- `moveFile` — Rename or relocate files
+- `createDirectory` — Create new folders
+- `executeCommand` — Run any shell command
 
 ---
 
-## Status
+## 🏗️ Built With Modern Tech
 
-This project is in **alpha** and highly experimental. Expect rough edges and breaking changes.
+- **🔥 TypeScript** — Type-safe development
+- **⚛️ Ink + React** — Beautiful terminal UI
+- **🦜 LangChain.js** — Multi-provider AI integration
+- **🐳 Docker** — Secure command execution
+- **⚡ ESBuild** — Lightning-fast builds
 
 ---
 
-## License
+## 🤝 Contributing
 
-MIT
+We love contributions! Code Bandit is in active development and there's lots of exciting work ahead.
+
+```bash
+git clone https://github.com/janole/code-bandit.git
+cd code-bandit
+npm install
+npm run dev
+```
+
+Check out our [development guide](AGENTS.md) for more details.
+
+---
+
+## 📈 Project Status
+
+🚧 **Alpha Release** — Code Bandit is experimental but rapidly evolving. We recommend using it in git repositories so you can easily review and revert changes.
+
+**Coming Soon:**
+- 🌐 Web interface
+- 📱 Mobile companion app
+- 🔌 Plugin ecosystem
+- 📊 Analytics dashboard
+
+---
+
+## 📄 License
+
+MIT © [Jan Ole Suhr](https://janole.com)
+
+---
+
+<div align="center">
+
+**⭐ Star us on GitHub if Code Bandit makes your coding life easier!**
+
+[🛠️ Report Issues](https://github.com/janole/code-bandit/issues) • [💬 Discussions](https://github.com/janole/code-bandit/discussions) • [📚 Wiki](https://github.com/janole/code-bandit/wiki)
+
+</div>
+
+<!-- This file was initially generated by the AI agent claude-sonnet-4-20250514. -->

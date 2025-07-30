@@ -82,6 +82,8 @@ class ChatService
             llm = new ChatAnthropic({
                 model,
                 maxTokens: 16384,
+                anthropicApiKey: apiKey,
+                anthropicApiUrl: apiUrl,
             });
         }
         else if (provider === "gemini")

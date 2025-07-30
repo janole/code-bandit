@@ -88,7 +88,10 @@ class ChatService
         }
         else if (provider === "gemini")
         {
-            llm = new ChatGoogleGenerativeAI({ model });
+            llm = new ChatGoogleGenerativeAI({
+                model,
+                apiKey,
+            });
         }
         else if (provider === "openrouter")
         {

@@ -6,10 +6,17 @@ import { ChatGroq } from "@langchain/groq";
 import { ChatOllama } from "@langchain/ollama";
 import { ChatOpenAI } from "@langchain/openai";
 
+import { COMMIT_HASH, VERSION } from "../.version.js";
 import tryCatch from "../utils/try-catch.js";
 import { IChatSession } from "./chat-session.js";
 import { TMessage } from "./custom-messages.js";
 import { PromptLoader } from "./prompt-loader.js";
+
+const defaultHeaders = {
+    "HTTP-Referer": "https://github.com/janole/code-bandit",
+    "X-Title": "Code Bandit",
+    "User-Agent": `Code Bandit/${VERSION}+${COMMIT_HASH} (+https://github.com/janole/code-bandit)`,
+};
 
 export type TProvider = "ollama" | "openai" | "anthropic" | "gemini" | "openrouter" | "groq";
 
@@ -66,6 +73,7 @@ class ChatService
                 openAIApiKey: apiKey, // || process.env["OPENAI_API_KEY"],
                 configuration: {
                     baseURL: apiUrl, // || process.env["OPENAI_API_BASE_URL"],
+                    defaultHeaders,
                 },
             });
         }
@@ -87,6 +95,7 @@ class ChatService
                 openAIApiKey: apiKey, // || process.env["OPENROUTER_API_KEY"],
                 configuration: {
                     baseURL: apiUrl || "https://openrouter.ai/api/v1", // || process.env["OPENROUTER_API_BASE_URL"],
+                    defaultHeaders,
                 },
             });
         }

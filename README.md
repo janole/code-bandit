@@ -1,6 +1,6 @@
 # 🏴‍☠️ Code Bandit
 
-> **Your AI-powered codebase companion that speaks your language**
+**Your AI-powered codebase companion that speaks your language**
 
 [![npm version](https://badge.fury.io/js/@janole%2Fcode-bandit.svg)](https://badge.fury.io/js/@janole%2Fcode-bandit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -148,7 +148,7 @@ Code Bandit is designed with safety in mind:
 - **`yolo`** — Full automation mode (use in git repositories!)
 
 ### 🐳 **Docker Sandboxing**
-All shell commands run in isolated Docker containers, protecting your system from potentially harmful operations.
+- All shell commands run in isolated Docker containers, protecting your system from potentially harmful operations.
 
 ### 📋 **Always Available Tools**
 - `listDirectory` — Browse project structure

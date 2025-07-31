@@ -97,9 +97,9 @@ class ChatService
         {
             llm = new ChatOpenAI({
                 model,
-                openAIApiKey: apiKey, // || process.env["OPENROUTER_API_KEY"],
                 configuration: {
                     baseURL: apiUrl || "https://openrouter.ai/api/v1", // || process.env["OPENROUTER_API_BASE_URL"],
+                    apiKey: apiKey || process.env["OPENROUTER_API_KEY"],
                     defaultHeaders,
                 },
             });

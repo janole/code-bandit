@@ -9,6 +9,7 @@
 		"url": "git+https://github.com/janole/code-bandit.git"
 	},
 	"license": "MIT",
+	"main": "dist/coba.js",
 	"bin": {
 		"coba": "dist/coba.js"
 	},

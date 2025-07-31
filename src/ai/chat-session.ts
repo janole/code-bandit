@@ -93,7 +93,7 @@ export class ChatSession implements IChatSession
         this.chatServiceOptions = props.chatServiceOptions;
         this.messages = props.messages;
 
-        this.storage = new FileSessionStorage(this.workDir);
+        this.storage = new FileSessionStorage();
     }
 
     static create(props: Pick<IChatSession, "workDir" | "toolMode" | "chatServiceOptions">)

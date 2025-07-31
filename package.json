@@ -6,7 +6,7 @@
 	"homepage": "https://github.com/janole/code-bandit?#readme",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/janole/code-bandit.git"
+		"url": "git+https://github.com/janole/code-bandit.git"
 	},
 	"license": "MIT",
 	"bin": {

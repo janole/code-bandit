@@ -8,6 +8,9 @@
 		"type": "git",
 		"url": "git+https://github.com/janole/code-bandit.git"
 	},
+	"bugs": {
+		"url": "https://github.com/janole/code-bandit/issues"
+	},
 	"license": "MIT",
 	"main": "dist/coba.js",
 	"bin": {

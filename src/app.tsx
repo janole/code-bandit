@@ -1,6 +1,7 @@
 import { HumanMessage } from "@langchain/core/messages";
 import chalk from "chalk";
 import { Box, Static, Text } from "ink";
+import { homedir } from "os";
 import React, { useState } from "react";
 
 import { ChatSession } from "./ai/chat-session.js";
@@ -82,6 +83,15 @@ function ChatApp(props: ChatAppProps)
 
 			{/* Footer */}
 			<Box paddingX={1}>
+				{session.toolMode !== "confirm" && <Box flexShrink={0} paddingRight={1}>
+					<Badge
+						color={session.toolMode === "yolo" ? "red" : "whiteBright"}
+						textColor={session.toolMode === "yolo" ? "white" : "blue"}
+					>
+						{session.toolMode.toLocaleUpperCase()}
+					</Badge>
+				</Box>}
+
 				<Spinner empty={!working} color={!working ? "blackBright" : "blue"}>
 					{!working
 						? <Text color="green">{chatServiceOptions.provider}/{chatServiceOptions.model}</Text>
@@ -92,15 +102,9 @@ function ChatApp(props: ChatAppProps)
 					}
 				</Spinner>
 
-				{session.toolMode !== "confirm" && <>
-					<Text>{" "}</Text>
-					<Badge
-						color={session.toolMode === "yolo" ? "red" : "whiteBright"}
-						textColor={session.toolMode === "yolo" ? "white" : "blue"}
-					>
-						{session.toolMode.toLocaleUpperCase()}
-					</Badge>
-				</>}
+				<Box flexShrink={0} paddingLeft={1}>
+					<Text color="blackBright">[{session.workDir.replace(homedir(), "~")}]</Text>
+				</Box>
 			</Box>
 		</Box>
 	);

@@ -8,7 +8,7 @@ import tryCatch from "../utils/try-catch.js";
 import { ChatService } from "./chat-service.js";
 import { IChatSession } from "./chat-session.js";
 import { ErrorMessage, TMessage, ToolProgressMessage } from "./custom-messages.js";
-import { getTools } from "./tools/loader.js";
+import { getTools, TTools } from "./tools/loader.js";
 
 const chatService = new ChatService();
 
@@ -49,13 +49,14 @@ interface WorkProps
     session: IChatSession;
     send: (messages: TMessage[]) => void;
     signal: AbortSignal;
+    tools?: TTools;
 }
 
 async function work(props: WorkProps)
 {
     const { session, send, signal } = props;
 
-    const tools = getTools({ includeDestructiveTools: session.toolMode !== "read-only" });
+    const tools = props.tools ?? getTools({ includeDestructiveTools: session.toolMode !== "read-only" });
 
     const llm = await chatService.getLLM(session).then(llm => 
     {

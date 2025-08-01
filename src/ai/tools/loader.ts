@@ -16,4 +16,6 @@ function getTools(props: GetToolsProps)
     };
 }
 
-export { getTools };
+type TTools = ReturnType<typeof getTools>;
+
+export { getTools, TTools };

@@ -23,6 +23,7 @@ program
 	.option("--context-size <size>", "Context size in tokens used for chat history")
 	.option("--max-messages <count>", "Maximum number of messages to keep in chat history", "10")
 	.option("-C, --continue-session <filename>", "Continue with session loaded from filename")
+	.option("--start-message <message>", "Send this text")
 	.option("--read-only", "Start with read-only mode for tools")
 	.option("--write-mode", "Enable (destructive!) write mode for tools")
 	.option("--no-agent-rules", "Disable loading of AGENTS.md, .cursorrules, etc.")
@@ -57,7 +58,9 @@ program
 			? await ChatSession.createFromFile(options.continueSession)
 			: ChatSession.create({ workDir, toolMode, chatServiceOptions });
 
-		render(<App session={session} debug={options.debug} />, { exitOnCtrlC: false });
+		const props = { session, startMessage: options.startMessage, debug: options.debug };
+
+		render(<App {...props} />, { exitOnCtrlC: false });
 	});
 
 program.parse(process.argv);

@@ -8,17 +8,24 @@ import { getSystemPrompt } from "./prompts/loader.js";
 const MAX_PROMPT_LENGTH = 4000; // TODO: make dynamic based on session / contextLength -> promptLength?
 const AGENT_RULE_FILES = [".cursorrules", "AGENTS.md", "CLAUDE.md"];
 
-export class PromptLoader
+export interface IPromptLoader
+{
+	getSystemPrompt: () => string;
+}
+
+export class PromptLoader implements IPromptLoader
 {
 	private basePrompt: string;
 	private workDir: string;
 	private agentRules: string | null = null;
+	private systemPrompt?: string = undefined;
 	private disableAgentRules: boolean;
 
 	private constructor(session: IChatSession)
 	{
 		this.basePrompt = getSystemPrompt(session.chatServiceOptions.provider);
 		this.workDir = session.workDir;
+		this.systemPrompt = session.systemPrompt;
 		this.disableAgentRules = !!session.chatServiceOptions.disableAgentRules;
 	}
 
@@ -56,6 +63,12 @@ export class PromptLoader
 
 	getSystemPrompt(): string
 	{
+		if (this.systemPrompt)
+		{
+			// TODO: extend this into a template mechanism like "%{DEFAULT_PROMPT}% ..."?
+			return this.systemPrompt;
+		}
+
 		return this.agentRules
 			? `${this.basePrompt}\n\n--- Project-Specific Instructions ---\n${this.agentRules}\n`
 			: this.basePrompt;

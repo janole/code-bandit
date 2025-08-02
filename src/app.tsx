@@ -15,12 +15,13 @@ import useTerminalSize from "./utils/use-terminal-size.js";
 interface ChatAppProps
 {
 	session: ChatSession;
+	startMessage?: string;
 	debug?: boolean;
 }
 
 function ChatApp(props: ChatAppProps)
 {
-	const { session, debug } = props;
+	const { session, startMessage, debug } = props;
 	const { chatServiceOptions } = session;
 
 	const [_message, setMessage] = useState("");
@@ -34,6 +35,7 @@ function ChatApp(props: ChatAppProps)
 		handleSendHistory,
 	} = useChatController({
 		session,
+		startMessage,
 	});
 
 	const handleSendMessage = () =>

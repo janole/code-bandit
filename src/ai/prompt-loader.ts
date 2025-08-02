@@ -15,14 +15,14 @@ export class PromptLoader
 	private agentRules: string | null = null;
 	private disableAgentRules: boolean;
 
-	constructor(session: IChatSession)
+	private constructor(session: IChatSession)
 	{
 		this.basePrompt = getSystemPrompt(session.chatServiceOptions.provider);
 		this.workDir = session.workDir;
 		this.disableAgentRules = !!session.chatServiceOptions.disableAgentRules;
 	}
 
-	async loadAgentRules(): Promise<void>
+	private async loadAgentRules(): Promise<void>
 	{
 		if (this.disableAgentRules)
 		{

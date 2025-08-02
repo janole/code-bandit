@@ -84,6 +84,8 @@ export class ChatSession implements IChatSession
     toolMode: TToolMode;
     chatServiceOptions: IChatServiceOptions;
 
+    systemPrompt?: string;
+
     messages: TMessage[] = [];
     finished: number = 0;
 
@@ -95,12 +97,13 @@ export class ChatSession implements IChatSession
         this.workDir = props.workDir;
         this.toolMode = props.toolMode || "confirm";
         this.chatServiceOptions = props.chatServiceOptions;
+        this.systemPrompt = props.systemPrompt;
         this.messages = props.messages;
 
         this.storage = new FileSessionStorage();
     }
 
-    static create(props: Pick<IChatSession, "workDir" | "toolMode" | "chatServiceOptions">)
+    static create(props: Pick<IChatSession, "workDir" | "toolMode" | "chatServiceOptions" | "systemPrompt">)
     {
         const chatSession = new ChatSession({
             id: ulid(),

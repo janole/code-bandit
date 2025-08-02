@@ -1,5 +1,6 @@
 import stylistic from "@stylistic/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
+import reactHooks from "eslint-plugin-react-hooks";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
 import eslintPluginUnicorn from "eslint-plugin-unicorn";
 import globals from "globals";
@@ -17,11 +18,13 @@ export default [
             globals: globals.node,
         },
         plugins: {
+            "react-hooks": reactHooks,
             unicorn: eslintPluginUnicorn,
             "simple-import-sort": simpleImportSort,
             "@stylistic": stylistic
         },
         rules: {
+            ...reactHooks.configs["recommended-latest"].rules,
             "unicorn/filename-case": ["error", { case: "kebabCase" }],
             "simple-import-sort/imports": "error",
             "simple-import-sort/exports": "error",

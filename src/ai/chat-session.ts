@@ -43,6 +43,7 @@ export function mapSessionToSessionData(session: IChatSession)
         workDir: session.workDir,
         toolMode: session.toolMode || "confirm",
         chatServiceOptions: session.chatServiceOptions,
+        systemPrompt: session.systemPrompt,
         messages: session.messages.map(mapMessageToObject).filter(m => m),
         finished: session.finished,
     };
@@ -55,6 +56,7 @@ export function mapSessionDataToSession(data: any): IChatSession
         workDir: data.workDir,
         toolMode: data.toolMode || "confirm",
         chatServiceOptions: data.chatServiceOptions,
+        systemPrompt: data.systemPrompt,
         messages: data.messages.map(mapObjectToMessage).filter((m: TMessage | undefined) => m),
         finished: data.finished,
     };
@@ -67,6 +69,8 @@ export interface IChatSession
     workDir: string;
     toolMode: TToolMode;
     chatServiceOptions: IChatServiceOptions;
+
+    systemPrompt?: string; // TODO: extend into service or template like "%{DEFAULT}% ..."
 
     messages: TMessage[];
     finished: number;

@@ -26,7 +26,7 @@ program
 	.option("--read-only", "Start with read-only mode for tools")
 	.option("--write-mode", "Enable (destructive!) write mode for tools")
 	.option("--no-agent-rules", "Disable loading of AGENTS.md, .cursorrules, etc.")
-	.option("-d, --debug", "Show debug information")
+	.option("--debug", "Show debug information")
 	.action(async (gitRepoPath: string, options) =>
 	{
 		gitRepoPath && process.chdir(gitRepoPath);

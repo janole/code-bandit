@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import { HumanMessage } from "@langchain/core/messages";
 import { Command } from "commander";
 import { render } from "ink";
 import { cwd } from "process";
@@ -7,11 +6,10 @@ import React from "react";
 
 import { COMMIT_HASH, VERSION } from "./.version.js";
 import { ChatService, IChatServiceOptions } from "./ai/chat-service.js";
-import { PromptLoader } from "./ai/prompt-loader.js";
+import { PromptLoader } from "./ai/prompts/prompt-loader.js";
 import { FileSessionStorage } from "./ai/session/file-session-storage.js";
 import { TToolMode } from "./ai/session/session.js";
 import { NodeToolProvider } from "./ai/tools/node-tool-provider.js";
-import { work } from "./ai/work.js";
 import App from "./app.js";
 
 const program = new Command();

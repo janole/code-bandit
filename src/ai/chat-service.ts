@@ -8,9 +8,10 @@ import { ChatOpenAI } from "@langchain/openai";
 
 import { COMMIT_HASH, VERSION } from "../.version.js";
 import tryCatch from "../utils/try-catch.js";
-import { IChatSession } from "./chat-session.js";
 import { TMessage } from "./custom-messages.js";
-import { PromptLoader } from "./prompt-loader.js";
+import { IPromptLoader } from "./prompts/types.js";
+import { IChatSession } from "./session/session.js";
+import { IToolProvider, TTools } from "./tools/types.js";
 
 const defaultHeaders = {
     "HTTP-Referer": "https://github.com/janole/code-bandit",
@@ -36,6 +37,9 @@ export interface IChatServiceOptions
 
 class ChatService
 {
+    promptLoader?: IPromptLoader;
+    toolProvider?: IToolProvider;
+
     current?: {
         llm: BaseChatModel;
         provider: TProvider;
@@ -43,10 +47,19 @@ class ChatService
 
         contextSize?: number;
         maxMessages?: number;
+
         systemMessage?: SystemMessage;
+
+        tools?: TTools;
     };
 
-    async getLLM(session: IChatSession): Promise<BaseChatModel>
+    constructor(props: { promptLoader?: IPromptLoader; toolProvider?: IToolProvider; })
+    {
+        this.promptLoader = props.promptLoader;
+        this.toolProvider = props.toolProvider;
+    }
+
+    private async getLLM(session: IChatSession): Promise<BaseChatModel>
     {
         const { provider, model, contextSize, maxMessages, apiUrl, apiKey } = session.chatServiceOptions;
 
@@ -117,8 +130,7 @@ class ChatService
             throw new Error(`Unknown provider ${provider}`);
         }
 
-        const promptLoader = await PromptLoader.create(session);
-        const systemPrompt = promptLoader.getSystemPrompt();
+        const systemPrompt = session.systemPrompt || this.promptLoader?.getSystemPrompt(session);
 
         this.current = {
             llm,
@@ -128,13 +140,42 @@ class ChatService
             contextSize,
             maxMessages,
 
-            systemMessage: new SystemMessage(systemPrompt),
+            systemMessage: systemPrompt ? new SystemMessage(systemPrompt) : undefined,
+
+            tools: this.toolProvider?.getTools(session),
         };
 
         return this.current.llm;
     }
 
-    async prepareMessages(messages: TMessage[]): Promise<BaseMessage[]>
+    get tools()
+    {
+        return this.current?.tools;
+    }
+
+    async stream(session: IChatSession, signal?: AbortSignal)
+    {
+        const llm = await this.getLLM(session).then(llm => 
+        {
+            if (!this.tools || Object.keys(this.tools).length === 0)
+            {
+                return llm;
+            }
+
+            if (!llm.bindTools)
+            {
+                throw new Error("LLM does not support binding tools.");
+            }
+
+            return llm.bindTools(Object.values(this.tools));
+        });
+
+        const preparedMessages = await this.prepareMessages(session.messages);
+
+        return llm.stream(preparedMessages, { signal });
+    }
+
+    private async prepareMessages(messages: readonly TMessage[]): Promise<BaseMessage[]>
     {
         if (!this.current)
         {

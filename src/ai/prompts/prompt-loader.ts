@@ -2,12 +2,20 @@ import { promises as fs } from "fs";
 import { globbySync } from "globby";
 import path from "path";
 
-import { getSystemPrompt } from "./prompts/loader.js";
-import { IPromptLoader } from "./prompts/types.js";
-import { IChatSession } from "./session/session.js";
+import { IChatSession } from "../session/session.js";
+import { prompt as defaultPrompt } from "./default.js";
+import { prompt as ollamaPrompt } from "./ollama.js";
+import { IPromptLoader } from "./types.js";
 
 const MAX_PROMPT_LENGTH = 4000; // TODO: make dynamic based on session / contextLength -> promptLength?
 const AGENT_RULE_FILES = [".cursorrules", "AGENTS.md", "CLAUDE.md"];
+
+const systemPrompts = {
+	default: defaultPrompt,
+	ollama: ollamaPrompt,
+};
+
+const getSystemPrompt = (key: string) => systemPrompts[key as keyof typeof systemPrompts] || systemPrompts.default;
 
 export class PromptLoader implements IPromptLoader
 {

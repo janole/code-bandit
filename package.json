@@ -36,10 +36,9 @@
 		"lint": "eslint",
 		"lint:fix": "eslint --fix",
 		"ok": "npm run lint:fix && npm run typecheck && npm run check:browser-deps",
-		"prebuild": "npm run ok && npm run genversion && patch-package",
+		"prebuild": "npm run genversion && patch-package && npm run ok",
 		"build": "rimraf dist && tsc -p tsconfig.dts.json && node esbuild.config.js",
 		"genversion": "COMMIT_HASH=$(git rev-parse --short HEAD) && echo \"export const VERSION = \\\"${npm_package_version}\\\";\\nexport const COMMIT_HASH = \\\"${COMMIT_HASH}\\\";\" > src/.version.ts",
-		"clean": "rimraf dist",
 		"prepack": "npm run build",
 		"check:browser-deps": "depcruise --ts-config ./tsconfig.json --config .dependency-cruiser.js src/browser.ts"
 	},

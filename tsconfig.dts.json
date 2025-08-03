@@ -4,6 +4,6 @@
     "emitDeclarationOnly": true
   },
   "include": [
-    "src/index.ts"
+    "src/browser.ts"
   ]
 }

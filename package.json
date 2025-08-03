@@ -20,7 +20,6 @@
 	"exports": {
 		".": {
 			"types": "./dist/index.node.d.ts",
-			"browser": "./dist/browser.js",
 			"import": "./dist/index.js",
 			"default": "./dist/index.js"
 		}
@@ -35,12 +34,11 @@
 		"typecheck": "npx tsc --noEmit -p tsconfig.json",
 		"lint": "eslint",
 		"lint:fix": "eslint --fix",
-		"ok": "npm run lint:fix && npm run typecheck && npm run check:browser-deps",
+		"ok": "npm run lint:fix && npm run typecheck",
 		"prebuild": "npm run genversion && patch-package && npm run ok",
 		"build": "rimraf dist && tsc -p tsconfig.dts.json && node esbuild.config.js",
 		"genversion": "COMMIT_HASH=$(git rev-parse --short HEAD) && echo \"export const VERSION = \\\"${npm_package_version}\\\";\\nexport const COMMIT_HASH = \\\"${COMMIT_HASH}\\\";\" > src/.version.ts",
-		"prepack": "npm run build",
-		"check:browser-deps": "depcruise --ts-config ./tsconfig.json --config .dependency-cruiser.js src/index.browser.ts"
+		"prepack": "npm run build"
 	},
 	"files": [
 		"dist"
@@ -78,7 +76,6 @@
 		"@types/react": "^19.1.8",
 		"@types/write-file-atomic": "^4.0.3",
 		"@typescript-eslint/eslint-plugin": "^8.36.0",
-		"dependency-cruiser": "^17.0.0",
 		"esbuild": "^0.25.6",
 		"esbuild-node-externals": "^1.18.0",
 		"eslint": "^9.32.0",

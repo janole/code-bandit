@@ -13,13 +13,13 @@
 	},
 	"license": "MIT",
 	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"types": "dist/index.node.d.ts",
 	"bin": {
 		"coba": "dist/coba.js"
 	},
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
+			"types": "./dist/index.node.d.ts",
 			"browser": "./dist/browser.js",
 			"import": "./dist/index.js",
 			"default": "./dist/index.js"

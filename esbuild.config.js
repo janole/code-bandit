@@ -20,9 +20,21 @@ const nodeBuild = {
 const browserBuild = {
     ...common,
     entryPoints: ["src/index.browser.ts"],
-    outfile: "dist/browser.js",
+    // outfile: "dist/browser.js",
     platform: "browser",
     target: ["es2020", "chrome100", "firefox100", "safari15"],
+    splitting: true,
+    outdir: "dist/web",      // <-- required for splitting
+    entryNames: "[name]-[hash]",
+    chunkNames: "chunks/[name]-[hash]",
+    assetNames: "assets/[name]-[hash]",
+    minify: true,
+    sourcemap: false,
+    legalComments: "none",
+    define: {
+        "process.env.NODE_ENV": "\"production\"",
+        "DEV": "false",
+    },
 };
 
 const cliBuild = {
@@ -32,9 +44,6 @@ const cliBuild = {
     platform: "node",
     target: ["node20"],
     plugins: [nodeExternalsPlugin({ allowList: ["@langchain/ollama"] })],
-    banner: {
-        js: "#!/usr/bin/env node",
-    },
 };
 
 await Promise.all([

@@ -2,16 +2,12 @@ import { promises as fs } from "fs";
 import { globbySync } from "globby";
 import path from "path";
 
-import { IChatSession } from "./chat-session.js";
 import { getSystemPrompt } from "./prompts/loader.js";
+import { IPromptLoader } from "./prompts/types.js";
+import { IChatSession } from "./session/session.js";
 
 const MAX_PROMPT_LENGTH = 4000; // TODO: make dynamic based on session / contextLength -> promptLength?
 const AGENT_RULE_FILES = [".cursorrules", "AGENTS.md", "CLAUDE.md"];
-
-export interface IPromptLoader
-{
-	getSystemPrompt: () => string;
-}
 
 export class PromptLoader implements IPromptLoader
 {

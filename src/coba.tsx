@@ -29,7 +29,6 @@ program
 	.option("--max-messages <count>", "Maximum number of messages to keep in chat history", "10")
 	.option("-C, --continue-session <filename>", "Continue with session loaded from filename")
 	.option("--start-message <message>", "Start chat with this message")
-	.option("-I, --input <message>", "Send ...")
 	.option("--read-only", "Start with read-only mode for tools")
 	.option("--write-mode", "Enable (destructive!) write mode for tools")
 	.option("--no-agent-rules", "Disable loading of AGENTS.md, .cursorrules, etc.")
@@ -68,17 +67,6 @@ program
 			promptLoader: await PromptLoader.create(session),
 			toolProvider: new NodeToolProvider(),
 		});
-
-		if (options.input)
-		{
-			session.messages = [new HumanMessage(options.input)];
-
-			const messages = await work({ chatService, session, send: () => { }, signal: new AbortController().signal });
-
-			console.log(messages);
-
-			return;
-		}
 
 		const props = { chatService, session, startMessage: options.startMessage, debug: options.debug };
 

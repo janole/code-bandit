@@ -1,12 +1,17 @@
 #!/usr/bin/env node
+import { HumanMessage } from "@langchain/core/messages";
 import { Command } from "commander";
 import { render } from "ink";
 import { cwd } from "process";
 import React from "react";
 
 import { COMMIT_HASH, VERSION } from "./.version.js";
-import { IChatServiceOptions } from "./ai/chat-service.js";
-import { ChatSession, TToolMode } from "./ai/chat-session.js";
+import { ChatService, IChatServiceOptions } from "./ai/chat-service.js";
+import { PromptLoader } from "./ai/prompt-loader.js";
+import { FileSessionStorage } from "./ai/session/file-session-storage.js";
+import { TToolMode } from "./ai/session/session.js";
+import { NodeToolProvider } from "./ai/tools/node-tool-provider.js";
+import { work } from "./ai/work.js";
 import App from "./app.js";
 
 const program = new Command();
@@ -23,7 +28,8 @@ program
 	.option("--context-size <size>", "Context size in tokens used for chat history")
 	.option("--max-messages <count>", "Maximum number of messages to keep in chat history", "10")
 	.option("-C, --continue-session <filename>", "Continue with session loaded from filename")
-	.option("--start-message <message>", "Send this text")
+	.option("--start-message <message>", "Start chat with this message")
+	.option("-I, --input <message>", "Send ...")
 	.option("--read-only", "Start with read-only mode for tools")
 	.option("--write-mode", "Enable (destructive!) write mode for tools")
 	.option("--no-agent-rules", "Disable loading of AGENTS.md, .cursorrules, etc.")
@@ -55,10 +61,26 @@ program
 		const toolMode: TToolMode = options.readOnly ? "read-only" : options.writeMode ? "yolo" : "confirm";
 
 		const session = options.continueSession
-			? await ChatSession.createFromFile(options.continueSession)
-			: ChatSession.create({ workDir, toolMode, chatServiceOptions });
+			? await FileSessionStorage.createFromFile(options.continueSession)
+			: FileSessionStorage.create({ workDir, toolMode, chatServiceOptions });
 
-		const props = { session, startMessage: options.startMessage, debug: options.debug };
+		const chatService = new ChatService({
+			promptLoader: await PromptLoader.create(session),
+			toolProvider: new NodeToolProvider(),
+		});
+
+		if (options.input)
+		{
+			session.messages = [new HumanMessage(options.input)];
+
+			const messages = await work({ chatService, session, send: () => { }, signal: new AbortController().signal });
+
+			console.log(messages);
+
+			return;
+		}
+
+		const props = { chatService, session, startMessage: options.startMessage, debug: options.debug };
 
 		render(<App {...props} />, { exitOnCtrlC: false });
 	});

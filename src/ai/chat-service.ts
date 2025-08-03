@@ -1,10 +1,5 @@
-import { ChatAnthropic } from "@langchain/anthropic";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { BaseMessage, SystemMessage, trimMessages } from "@langchain/core/messages";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { ChatGroq } from "@langchain/groq";
-import { ChatOllama } from "@langchain/ollama";
-import { ChatOpenAI } from "@langchain/openai";
 
 import { COMMIT_HASH, VERSION } from "../.version.js";
 import tryCatch from "../utils/try-catch.js";
@@ -73,6 +68,8 @@ class ChatService
 
         if (provider === "ollama")
         {
+            const { ChatOllama } = await import("@langchain/ollama");
+
             llm = new ChatOllama({
                 model,
                 baseUrl: apiUrl, // || process.env["OLLAMA_API_URL"],
@@ -81,6 +78,8 @@ class ChatService
         }
         else if (provider === "openai")
         {
+            const { ChatOpenAI } = await import("@langchain/openai");
+
             llm = new ChatOpenAI({
                 model,
                 openAIApiKey: apiKey, // || process.env["OPENAI_API_KEY"],
@@ -92,6 +91,8 @@ class ChatService
         }
         else if (provider === "anthropic")
         {
+            const { ChatAnthropic } = await import("@langchain/anthropic");
+
             llm = new ChatAnthropic({
                 model,
                 maxTokens: 16384,
@@ -101,6 +102,8 @@ class ChatService
         }
         else if (provider === "gemini")
         {
+            const { ChatGoogleGenerativeAI } = await import("@langchain/google-genai");
+
             llm = new ChatGoogleGenerativeAI({
                 model,
                 apiKey,
@@ -108,6 +111,8 @@ class ChatService
         }
         else if (provider === "openrouter")
         {
+            const { ChatOpenAI } = await import("@langchain/openai");
+
             llm = new ChatOpenAI({
                 model,
                 configuration: {
@@ -119,6 +124,8 @@ class ChatService
         }
         else if (provider === "groq")
         {
+            const { ChatGroq } = await import("@langchain/groq");
+
             llm = new ChatGroq({
                 model,
                 apiKey: apiKey, // || process.env["GROQ_API_KEY"]

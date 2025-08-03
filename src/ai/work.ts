@@ -1,85 +1,22 @@
-import { BaseChatModelCallOptions } from "@langchain/core/language_models/chat_models";
-import { AIMessageChunk, BaseMessage, ToolMessage } from "@langchain/core/messages";
-import { Runnable } from "@langchain/core/runnables";
+import { AIMessageChunk, ToolMessage } from "@langchain/core/messages";
 import { concat } from "@langchain/core/utils/stream";
-import { DynamicStructuredTool } from "langchain/tools";
 
 import tryCatch from "../utils/try-catch.js";
 import { ChatService } from "./chat-service.js";
-import { IChatSession } from "./chat-session.js";
 import { ErrorMessage, TMessage, ToolProgressMessage } from "./custom-messages.js";
-import { getTools, TTools } from "./tools/loader.js";
-
-const chatService = new ChatService();
-
-async function getStream(llm: Runnable<TMessage[], AIMessageChunk>, messages: TMessage[], options?: Partial<BaseChatModelCallOptions>)
-{
-    const preparedMessages = await chatService.prepareMessages(messages);
-
-    const { result: stream, error } = await tryCatch(llm.stream(preparedMessages, options));
-
-    return { stream, error };
-}
-
-function addFailedToolCallMessage(error: string | Error, toolCall: { id?: string; name: string }, messages: TMessage[])
-{
-    const errorMessage = (error instanceof Error) ? error.message : error.toString();
-
-    const content = `ERROR: Tool invocation failed for tool ${toolCall.name} with error: ${errorMessage}.`;
-
-    if (toolCall.id)
-    {
-        messages.push(new ToolMessage({
-            tool_call_id: toolCall.id,
-            status: "error",
-            content,
-            response_metadata: {
-                error,
-            }
-        }));
-    }
-    else
-    {
-        messages.push(new ErrorMessage(content, (error instanceof Error) ? error : undefined));
-    }
-}
+import { IChatSession } from "./session/session.js";
 
 interface WorkProps
 {
+    chatService: ChatService;
     session: IChatSession;
-    send: (messages: TMessage[]) => void;
-    signal: AbortSignal;
-    tools?: TTools;
+    send?: (messages: TMessage[]) => void;
+    signal?: AbortSignal;
 }
 
 async function work(props: WorkProps)
 {
-    const { session, send, signal } = props;
-
-    const tools = props.tools ?? getTools({ includeDestructiveTools: session.toolMode !== "read-only" });
-
-    const llm = await chatService.getLLM(session).then(llm => 
-    {
-        if (!llm.bindTools)
-        {
-            throw new Error("LLM does not support binding tools.");
-        }
-
-        return llm.bindTools(Object.values(tools)); // .withFallbacks([llm]);
-    });
-
-    return workInternal({ session, llm, tools, send, signal });
-}
-
-interface WorkInternalProps extends Pick<WorkProps, "session" | "send" | "signal">
-{
-    llm: Runnable<BaseMessage[], AIMessageChunk>;
-    tools: { [key: string]: DynamicStructuredTool };
-}
-
-async function workInternal(props: WorkInternalProps)
-{
-    const { session, llm, send, signal } = props;
+    const { session, chatService, send, signal } = props;
 
     const messages = await workTools({ ...props, session });
 
@@ -88,9 +25,7 @@ async function workInternal(props: WorkInternalProps)
         return messages;
     }
 
-    const metadata = { workDir: session.workDir };
-
-    let { stream, error } = await getStream(llm, messages, { metadata, signal });
+    const { result: stream, error } = await tryCatch(chatService.stream(session, signal));
 
     if (!stream)
     {
@@ -107,7 +42,7 @@ async function workInternal(props: WorkInternalProps)
 
         if (!aiMessage?.tool_calls?.length && !aiMessage?.tool_call_chunks?.length)
         {
-            send([...messages, aiMessage]); // TODO: check for race conditions
+            send?.([...messages, aiMessage]); // TODO: check for race conditions
         }
         else
         {
@@ -115,7 +50,7 @@ async function workInternal(props: WorkInternalProps)
 
             if (toolProgressMessages.length)
             {
-                send([...messages, aiMessage, ...toolProgressMessages]);
+                send?.([...messages, aiMessage, ...toolProgressMessages]);
             }
         }
     }
@@ -134,12 +69,12 @@ async function workInternal(props: WorkInternalProps)
     toolProgressMessages = aiMessage.tool_calls.map(toolCall => new ToolProgressMessage(toolCall)) || [];
     messages.push(...toolProgressMessages);
 
-    return workInternal({ ...props, session: { ...session, messages } });
+    return work({ ...props, session: { ...session, messages } });
 }
 
-async function workTools(props: Pick<WorkInternalProps, "session" | "tools" | "send" | "signal">)
+async function workTools(props: Pick<WorkProps, "session" | "chatService" | "send" | "signal">)
 {
-    const { session: { workDir, messages, toolMode }, tools, send } = props;
+    const { session: { workDir, messages, toolMode }, chatService, send } = props;
 
     const toolProgressMessages = messages.filter(m => ToolProgressMessage.isTypeOf(m) && (m.status === "pending" || m.status === "confirmed" || m.status === "declined")) as ToolProgressMessage[];
 
@@ -153,7 +88,7 @@ async function workTools(props: Pick<WorkInternalProps, "session" | "tools" | "s
     for (const toolProgressMessage of toolProgressMessages)
     {
         const toolCall = toolProgressMessage.toolCall!;
-        const selectedTool = tools[toolCall.name];
+        const selectedTool = chatService.tools?.[toolCall.name];
 
         if (!selectedTool)
         {
@@ -194,7 +129,7 @@ async function workTools(props: Pick<WorkInternalProps, "session" | "tools" | "s
             continue;
         }
 
-        send([...messages]);
+        send?.([...messages]);
 
         const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, { metadata }));
 
@@ -214,7 +149,7 @@ async function workTools(props: Pick<WorkInternalProps, "session" | "tools" | "s
         toolProgressMessage.content = error?.message || "Unknown Error";
     }
 
-    send([...messages]);
+    send?.([...messages]);
 
     return [...messages];
 }
@@ -222,6 +157,29 @@ async function workTools(props: Pick<WorkInternalProps, "session" | "tools" | "s
 export function needsToolConfirmation(messages: TMessage[])
 {
     return messages.find(m => ToolProgressMessage.isTypeOf(m) && m.status === "pending-confirmation");
+}
+
+function addFailedToolCallMessage(error: string | Error, toolCall: { id?: string; name: string }, messages: TMessage[])
+{
+    const errorMessage = (error instanceof Error) ? error.message : error.toString();
+
+    const content = `ERROR: Tool invocation failed for tool ${toolCall.name} with error: ${errorMessage}.`;
+
+    if (toolCall.id)
+    {
+        messages.push(new ToolMessage({
+            tool_call_id: toolCall.id,
+            status: "error",
+            content,
+            response_metadata: {
+                error,
+            }
+        }));
+    }
+    else
+    {
+        messages.push(new ErrorMessage(content, (error instanceof Error) ? error : undefined));
+    }
 }
 
 export { work };

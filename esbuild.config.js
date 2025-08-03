@@ -1,29 +1,46 @@
 import esbuild from "esbuild";
 import { nodeExternalsPlugin } from "esbuild-node-externals";
 
-const buildOptions = {
+const common = {
     bundle: true,
-    platform: "node",
     sourcemap: true,
     format: "esm",
     logLevel: "info",
 };
 
+const nodeBuild = {
+    ...common,
+    entryPoints: ["src/index.node.ts"],
+    outfile: "dist/index.js",
+    platform: "node",
+    target: ["node20"],
+    plugins: [nodeExternalsPlugin()],
+};
+
+const browserBuild = {
+    ...common,
+    entryPoints: ["src/index.browser.ts"],
+    outfile: "dist/browser.js",
+    platform: "browser",
+    target: ["es2020", "chrome100", "firefox100", "safari15"],
+};
+
+const cliBuild = {
+    ...common,
+    entryPoints: ["src/coba.tsx"],
+    outfile: "dist/coba.js",
+    platform: "node",
+    target: ["node20"],
+    plugins: [nodeExternalsPlugin({ allowList: ["@langchain/ollama"] })],
+    banner: {
+        js: "#!/usr/bin/env node",
+    },
+};
+
 await Promise.all([
-    esbuild.build({
-        ...buildOptions,
-        entryPoints: ["src/coba.tsx"],
-        outfile: "dist/coba.js",
-        plugins: [nodeExternalsPlugin({
-            allowList: ["@langchain/ollama"],
-        })],
-    }),
-    esbuild.build({
-        ...buildOptions,
-        entryPoints: ["src/browser.ts"],
-        outfile: "dist/browser.js",
-        plugins: [nodeExternalsPlugin()],
-    })
+    esbuild.build(nodeBuild),
+    esbuild.build(browserBuild),
+    esbuild.build(cliBuild),
 ]);
 
 console.log("Build completed.");

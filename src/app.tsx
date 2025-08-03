@@ -2,9 +2,10 @@ import { HumanMessage } from "@langchain/core/messages";
 import chalk from "chalk";
 import { Box, Static, Text } from "ink";
 import { homedir } from "os";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-import { ChatSession } from "./ai/chat-session.js";
+import { ChatService } from "./ai/chat-service.js";
+import { ChatSession } from "./ai/session/session.js";
 import { useChatController } from "./chat-controller.js";
 import MemoMessage, { Message } from "./ui/messages/message.js";
 import { Badge } from "./ui/messages/types.js";
@@ -14,6 +15,7 @@ import useTerminalSize from "./utils/use-terminal-size.js";
 
 interface ChatAppProps
 {
+	chatService: ChatService;
 	session: ChatSession;
 	startMessage?: string;
 	debug?: boolean;
@@ -21,7 +23,7 @@ interface ChatAppProps
 
 function ChatApp(props: ChatAppProps)
 {
-	const { session, startMessage, debug } = props;
+	const { chatService, session, startMessage, debug } = props;
 	const { chatServiceOptions } = session;
 
 	const [_message, setMessage] = useState("");
@@ -34,9 +36,18 @@ function ChatApp(props: ChatAppProps)
 		chatHistory,
 		handleSendHistory,
 	} = useChatController({
+		chatService,
 		session,
-		startMessage,
 	});
+
+	useEffect(() =>
+	{
+		if (startMessage)
+		{
+			handleSendHistory([...chatHistory.messages, new HumanMessage(startMessage)]);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const handleSendMessage = () =>
 	{

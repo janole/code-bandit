@@ -1,4 +1,3 @@
-import { HumanMessage } from "@langchain/core/messages";
 import { Key, useApp } from "ink";
 import { useEffect, useState } from "react";
 
@@ -11,12 +10,11 @@ interface UseChatControllerProps
 {
 	chatService: ChatService;
 	session: ChatSession;
-	startMessage?: string;
 }
 
 export function useChatController(props: UseChatControllerProps)
 {
-	const { chatService, session, startMessage } = props;
+	const { chatService, session } = props;
 
 	const { exit } = useApp();
 
@@ -157,15 +155,6 @@ export function useChatController(props: UseChatControllerProps)
 
 		return !!confirm; // do not allow input as long as tool-confirmation is needed
 	};
-
-	useEffect(() =>
-	{
-		if (startMessage)
-		{
-			handleSendHistory([...chatHistory.messages, new HumanMessage(startMessage)], chatHistory.messages.length + 1);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
 
 	useEffect(() =>
 	{

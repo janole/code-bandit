@@ -20,8 +20,8 @@ await Promise.all([
     }),
     esbuild.build({
         ...buildOptions,
-        entryPoints: ["src/index.ts"],
-        outfile: "dist/index.js",
+        entryPoints: ["src/browser.ts"],
+        outfile: "dist/browser.js",
         plugins: [nodeExternalsPlugin()],
     })
 ]);

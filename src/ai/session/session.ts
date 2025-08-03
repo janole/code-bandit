@@ -1,14 +1,15 @@
 import { mapChatMessagesToStoredMessages, mapStoredMessageToChatMessage, StoredMessage } from "@langchain/core/messages";
-import { mkdir, readFile } from "fs/promises";
-import { homedir } from "os";
-import { join } from "path";
 import { ulid } from "ulid";
-import writeFileAtomic from "write-file-atomic";
 
-import { IChatServiceOptions } from "./chat-service.js";
-import { CustomMessage, isCustomMessage, TMessage } from "./custom-messages.js";
+import { IChatServiceOptions } from "../chat-service.js";
+import { CustomMessage, isCustomMessage, TMessage } from "../custom-messages.js";
 
 export type TToolMode = "confirm" | "read-only" | "yolo";
+
+export interface ISessionStorage
+{
+    saveSession(session: ChatSession): Promise<void>;
+}
 
 export function mapMessageToObject(msg: TMessage): CustomMessage | StoredMessage | undefined
 {
@@ -76,6 +77,13 @@ export interface IChatSession
     finished: number;
 }
 
+export interface ICreateChatSession extends Omit<IChatSession, "id" | "messages" | "finished">
+{
+    id?: IChatSession["id"];
+    messages?: IChatSession["messages"];
+    finished?: IChatSession["finished"];
+}
+
 export class ChatSession implements IChatSession
 {
     id: string;
@@ -89,39 +97,37 @@ export class ChatSession implements IChatSession
     messages: TMessage[] = [];
     finished: number = 0;
 
-    storage: ISessionStorage;
+    storage?: ISessionStorage;
 
-    private constructor(props: IChatSession)
+    private constructor(props: IChatSession, storage: ISessionStorage | undefined)
     {
         this.id = props.id;
         this.workDir = props.workDir;
         this.toolMode = props.toolMode || "confirm";
         this.chatServiceOptions = props.chatServiceOptions;
         this.systemPrompt = props.systemPrompt;
-        this.messages = props.messages;
+        this.messages = props.messages || [];
+        this.finished = Math.min(props.finished || 0, this.messages.length);
 
-        this.storage = new FileSessionStorage();
+        this.storage = storage;
     }
 
-    static create(props: Pick<IChatSession, "workDir" | "toolMode" | "chatServiceOptions" | "systemPrompt">)
+    static create(props: ICreateChatSession, storage?: ISessionStorage)
     {
         const chatSession = new ChatSession({
-            id: ulid(),
-            messages: [],
-            finished: 0,
             ...props,
-        });
+            id: props.id || ulid(),
+            messages: props.messages || [],
+            finished: props.finished || 0,
+        }, storage);
 
         return chatSession;
     }
 
-    static async createFromFile(filePath: string): Promise<ChatSession>
+    setStorage(storage: ISessionStorage): ChatSession
     {
-        const chatSessionData = await FileSessionStorage.loadSession(filePath);
-
-        const chatSession = new ChatSession(chatSessionData);
-
-        return chatSession;
+        this.storage = storage;
+        return this;
     }
 
     async setMessages(messages: TMessage[], finished: number, autoSave: boolean = true): Promise<void>
@@ -139,60 +145,11 @@ export class ChatSession implements IChatSession
 
     async save(): Promise<void>
     {
+        if (!this.storage)
+        {
+            throw new Error("No storage configured!");
+        }
+
         return this.storage.saveSession(this);
-    }
-}
-
-interface ISessionStorage
-{
-    saveSession(session: ChatSession): Promise<void>;
-}
-
-class FileSessionStorage implements ISessionStorage
-{
-    private readonly sessionsDir: string;
-
-    constructor(baseDir?: string)
-    {
-        this.sessionsDir = join(baseDir || homedir(), ".code-bandit", "sessions");
-    }
-
-    static async loadSession(filePath: string): Promise<IChatSession>
-    {
-        const data = JSON.parse(await readFile(filePath, "utf8"));
-
-        return mapSessionDataToSession(data);
-    }
-
-    async saveSession(session: ChatSession): Promise<void>
-    {
-        await this.ensureSessionsDir();
-
-        const filePath = this.getSessionFilePath(session.id);
-
-        const sessionData = mapSessionToSessionData(session);
-
-        await writeFileAtomic(filePath, JSON.stringify(sessionData, null, 2), "utf-8");
-    }
-
-    private getSessionFilePath(sessionId: string): string
-    {
-        return join(this.sessionsDir, `${sessionId}.json`);
-    }
-
-    private async ensureSessionsDir(): Promise<void>
-    {
-        try
-        {
-            await mkdir(this.sessionsDir, { recursive: true });
-        }
-        catch (error)
-        {
-            // Directory might already exist, ignore EEXIST errors
-            if ((error as NodeJS.ErrnoException).code !== "EEXIST")
-            {
-                throw error;
-            }
-        }
     }
 }

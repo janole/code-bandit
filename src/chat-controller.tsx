@@ -2,19 +2,21 @@ import { HumanMessage } from "@langchain/core/messages";
 import { Key, useApp } from "ink";
 import { useEffect, useState } from "react";
 
-import { ChatSession } from "./ai/chat-session.js";
+import { ChatService } from "./ai/chat-service.js";
 import { ErrorMessage, TMessage, ToolProgressMessage } from "./ai/custom-messages.js";
+import { ChatSession } from "./ai/session/session.js";
 import { needsToolConfirmation, work } from "./ai/work.js";
 
 interface UseChatControllerProps
 {
+	chatService: ChatService;
 	session: ChatSession;
 	startMessage?: string;
 }
 
 export function useChatController(props: UseChatControllerProps)
 {
-	const { session, startMessage } = props;
+	const { chatService, session, startMessage } = props;
 
 	const { exit } = useApp();
 
@@ -45,6 +47,7 @@ export function useChatController(props: UseChatControllerProps)
 		session.setMessages(messages, messages.length, false);
 
 		work({
+			chatService,
 			session,
 			send: (messages: TMessage[]) => setChatHistory(history => ({ ...history, messages })),
 			signal: abortController.signal,

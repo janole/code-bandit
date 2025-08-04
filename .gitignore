@@ -3,3 +3,9 @@ dist
 src/.version.ts
 **/.*.swp
 .code-bandit
+
+# VS Code extension
+vscode-extension/node_modules
+vscode-extension/dist
+vscode-extension/.vscode-test/
+vscode-extension/*.vsix

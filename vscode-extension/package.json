@@ -1,0 +1,40 @@
+{
+  "name": "code-bandit-vscode",
+  "displayName": "Code Bandit VS Code Extension",
+  "description": "VS Code extension for Code Bandit AI-powered codebase companion",
+  "version": "0.1.0",
+  "publisher": "janole",
+  "engines": {
+    "vscode": "^1.74.0",
+    "node": ">=18"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:code-bandit.analyze"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "code-bandit.analyze",
+        "title": "Analyze with Code Bandit"
+      }
+    ]
+  },
+  "dependencies": {
+    "@janole/code-bandit": "file:.."
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "^18.x",
+    "typescript": "^5.8.3",
+    "esbuild": "^0.25.6"
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --target=node18",
+    "watch": "npm run build -- --watch",
+    "prepack": "npm run build"
+  }
+}

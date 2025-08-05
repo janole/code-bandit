@@ -75,7 +75,7 @@ export function useChatController(props: UseChatControllerProps)
 			{
 				setWorking(false);
 			});
-	}
+	};
 
 	const handleInput = (input: string, key: Key): boolean =>
 	{

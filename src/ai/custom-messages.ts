@@ -58,7 +58,7 @@ class ErrorMessage extends CustomMessage
                 name: error.name,
                 message: error.message,
                 stack: error.stack,
-            }
+            };
         }
     }
 }

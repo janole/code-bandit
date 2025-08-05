@@ -37,8 +37,10 @@ export default [
                 format: ["camelCase", "PascalCase"],
             }],
 
-            "@stylistic/brace-style": [2, "allman", { allowSingleLine: true }],
-            "@stylistic/quotes": [2, "double"],
+            "@stylistic/brace-style": ["error", "allman", { allowSingleLine: true }],
+            "@stylistic/quotes": ["error", "double"],
+            "@stylistic/comma-dangle": ["error", "always-multiline"],
+            "@stylistic/indent": ["error", 4],
 
             "simple-import-sort/imports": "error",
             "simple-import-sort/exports": "error",
@@ -56,7 +58,7 @@ export default [
             "patches",
             ".git",
             "**/dist/**",
-            "**/node_modules/**"
+            "**/node_modules/**",
         ],
     },
 ];

@@ -17,6 +17,7 @@ function listDirectory({ directory = "." }: { directory: string }, config?: Runn
         const files = globbySync(combinedPath, {
             dot: true,
             onlyFiles: false,
+            followSymbolicLinks: false,
             objectMode: true,
             stats: true,
         });
@@ -125,6 +126,7 @@ function findFiles({ pattern, directory = "." }: { pattern: string; directory?: 
         const files = globbySync(combinedPattern, {
             dot: true,
             onlyFiles: true,
+            followSymbolicLinks: false,
             gitignore: true,
         });
 
@@ -155,6 +157,7 @@ function searchInFiles({ pattern, glob: globPattern, directory = ".", isCaseSens
         const files = globbySync(combinedGlob, {
             dot: true,
             onlyFiles: true,
+            followSymbolicLinks: false,
             gitignore: true,
         });
 

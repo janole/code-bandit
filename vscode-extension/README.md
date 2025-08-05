@@ -2,9 +2,9 @@
 
 This is the companion VS Code extension for Code Bandit. Code Bandit itself is currently a CLI tool, and this extension is a **work in progress** that exposes just one feature from the CLI today:
 
-- AI-generated commit messages
+- **AI-generated commit messages**
 
-Over time, this may evolve into (or be complemented by) a fully-featured VS Code *experience* ...
+> Over time, this may evolve into (or be complemented by) a fully-featured VS Code *experience* ...
 
 ---
 
@@ -20,14 +20,14 @@ Over time, this may evolve into (or be complemented by) a fully-featured VS Code
 ## Features (today)
 
 - 🚀 **AI-Powered Git Commit Message Generation**  
-  Automatically create relevant commit messages based on your **staged changes**.
+  Automatically create commit messages based on your **staged changes**.
 
 ## How To Use
 
 1. Open the Source Control view (`Ctrl+Shift+G` or `Cmd+Shift+G`).
 2. Stage your changes.
 3. Click the ✨ "Code Bandit: Generate Commit Message" ✨ button either next to or above the commit input box.
-4. Code Bandit uses AI to generate a suggested commit message, which you can review and edit.
+4. Code Bandit uses the configured LLM to generate a suggested commit message, which you can review and edit.
 
 ## Requirements
 

@@ -1,61 +1,73 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Extension: Build",
-      "type": "shell",
-      "command": "npm",
-      "args": ["run", "compile"],
-      "options": {
-        "cwd": "${workspaceFolder}/vscode-extension"
-      },
-      "group": "build",
-      "presentation": {
-        "panel": "shared",
-        "reveal": "silent",
-        "showReuseMessage": false
-      },
-      "problemMatcher": ["$tsc", "$esbuild"]
-    },
-    {
-      "label": "Extension: Watch",
-      "type": "shell",
-      "command": "npm",
-      "args": ["run", "watch"],
-      "options": {
-        "cwd": "${workspaceFolder}/vscode-extension"
-      },
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "isBackground": true,
-      "presentation": {
-        "panel": "dedicated",
-        "reveal": "never"
-      },
-      "problemMatcher": ["$tsc-watch", "$esbuild-watch"]
-    },
-    {
-      "label": "Core: Build",
-      "type": "npm",
-      "script": "build",
-      "group": "build",
-      "presentation": {
-        "panel": "shared",
-        "reveal": "silent"
-      }
-    },
-    {
-      "label": "Core: Watch",
-      "type": "npm", 
-      "script": "watch",
-      "group": "build",
-      "isBackground": true,
-      "presentation": {
-        "panel": "dedicated",
-        "reveal": "never"
-      }
-    }
-  ]
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Extension: Build",
+            "type": "shell",
+            "command": "npm",
+            "args": [
+                "run",
+                "compile"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/vscode-extension"
+            },
+            "group": "build",
+            "presentation": {
+                "panel": "shared",
+                "reveal": "silent",
+                "showReuseMessage": false
+            },
+            "problemMatcher": [
+                "$tsc",
+                "$esbuild"
+            ]
+        },
+        {
+            "label": "Extension: Watch",
+            "type": "shell",
+            "command": "npm",
+            "args": [
+                "run",
+                "watch"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/vscode-extension"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "isBackground": true,
+            "presentation": {
+                "panel": "dedicated",
+                "reveal": "never"
+            },
+            "problemMatcher": [
+                "$tsc-watch",
+                "$esbuild-watch"
+            ]
+        },
+        {
+            "label": "Core: Build",
+            "type": "npm",
+            "script": "build",
+            "group": "build",
+            "presentation": {
+                "panel": "shared",
+                "reveal": "silent"
+            }
+        },
+        {
+            "label": "Core: Watch",
+            "type": "npm",
+            "script": "watch",
+            "group": "build",
+            "isBackground": true,
+            "presentation": {
+                "panel": "dedicated",
+                "reveal": "never"
+            }
+        }
+    ]
 }

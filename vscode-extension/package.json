@@ -1,40 +1,109 @@
 {
-  "name": "code-bandit-vscode",
-  "displayName": "Code Bandit VS Code Extension",
-  "description": "VS Code extension for Code Bandit AI-powered codebase companion",
-  "version": "0.1.0",
-  "publisher": "janole",
-  "engines": {
-    "vscode": "^1.74.0",
-    "node": ">=18"
-  },
-  "categories": [
-    "Other"
-  ],
-  "activationEvents": [
-    "onCommand:code-bandit.analyze"
-  ],
-  "main": "./dist/extension.js",
-  "contributes": {
-    "commands": [
-      {
-        "command": "code-bandit.analyze",
-        "title": "Analyze with Code Bandit"
-      }
-    ]
-  },
-  "dependencies": {
-    "@janole/code-bandit": "file:.."
-  },
-  "devDependencies": {
-    "@types/vscode": "^1.74.0",
-    "@types/node": "^18.x",
-    "typescript": "^5.8.3",
-    "esbuild": "^0.25.6"
-  },
-  "scripts": {
-    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --target=node18",
-    "watch": "npm run build -- --watch",
-    "prepack": "npm run build"
-  }
+    "name": "code-bandit",
+    "version": "0.0.3",
+    "displayName": "Code Bandit",
+    "description": "Your AI-powered codebase companion that speaks your language",
+    "publisher": "mobileways",
+    "author": {
+        "name": "Jan Ole Suhr",
+        "email": "ole@mobileways.de"
+    },
+    "license": "MIT",
+    "engines": {
+        "vscode": "^1.102.0",
+        "node": ">=18"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onResolveSourceControlView:git"
+    ],
+    "main": "./dist/extension.js",
+    "type": "module",
+    "enabledApiProposals": [],
+    "contributes": {
+        "commands": [
+            {
+                "command": "code-bandit.autofillCommitMessage",
+                "title": "Code Bandit: Generate Commit Message",
+                "icon": {
+                    "light": "resources/auto-fill-commit.svg",
+                    "dark": "resources/auto-fill-commit.svg"
+                }
+            }
+        ],
+        "menus": {
+            "scm/title": [
+                {
+                    "command": "code-bandit.autofillCommitMessage",
+                    "when": "scmProvider == git && config.codeBandit.uI.showCommitButton",
+                    "group": "navigation"
+                },
+                {
+                    "command": "code-bandit.autofillCommitMessage",
+                    "when": "scmProvider == git",
+                    "group": "1_modification"
+                }
+            ]
+        },
+        "keybindings": [
+            {
+                "command": "code-bandit.autofillCommitMessage",
+                "key": "ctrl+alt+c",
+                "mac": "cmd+alt+c",
+                "when": "scmProvider == git && activeViewlet == 'workbench.view.scm'"
+            }
+        ],
+        "configuration": {
+            "title": "Code Bandit",
+            "properties": {
+                "codeBandit.aI.models.gitCommit": {
+                    "type": "string",
+                    "default": "openai/gpt-4.1-mini",
+                    "description": "The LLM provider/model for generating the git commit message."
+                },
+                "codeBandit.uI.showCommitButton": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show the 'Generate Commit Message' button in the Source Control title bar."
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run package",
+        "compile": "npm run check-types && npm run lint && node esbuild.js",
+        "watch": "npm-run-all -p watch:*",
+        "watch:esbuild": "node esbuild.js --watch",
+        "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+        "package": "npm run check-types && npm run lint && node esbuild.js --production",
+        "compile-tests": "tsc -p . --outDir out",
+        "watch-tests": "tsc -p . -w --outDir out",
+        "pretest": "npm run compile-tests && npm run compile && npm run lint",
+        "check-types": "tsc --noEmit",
+        "lint": "eslint src",
+        "lint:fix": "eslint --fix src",
+        "test": "vscode-test",
+        "update-proposed-api": "vscode-dts dev"
+    },
+    "devDependencies": {
+        "@stylistic/eslint-plugin": "^5.2.2",
+        "@types/mocha": "^10.0.10",
+        "@types/node": "20.x",
+        "@types/vscode": "^1.102.0",
+        "@typescript-eslint/eslint-plugin": "^8.31.1",
+        "@typescript-eslint/parser": "^8.31.1",
+        "@vscode/test-cli": "^0.0.11",
+        "@vscode/test-electron": "^2.5.2",
+        "esbuild": "^0.25.3",
+        "eslint": "^9.25.1",
+        "eslint-plugin-simple-import-sort": "^12.1.1",
+        "npm-run-all": "^4.1.5",
+        "typescript": "^5.8.3",
+        "vscode-dts": "^0.3.3"
+    },
+    "dependencies": {
+        "@janole/code-bandit": "file:.."
+    }
 }

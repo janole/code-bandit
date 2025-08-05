@@ -6,7 +6,7 @@ export function activate(context: vscode.ExtensionContext)
 {
     const disposable = vscode.commands.registerCommand(
         "code-bandit.autofillCommitMessage",
-        autofillCommitMessage
+        autofillCommitMessage,
     );
 
     context.subscriptions.push(disposable);

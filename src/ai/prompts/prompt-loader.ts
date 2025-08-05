@@ -1,5 +1,5 @@
 import { promises as fs } from "fs";
-import { globbySync } from "globby";
+import { globby } from "globby";
 import path from "path";
 
 import { IChatSession } from "../session/session.js";
@@ -42,9 +42,11 @@ export class PromptLoader implements IPromptLoader
 
         try
         {
-            const files = await globbySync(`${this.workDir}/**/{${AGENT_RULE_FILES.join(",")}}`, {
+            const files = await globby(`${this.workDir}/**/{${AGENT_RULE_FILES.join(",")}}`, {
                 dot: true,
                 gitignore: true,
+                onlyFiles: true,
+                followSymbolicLinks: false,
             });
 
             if (files.length > 0)
@@ -52,7 +54,7 @@ export class PromptLoader implements IPromptLoader
                 const sortedFiles = files.sort(
                     (a, b) =>
                         AGENT_RULE_FILES.indexOf(path.basename(a)) -
-						AGENT_RULE_FILES.indexOf(path.basename(b)),
+                        AGENT_RULE_FILES.indexOf(path.basename(b)),
                 );
                 const filePath = sortedFiles[0] as string;
                 const content = await fs.readFile(filePath, "utf-8");

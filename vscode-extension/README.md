@@ -1,13 +1,17 @@
 # Code Bandit (VS Code Extension)
 
-This is the companion VS Code extension for Code Bandit. Code Bandit itself is currently a CLI tool, and this extension is a work in progress that exposes just one feature from the CLI today: AI-generated commit messages. Over time, this may evolve into (or be complemented by) a full-featured VS Code experience.
+This is the companion VS Code extension for Code Bandit. Code Bandit itself is currently a CLI tool, and this extension is a **work in progress** that exposes just one feature from the CLI today:
+
+- AI-generated commit messages
+
+Over time, this may evolve into (or be complemented by) a fully-featured VS Code *experience* ...
 
 ---
 
 ## Current Status
 
-- Alpha/Experimental: this extension is early-stage and may change rapidly.
-- Work in progress: the extension currently provides only the AI-generated commit message feature.
+- **Alpha/Experimental**: this extension is early-stage and may change rapidly.
+- **Work in progress**: the extension currently provides **only the AI-generated commit message feature**.
 - Code Bandit’s primary interface today is the command-line (CLI).
 - Additional in-editor AI features (code understanding, generation, refactoring, etc.) are planned but not yet implemented.
 
@@ -16,8 +20,7 @@ This is the companion VS Code extension for Code Bandit. Code Bandit itself is c
 ## Features (today)
 
 - 🚀 **AI-Powered Git Commit Message Generation**  
-  Automatically create relevant commit messages based on your staged changes.  
-  Click the “chat sparkle” icon next to the Git commit input in the Source Control view.
+  Automatically create relevant commit messages based on your **staged changes**.
 
 ## How To Use
 
@@ -55,21 +58,11 @@ More settings may be added as the extension evolves.
 
 ## Known Issues
 
-- The commit input box button requires VS Code v1.102.0 or later.
-- Only the AI commit message feature is currently available.
-
-## Roadmap
-
-- Broader in-editor AI assistance (navigation, explanations, refactoring, test generation).
-- Tighter integration with the Code Bandit CLI and potential migration toward a full-featured VS Code extension.
-
-## Learn More
-
-For the full capabilities and primary interface, see the Code Bandit CLI in the main repository README.
+- Configuration of AI providers is cumbersome ...
 
 ## Release Notes
 
-### 0.0.1
+### 0.3.5
 
 - Initial release: AI-powered commit message generation for Git in VS Code.
 

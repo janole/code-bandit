@@ -31,6 +31,7 @@ export default [
             "eqeqeq": "warn",
             "no-throw-literal": "warn",
             "semi": "warn",
+            "no-dupe-keys": "error",
 
             "@typescript-eslint/naming-convention": ["warn", {
                 selector: "import",

@@ -39,10 +39,23 @@ class CommitMessageGenerator
         this.repository = repository;
     }
 
+    private getProgressLocation(): vscode.ProgressLocation
+    {
+        switch (vscode.workspace.getConfiguration("codeBandit.uI").get("showCommitProgress") || "notification")
+        {
+            case "statusbar":
+                return vscode.ProgressLocation.Window;
+            case "none":
+                return vscode.ProgressLocation.SourceControl;
+            default:
+                return vscode.ProgressLocation.Notification;
+        }
+    }
+
     async withProgress()
     {
         const options = {
-            location: vscode.ProgressLocation.Notification,
+            location: this.getProgressLocation(),
             title: "Creating commit message",
             cancellable: true,
         };

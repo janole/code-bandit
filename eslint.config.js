@@ -42,6 +42,7 @@ export default [
             "@stylistic/comma-dangle": ["error", "always-multiline"],
             "@stylistic/indent": ["error", 4],
             "@stylistic/eol-last": ["error", "always"],
+            "@stylistic/object-curly-spacing": ["error", "always"],
 
             "simple-import-sort/imports": "error",
             "simple-import-sort/exports": "error",

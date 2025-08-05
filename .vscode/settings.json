@@ -14,9 +14,4 @@
         "**/node_modules": true,
         "**/dist": true
     },
-    "typescript.preferences.enableProjectDiagnostics": true,
-    "eslint.workingDirectories": [
-        ".",
-        "./vscode-extension"
-    ]
 }

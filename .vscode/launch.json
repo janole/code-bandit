@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run VS Code Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/vscode-extension"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/vscode-extension/dist/**/*.js"
+      ],
+      "preLaunchTask": "Extension: Build"
+    },
+    {
+      "name": "Run Code Bandit CLI",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/coba.tsx",
+      "args": ["analyze", "this", "project"],
+      "runtimeArgs": ["--import", "@swc-node/register/esm-register"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

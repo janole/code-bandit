@@ -10,7 +10,7 @@ const STATE_CONFIG = {
     no: { color: "red", symbol: "✖", label: "No" },
     all: { color: "green", symbol: "✔", label: "Allow All (YOLO)" },
     none: { color: "red", symbol: "✖", label: "Deny All (Read-Only)" },
-}
+};
 
 function ellipsizeVal(val: any | any[], limit: number = 50)
 {

@@ -1,4 +1,5 @@
 import stylistic from "@stylistic/eslint-plugin";
+import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import reactHooks from "eslint-plugin-react-hooks";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
@@ -6,34 +7,56 @@ import eslintPluginUnicorn from "eslint-plugin-unicorn";
 import globals from "globals";
 
 export default [
+    // Base configuration for all TypeScript files
     {
         files: ["**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
         languageOptions: {
             parser: tsParser,
             parserOptions: {
                 ecmaFeatures: { jsx: true },
-                ecmaVersion: 2020,
+                ecmaVersion: 2022,
                 sourceType: "module",
             },
             globals: globals.node,
         },
         plugins: {
-            "react-hooks": reactHooks,
-            unicorn: eslintPluginUnicorn,
+            "@typescript-eslint": typescriptEslint,
+            "@stylistic": stylistic,
             "simple-import-sort": simpleImportSort,
-            "@stylistic": stylistic
+            "react-hooks": reactHooks,
+            "unicorn": eslintPluginUnicorn,
         },
         rules: {
-            ...reactHooks.configs["recommended-latest"].rules,
-            "unicorn/filename-case": ["error", { case: "kebabCase" }],
+            "curly": "warn",
+            "eqeqeq": "warn",
+            "no-throw-literal": "warn",
+            "semi": "warn",
+
+            "@typescript-eslint/naming-convention": ["warn", {
+                selector: "import",
+                format: ["camelCase", "PascalCase"],
+            }],
+
+            "@stylistic/brace-style": [2, "allman", { allowSingleLine: true }],
+            "@stylistic/quotes": [2, "double"],
+
             "simple-import-sort/imports": "error",
             "simple-import-sort/exports": "error",
-            "@stylistic/brace-style": [2, "allman", { allowSingleLine: true }],
-            "@stylistic/quotes": [2, "double"]
+
+            ...reactHooks.configs["recommended-latest"].rules,
+
+            "unicorn/filename-case": ["error", { case: "kebabCase" }],
         },
     },
+    // Global ignores
     {
-        // Note: there should be no other properties in this object
-        ignores: ["dist", "node_modules", "patches", ".git"],
+        ignores: [
+            "dist",
+            "node_modules",
+            "patches",
+            ".git",
+            "**/dist/**",
+            "**/node_modules/**"
+        ],
     },
 ];

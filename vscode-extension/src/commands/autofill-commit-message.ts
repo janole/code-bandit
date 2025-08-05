@@ -44,12 +44,12 @@ class CommitMessageGenerator
         const options = {
             location: vscode.ProgressLocation.Notification,
             title: "Creating commit message",
-            cancellable: true
+            cancellable: true,
         };
 
         return vscode.window.withProgress(
             options,
-            (progress, token) => this.generateCommitMessage(progress, token)
+            (progress, token) => this.generateCommitMessage(progress, token),
         );
     }
 

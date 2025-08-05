@@ -15,60 +15,60 @@ import App from "./app.js";
 const program = new Command();
 
 program
-	.name("coba")
-	.description("Code Bandit")
-	.version(`${VERSION}+${COMMIT_HASH}`)
-	.argument("[git-repo-path]", "git repository directory", ".")
-	.requiredOption("-p, --provider <provider>", "Specify the model provider to be used", process.env["CODE_BANDIT_PROVIDER"])
-	.requiredOption("-m, --model <model>", "Specify the model to be used", process.env["CODE_BANDIT_MODEL"])
-	.option("-u, --api-url <url>", "API URL for the model provider")
-	.option("-k, --api-key <key>", "API key for the model provider")
-	.option("--context-size <size>", "Context size in tokens used for chat history")
-	.option("--max-messages <count>", "Maximum number of messages to keep in chat history", "10")
-	.option("-C, --continue-session <filename>", "Continue with session loaded from filename")
-	.option("--start-message <message>", "Start chat with this message")
-	.option("--read-only", "Start with read-only mode for tools")
-	.option("--write-mode", "Enable (destructive!) write mode for tools")
-	.option("--no-agent-rules", "Disable loading of AGENTS.md, .cursorrules, etc.")
-	.option("--debug", "Show debug information")
-	.action(async (gitRepoPath: string, options) =>
-	{
-		gitRepoPath && process.chdir(gitRepoPath);
+    .name("coba")
+    .description("Code Bandit")
+    .version(`${VERSION}+${COMMIT_HASH}`)
+    .argument("[git-repo-path]", "git repository directory", ".")
+    .requiredOption("-p, --provider <provider>", "Specify the model provider to be used", process.env["CODE_BANDIT_PROVIDER"])
+    .requiredOption("-m, --model <model>", "Specify the model to be used", process.env["CODE_BANDIT_MODEL"])
+    .option("-u, --api-url <url>", "API URL for the model provider")
+    .option("-k, --api-key <key>", "API key for the model provider")
+    .option("--context-size <size>", "Context size in tokens used for chat history")
+    .option("--max-messages <count>", "Maximum number of messages to keep in chat history", "10")
+    .option("-C, --continue-session <filename>", "Continue with session loaded from filename")
+    .option("--start-message <message>", "Start chat with this message")
+    .option("--read-only", "Start with read-only mode for tools")
+    .option("--write-mode", "Enable (destructive!) write mode for tools")
+    .option("--no-agent-rules", "Disable loading of AGENTS.md, .cursorrules, etc.")
+    .option("--debug", "Show debug information")
+    .action(async (gitRepoPath: string, options) =>
+    {
+        gitRepoPath && process.chdir(gitRepoPath);
 
-		const workDir = cwd();
+        const workDir = cwd();
 
-		const contextSize = options.contextSize
-			? parseInt(options.contextSize)
-			: (options.provider === "ollama" ? 8192 : undefined);
+        const contextSize = options.contextSize
+            ? parseInt(options.contextSize)
+            : (options.provider === "ollama" ? 8192 : undefined);
 
-		const maxMessages = options.maxMessages
-			? parseInt(options.maxMessages)
-			: undefined;
+        const maxMessages = options.maxMessages
+            ? parseInt(options.maxMessages)
+            : undefined;
 
-		const chatServiceOptions: IChatServiceOptions = {
-			provider: options.provider,
-			model: options.model,
-			contextSize,
-			maxMessages,
-			apiUrl: options.apiUrl,
-			apiKey: options.apiKey,
-			disableAgentRules: options.noAgentRules,
-		};
+        const chatServiceOptions: IChatServiceOptions = {
+            provider: options.provider,
+            model: options.model,
+            contextSize,
+            maxMessages,
+            apiUrl: options.apiUrl,
+            apiKey: options.apiKey,
+            disableAgentRules: options.noAgentRules,
+        };
 
-		const toolMode: TToolMode = options.readOnly ? "read-only" : options.writeMode ? "yolo" : "confirm";
+        const toolMode: TToolMode = options.readOnly ? "read-only" : options.writeMode ? "yolo" : "confirm";
 
-		const session = options.continueSession
-			? await FileSessionStorage.createFromFile(options.continueSession)
-			: FileSessionStorage.create({ workDir, toolMode, chatServiceOptions });
+        const session = options.continueSession
+            ? await FileSessionStorage.createFromFile(options.continueSession)
+            : FileSessionStorage.create({ workDir, toolMode, chatServiceOptions });
 
-		const chatService = new ChatService({
-			promptLoader: await PromptLoader.create(session),
-			toolProvider: new NodeToolProvider(),
-		});
+        const chatService = new ChatService({
+            promptLoader: await PromptLoader.create(session),
+            toolProvider: new NodeToolProvider(),
+        });
 
-		const props = { chatService, session, startMessage: options.startMessage, debug: options.debug };
+        const props = { chatService, session, startMessage: options.startMessage, debug: options.debug };
 
-		render(<App {...props} />, { exitOnCtrlC: false });
-	});
+        render(<App {...props} />, { exitOnCtrlC: false });
+    });
 
 program.parse(process.argv);

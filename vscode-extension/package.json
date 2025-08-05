@@ -67,6 +67,21 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Show the 'Generate Commit Message' button in the Source Control title bar."
+                },
+                "codeBandit.uI.showCommitProgress": {
+                    "type": "string",
+                    "enum": [
+                        "notification",
+                        "statusbar",
+                        "none"
+                    ],
+                    "enumDescriptions": [
+                        "Notification",
+                        "Status Bar",
+                        "Silent"
+                    ],
+                    "default": "notification",
+                    "description": "Show the progress of generating the commit message."
                 }
             }
         }

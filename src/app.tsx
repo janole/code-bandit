@@ -111,7 +111,7 @@ function ChatApp(props: ChatAppProps)
                         : "(working)"
                     }
                     {!working && chatServiceOptions.contextSize &&
-						<Text> (ctx:{chatServiceOptions.contextSize})</Text>
+                        <Text> (ctx:{chatServiceOptions.contextSize})</Text>
                     }
                 </Spinner>
 

@@ -1,4 +1,4 @@
-import { AIMessage, ChatService, ChatSession, HumanMessage, work } from "@janole/code-bandit";
+import { AIMessage, ChatService, ChatSession, HumanMessage, work } from "@janole/code-bandit/vscode";
 import * as vscode from "vscode";
 
 import { getActiveRepository, getStagedInfo } from "../git/api.js";

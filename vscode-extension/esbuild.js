@@ -1,4 +1,5 @@
 import esbuild from "esbuild";
+import { writeFileSync } from "fs";
 
 const production = process.argv.includes("--production");
 const watch = process.argv.includes("--watch");
@@ -36,17 +37,39 @@ async function main()
         bundle: true,
         format: "esm",
         minify: production,
-        sourcemap: !production,
+        sourcemap: true, //!production,
         sourcesContent: false,
         platform: "node",
         outfile: "dist/extension.js",
-        external: ["vscode", "fs"],
+        external: ["vscode"],
         logLevel: "silent",
+        metafile: true,
         target: "node18",
         banner: {
             js: "import { createRequire } from 'module';\nconst require = createRequire(import.meta.url);",
         },
         plugins: [
+            // nodeExternalsPlugin({
+            //     packagePath: [
+            //         "./package.json",
+            //         "../package.json",
+            //     ],
+            //     allowList: [
+            //         "@janole/code-bandit",
+            //         "@langchain/core",
+            //         "@langchain/openai",
+            //         "@langchain/google-genai",
+            //         "@langchain/ollama",
+            //         "@langchain/anthropic",
+            //         "@langchain/groq",
+            //         "globby",
+            //         "fast-glob",
+            //         "write-file-atomic",
+            //         "ulid",
+            //         "clipboardy",
+            //         "execa",
+            //     ],
+            // }),
             /* add to the end of plugins array */
             esbuildProblemMatcherPlugin,
         ],
@@ -57,8 +80,13 @@ async function main()
     }
     else
     {
-        await ctx.rebuild();
+        const result = await ctx.rebuild();
         await ctx.dispose();
+
+        if (result?.metafile)
+        {
+            writeFileSync("meta.json", JSON.stringify(result.metafile));
+        }
     }
 }
 

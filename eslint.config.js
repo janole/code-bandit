@@ -1,6 +1,7 @@
 import stylistic from "@stylistic/eslint-plugin";
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
+import eslintPluginJsonc from "eslint-plugin-jsonc";
 import reactHooks from "eslint-plugin-react-hooks";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
 import eslintPluginUnicorn from "eslint-plugin-unicorn";
@@ -53,6 +54,23 @@ export default [
             "unicorn/filename-case": ["error", { case: "kebabCase" }],
         },
     },
+    // Lint all json files
+    {
+        files: ["**/*.json"],
+        ignores: ["**/package-lock.json"],
+        plugins: {
+            "jsonc": eslintPluginJsonc,
+            "@stylistic": stylistic,
+        },
+        languageOptions: {
+            parser: eslintPluginJsonc,
+        },
+        rules: {
+            "jsonc/indent": ["error", 4],
+            "jsonc/comma-dangle": ["error", "never"],
+            "@stylistic/eol-last": ["error", "always"],
+        },
+    },
     // Global ignores
     {
         ignores: [
@@ -62,6 +80,7 @@ export default [
             ".git",
             "**/dist/**",
             "**/node_modules/**",
+            ".code-bandit",
         ],
     },
 ];

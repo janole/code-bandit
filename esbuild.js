@@ -3,7 +3,6 @@ import { nodeExternalsPlugin } from "esbuild-node-externals";
 
 const common = {
     bundle: true,
-    sourcemap: true,
     format: "esm",
     logLevel: "info",
 };
@@ -13,7 +12,9 @@ const nodeBuild = {
     entryPoints: ["src/index.node.ts"],
     outfile: "dist/index.js",
     platform: "node",
-    target: ["node20"],
+    target: ["node18"],
+    minify: false,
+    sourcemap: true,
     plugins: [nodeExternalsPlugin()],
 };
 
@@ -23,6 +24,8 @@ const cliBuild = {
     outfile: "dist/coba.js",
     platform: "node",
     target: ["node20"],
+    minify: true,
+    sourcemap: false,
     plugins: [nodeExternalsPlugin({ allowList: ["@langchain/ollama"] })],
 };
 
@@ -31,4 +34,4 @@ await Promise.all([
     esbuild.build(cliBuild),
 ]);
 
-console.log("Build completed.");
+console.log("Build completed.", process.env.NODE_ENV);

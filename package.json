@@ -1,90 +1,93 @@
 {
-	"name": "@janole/code-bandit",
-	"description": "Your AI-powered codebase companion that speaks your language",
-	"version": "0.3.5",
-	"author": "Jan Ole Suhr <ole@janole.com> (https://janole.com)",
-	"homepage": "https://github.com/janole/code-bandit?#readme",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/janole/code-bandit.git"
-	},
-	"bugs": {
-		"url": "https://github.com/janole/code-bandit/issues"
-	},
-	"license": "MIT",
-	"main": "dist/index.js",
-	"types": "dist/index.node.d.ts",
-	"bin": {
-		"coba": "dist/coba.js"
-	},
-	"exports": {
-		".": {
-			"types": "./dist/index.node.d.ts",
-			"import": "./dist/index.js",
-			"default": "./dist/index.js"
-		}
-	},
-	"type": "module",
-	"engines": {
-		"node": ">=18"
-	},
-	"scripts": {
-		"dev": "node --import @swc-node/register/esm-register ./src/coba.tsx",
-		"watch": "tsc --watch",
-		"typecheck": "npx tsc --noEmit -p tsconfig.json",
-		"lint": "eslint .",
-		"lint:fix": "eslint --fix .",
-		"ok": "npm run lint:fix && npm run typecheck",
-		"prebuild": "npm run genversion && patch-package && npm run ok",
-		"build": "rimraf dist && tsc -p tsconfig.dts.json && node esbuild.js",
-		"genversion": "COMMIT_HASH=$(git rev-parse --short HEAD) && echo \"export const VERSION = \\\"${npm_package_version}\\\";\\nexport const COMMIT_HASH = \\\"${COMMIT_HASH}\\\";\" > src/.version.ts",
-		"prepack": "npm run build"
-	},
-	"files": [
-		"dist"
-	],
-	"dependencies": {
-		"@langchain/anthropic": "^0.3.24",
-		"@langchain/core": "^0.3.62",
-		"@langchain/google-genai": "^0.2.14",
-		"@langchain/groq": "^0.2.3",
-		"@langchain/ollama": "^0.2.3",
-		"@langchain/openai": "^0.6.2",
-		"chalk": "^5.4.1",
-		"clipboardy": "^4.0.0",
-		"commander": "^14.0.0",
-		"eslint-plugin-unicorn": "^60.0.0",
-		"execa": "^9.6.0",
-		"fast-glob": "^3.3.3",
-		"globby": "^14.1.0",
-		"ink": "^6.0.1",
-		"langchain": "^0.3.29",
-		"marked": "^15.0.12",
-		"marked-terminal": "^7.3.0",
-		"react": "^19.1.0",
-		"ulid": "^3.0.1",
-		"write-file-atomic": "^6.0.0"
-	},
-	"devDependencies": {
-		"@sindresorhus/tsconfig": "^7.0.0",
-		"@stylistic/eslint-plugin": "^5.1.0",
-		"@swc-node/register": "^1.10.10",
-		"@swc/core": "^1.13.3",
-		"@types/marked": "^5.0.2",
-		"@types/marked-terminal": "^6.1.1",
-		"@types/node": "^24.0.10",
-		"@types/react": "^19.1.8",
-		"@types/write-file-atomic": "^4.0.3",
-		"@typescript-eslint/eslint-plugin": "^8.36.0",
-		"esbuild": "^0.25.6",
-		"esbuild-node-externals": "^1.18.0",
-		"eslint": "^9.32.0",
-		"eslint-plugin-import": "^2.32.0",
-		"eslint-plugin-react-hooks": "^5.2.0",
-		"eslint-plugin-simple-import-sort": "^12.1.1",
-		"globals": "^16.3.0",
-		"patch-package": "^8.0.0",
-		"rimraf": "^6.0.1",
-		"typescript": "^5.8.3"
-	}
+    "name": "@janole/code-bandit",
+    "description": "Your AI-powered codebase companion that speaks your language",
+    "version": "0.3.5",
+    "author": "Jan Ole Suhr <ole@janole.com> (https://janole.com)",
+    "homepage": "https://github.com/janole/code-bandit?#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/janole/code-bandit.git"
+    },
+    "bugs": {
+        "url": "https://github.com/janole/code-bandit/issues"
+    },
+    "license": "MIT",
+    "main": "dist/index.js",
+    "types": "dist/index.node.d.ts",
+    "bin": {
+        "coba": "dist/coba.js"
+    },
+    "exports": {
+        ".": {
+            "types": "./dist/index.node.d.ts",
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
+        }
+    },
+    "type": "module",
+    "engines": {
+        "node": ">=18"
+    },
+    "scripts": {
+        "dev": "node --import @swc-node/register/esm-register ./src/coba.tsx",
+        "watch": "tsc --watch",
+        "typecheck": "npx tsc --noEmit -p tsconfig.json",
+        "lint": "eslint .",
+        "lint:fix": "eslint --fix .",
+        "ok": "npm run lint:fix && npm run typecheck",
+        "prebuild": "npm run genversion && patch-package && npm run ok",
+        "build": "rimraf dist && tsc -p tsconfig.dts.json && node esbuild.js",
+        "genversion": "COMMIT_HASH=$(git rev-parse --short HEAD) && echo \"export const VERSION = \\\"${npm_package_version}\\\";\\nexport const COMMIT_HASH = \\\"${COMMIT_HASH}\\\";\" > src/.version.ts",
+        "prepack": "npm run build"
+    },
+    "files": [
+        "dist"
+    ],
+    "dependencies": {
+        "@langchain/anthropic": "^0.3.24",
+        "@langchain/core": "^0.3.62",
+        "@langchain/google-genai": "^0.2.14",
+        "@langchain/groq": "^0.2.3",
+        "@langchain/ollama": "^0.2.3",
+        "@langchain/openai": "^0.6.2",
+        "chalk": "^5.4.1",
+        "clipboardy": "^4.0.0",
+        "commander": "^14.0.0",
+        "eslint-plugin-unicorn": "^60.0.0",
+        "execa": "^9.6.0",
+        "fast-glob": "^3.3.3",
+        "globby": "^14.1.0",
+        "ink": "^6.0.1",
+        "langchain": "^0.3.29",
+        "marked": "^15.0.12",
+        "marked-terminal": "^7.3.0",
+        "react": "^19.1.0",
+        "ulid": "^3.0.1",
+        "write-file-atomic": "^6.0.0"
+    },
+    "devDependencies": {
+        "@eslint/json": "^0.13.1",
+        "@sindresorhus/tsconfig": "^7.0.0",
+        "@stylistic/eslint-plugin": "^5.1.0",
+        "@swc-node/register": "^1.10.10",
+        "@swc/core": "^1.13.3",
+        "@types/marked": "^5.0.2",
+        "@types/marked-terminal": "^6.1.1",
+        "@types/node": "^24.0.10",
+        "@types/react": "^19.1.8",
+        "@types/write-file-atomic": "^4.0.3",
+        "@typescript-eslint/eslint-plugin": "^8.36.0",
+        "esbuild": "^0.25.6",
+        "esbuild-node-externals": "^1.18.0",
+        "eslint": "^9.32.0",
+        "eslint-plugin-import": "^2.32.0",
+        "eslint-plugin-jsonc": "^2.20.1",
+        "eslint-plugin-react-hooks": "^5.2.0",
+        "eslint-plugin-simple-import-sort": "^12.1.1",
+        "globals": "^16.3.0",
+        "jsonc-eslint-parser": "^2.4.0",
+        "patch-package": "^8.0.0",
+        "rimraf": "^6.0.1",
+        "typescript": "^5.8.3"
+    }
 }

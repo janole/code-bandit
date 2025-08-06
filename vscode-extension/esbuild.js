@@ -42,7 +42,6 @@ async function main()
         outfile: "dist/extension.js",
         external: ["vscode"],
         logLevel: "silent",
-        metafile: true,
         target: "node18",
         banner: {
             js: "import { createRequire } from 'module';\nconst require = createRequire(import.meta.url);",

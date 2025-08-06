@@ -18,6 +18,17 @@ const nodeBuild = {
     plugins: [nodeExternalsPlugin()],
 };
 
+const vscodeBuild = {
+    ...common,
+    entryPoints: ["src/index.vscode.ts"],
+    outfile: "dist/index.vscode.js",
+    platform: "node",
+    target: ["node18"],
+    minify: false,
+    sourcemap: true,
+    plugins: [nodeExternalsPlugin()],
+};
+
 const cliBuild = {
     ...common,
     entryPoints: ["src/coba.tsx"],
@@ -31,6 +42,7 @@ const cliBuild = {
 
 await Promise.all([
     esbuild.build(nodeBuild),
+    esbuild.build(vscodeBuild),
     esbuild.build(cliBuild),
 ]);
 

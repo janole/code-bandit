@@ -1,5 +1,5 @@
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
-import { BaseMessage, SystemMessage, trimMessages } from "@langchain/core/messages";
+import { BaseMessage, mapChatMessagesToStoredMessages, mapStoredMessageToChatMessage, SystemMessage, trimMessages } from "@langchain/core/messages";
 
 import { COMMIT_HASH, VERSION } from "../.version.js";
 import tryCatch from "../utils/try-catch.js";
@@ -191,6 +191,9 @@ class ChatService
 
         let preparedMessages: BaseMessage[] = messages.filter(msg => msg instanceof BaseMessage);
 
+        // Stage 0: Limit message content size to 50.000 - 60.000 characters
+        preparedMessages = this.limitMessageContentSize(preparedMessages, 60_000);
+
         // Stage 1: Trim by message count
         if (this.current.maxMessages)
         {
@@ -233,6 +236,25 @@ class ChatService
         }
 
         return preparedMessages;
+    }
+
+    private limitMessageContentSize(messages: readonly BaseMessage[], limit: number = 60_000): BaseMessage[]
+    {
+        const truncLimit = Math.trunc(limit * 0.9);
+
+        return messages.map(msg =>
+        {
+            if (msg.text.length < limit)
+            {
+                return msg;
+            }
+
+            const stored = mapChatMessagesToStoredMessages([msg])[0]!; // TODO: fix the !
+
+            stored.data.content = stored.data.content.slice(0, truncLimit);
+
+            return mapStoredMessageToChatMessage(stored);
+        });
     }
 }
 

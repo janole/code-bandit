@@ -253,8 +253,6 @@ class ChatService
 
             stored.data.content = stored.data.content.slice(0, truncLimit);
 
-            console.error("LIMIT", msg.text.length, stored.data.content.length);
-
             return mapStoredMessageToChatMessage(stored);
         });
     }

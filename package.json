@@ -74,6 +74,7 @@
         "langchain": "^0.3.29",
         "marked": "^15.0.12",
         "marked-terminal": "^7.3.0",
+        "node-pty": "^1.0.0",
         "react": "^19.1.0",
         "ulid": "^3.0.1",
         "write-file-atomic": "^6.0.0"

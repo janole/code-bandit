@@ -104,6 +104,7 @@
         "typecheck": "tsc --noEmit",
         "lint": "eslint --config ../eslint.config.js src",
         "lint:fix": "eslint --config ../eslint.config.js --fix src",
+        "ok": "npm run lint:fix && npm run typecheck",
         "test": "vscode-test",
         "update-proposed-api": "vscode-dts dev"
     },

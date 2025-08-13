@@ -17,9 +17,13 @@ const program = new Command();
 
 program
     .name("coba")
-    .description("Code Bandit")
-    .version(`${VERSION}+${COMMIT_HASH}`)
-    .argument("[git-repo-path]", "git repository directory", ".")
+    .description("Code Bandit - Your AI-powered codebase companion")
+    .version(`${VERSION}+${COMMIT_HASH}`);
+
+program
+    .command("chat", { isDefault: true })
+    .description("Start an interactive chat session with Code Bandit (default command).")
+    .argument("[git-repo-path]", "The git repository directory to work in", ".")
     .requiredOption("-p, --provider <provider>", "Specify the model provider to be used", process.env["CODE_BANDIT_PROVIDER"])
     .requiredOption("-m, --model <model>", "Specify the model to be used", process.env["CODE_BANDIT_MODEL"])
     .option("-u, --api-url <url>", "API URL for the model provider")
@@ -75,10 +79,18 @@ program
 program
     .command("install-extension")
     .description("Download and install the official Code Bandit VS Code extension.")
-    .option("--extension-version <tag>", "Specify a version tag to install (e.g., v0.1.0)", "latest")
+    .option("--tag <tag>", "Specify a version tag to install (e.g., v0.1.0)", "latest")
     .action(async (options) =>
     {
-        await installVscodeExtension(options.extensionVersion);
+        await installVscodeExtension(options.tag);
     });
+
+program.on('--help', () =>
+{
+    program.commands.forEach(cmd =>
+    {
+        console.log('\n' + cmd.helpInformation());
+    });
+});
 
 program.parse(process.argv);

@@ -18,11 +18,18 @@ const program = new Command();
 program
     .name("coba")
     .description("Code Bandit - Your AI-powered codebase companion")
+    .addHelpText("beforeAll", () =>
+    {
+        return program.commands.map(cmd => cmd.helpInformation()).join("\n");
+    })
     .version(`${VERSION}+${COMMIT_HASH}`);
 
 program
     .command("chat", { isDefault: true })
-    .description("Start an interactive chat session with Code Bandit (default command).")
+    .configureHelp({
+        commandUsage: () => `${program.name()} [options] [git-repo-path]`,
+    })
+    .description("Start an interactive chat session with Code Bandit.")
     .argument("[git-repo-path]", "The git repository directory to work in", ".")
     .requiredOption("-p, --provider <provider>", "Specify the model provider to be used", process.env["CODE_BANDIT_PROVIDER"])
     .requiredOption("-m, --model <model>", "Specify the model to be used", process.env["CODE_BANDIT_MODEL"])
@@ -84,13 +91,5 @@ program
     {
         await installVscodeExtension(options.tag);
     });
-
-program.on('--help', () =>
-{
-    program.commands.forEach(cmd =>
-    {
-        console.log('\n' + cmd.helpInformation());
-    });
-});
 
 program.parse(process.argv);

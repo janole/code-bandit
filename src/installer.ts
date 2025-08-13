@@ -7,34 +7,58 @@ import path from "path";
 const GITHUB_OWNER = "janole";
 const GITHUB_REPO = "code-bandit";
 
-async function getReleaseAssetUrl(version: string): Promise<{ url: string, fileName: string }>
+async function getReleaseAssetUrl(version: string): Promise<{ url: string; fileName: string }>
 {
-    const tag = version === "latest" ? "latest" : `tags/${version}`;
-    const apiUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/${tag}`;
+    // If the user requests a specific version, we use the direct tag URL.
+    if (version !== "latest")
+    {
+        const apiUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/${version}`;
+        console.log(`🔍 Fetching specific release information for tag '${version}'...`);
 
-    console.log(`🔍 Fetching release information from ${apiUrl}...`);
+        const response = await fetch(apiUrl, { headers: { "User-Agent": "Code-Bandit-CLI" } });
+        if (!response.ok)
+        {
+            throw new Error(`Failed to fetch release info for tag ${version}: ${response.statusText}`);
+        }
 
-    const response = await fetch(apiUrl, {
-        headers: { "User-Agent": "Code-Bandit-CLI" },
-    });
+        const releaseData = (await response.json()) as any;
+        const asset = releaseData.assets?.find((a: any) => a.name.endsWith(".vsix"));
+        if (!asset?.browser_download_url)
+        {
+            throw new Error(`Could not find a .vsix asset for version ${version}.`);
+        }
 
+        console.log(`✅ Found asset: ${asset.name}`);
+
+        return { url: asset.browser_download_url, fileName: asset.name };
+    }
+
+    // If the user wants the latest, we search through recent releases to find one with a .vsix asset.
+    console.log("🔍 Searching for the latest release with a .vsix asset...");
+    const listApiUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`;
+
+    const response = await fetch(listApiUrl, { headers: { "User-Agent": "Code-Bandit-CLI" } });
     if (!response.ok)
     {
-        throw new Error(`Failed to fetch release info: ${response.statusText} (URL: ${apiUrl})`);
+        throw new Error(`Failed to fetch release list: ${response.statusText}`);
     }
 
-    const releaseData = (await response.json()) as any;
-    const asset = releaseData.assets?.find((a: any) =>
-        a.name.endsWith(".vsix"),
-    );
+    const releases = (await response.json()) as any[];
 
-    if (!asset?.browser_download_url)
+    for (const release of releases)
     {
-        throw new Error(`Could not find a .vsix asset for version ${version}.`);
+        const vsixAsset = release.assets?.find((a: any) => a.name.endsWith(".vsix"));
+
+        if (vsixAsset)
+        {
+            // Found the most recent release with a VSIX file.
+            console.log(`✅ Found latest suitable release: ${release.name} (Asset: ${vsixAsset.name})`);
+            return { url: vsixAsset.browser_download_url, fileName: vsixAsset.name };
+        }
     }
 
-    console.log(`✅ Found asset: ${asset.name}`);
-    return { url: asset.browser_download_url, fileName: asset.name };
+    // If we get here, no VSIX was found in any of the recent releases.
+    throw new Error("Could not find a .vsix asset in any of the recent releases.");
 }
 
 async function downloadFile(url: string, dest: string): Promise<void>
@@ -109,16 +133,16 @@ export async function installVscodeExtension(version = "latest")
 
         if (error.message.includes("ENOENT"))
         {
-            errorMessage += "\\nCould not find the 'code' command. Please ensure you have launched VS Code and run the 'Shell Command: Install \\\\'code\\\\' command in PATH' command from the command palette (Cmd+Shift+P).";
+            errorMessage += "\nCould not find the 'code' command. Please ensure you have launched VS Code and run the 'Shell Command: Install 'code' command in PATH' command from the command palette (Cmd+Shift+P).";
         }
         else if (error.message)
         {
-            errorMessage += `\\nError: ${error.message}`;
+            errorMessage += `\nError: ${error.message}`;
         }
 
         if (error.stderr)
         {
-            errorMessage += `\\nDetails: ${error.stderr}`;
+            errorMessage += `\nDetails: ${error.stderr}`;
         }
         console.error(errorMessage);
     }

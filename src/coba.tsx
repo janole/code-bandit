@@ -11,6 +11,7 @@ import { FileSessionStorage } from "./ai/session/file-session-storage.js";
 import { TToolMode } from "./ai/session/session.js";
 import { NodeToolProvider } from "./ai/tools/node-tool-provider.js";
 import App from "./app.js";
+import { installVscodeExtension } from "./installer.js";
 
 const program = new Command();
 
@@ -69,6 +70,15 @@ program
         const props = { chatService, session, startMessage: options.startMessage, debug: options.debug };
 
         render(<App {...props} />, { exitOnCtrlC: false });
+    });
+
+program
+    .command("install-extension")
+    .description("Download and install the official Code Bandit VS Code extension.")
+    .option("--extension-version <tag>", "Specify a version tag to install (e.g., v0.1.0)", "latest")
+    .action(async (options) =>
+    {
+        await installVscodeExtension(options.extensionVersion);
     });
 
 program.parse(process.argv);

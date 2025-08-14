@@ -92,8 +92,8 @@ program.helpInformation = () =>
     return [
         "Code Bandit - Your AI-powered codebase companion",
         "",
-        ...program.commands.map(cmd => cmd.helpInformation())
+        ...program.commands.map(cmd => cmd.helpInformation()),
     ].join("\n");
-}
+};
 
 program.parse(process.argv);

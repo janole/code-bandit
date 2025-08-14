@@ -11,7 +11,7 @@ import { FileSessionStorage } from "./ai/session/file-session-storage.js";
 import { TToolMode } from "./ai/session/session.js";
 import { NodeToolProvider } from "./ai/tools/node-tool-provider.js";
 import App from "./app.js";
-import { installVscodeExtension } from "./installer.js";
+import { installVscodeExtension } from "./commands/install-extension.js";
 
 const program = new Command();
 

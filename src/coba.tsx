@@ -17,11 +17,6 @@ const program = new Command();
 
 program
     .name("coba")
-    .description("Code Bandit - Your AI-powered codebase companion")
-    .addHelpText("beforeAll", () =>
-    {
-        return program.commands.map(cmd => cmd.helpInformation()).join("\n");
-    })
     .version(`${VERSION}+${COMMIT_HASH}`);
 
 program
@@ -91,5 +86,14 @@ program
     {
         await installVscodeExtension(options.tag);
     });
+
+program.helpInformation = () => 
+{
+    return [
+        "Code Bandit - Your AI-powered codebase companion",
+        "",
+        ...program.commands.map(cmd => cmd.helpInformation())
+    ].join("\n");
+}
 
 program.parse(process.argv);

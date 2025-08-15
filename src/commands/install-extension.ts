@@ -65,7 +65,9 @@ async function downloadFile(url: string, dest: string): Promise<void>
 {
     return new Promise((resolve, reject) =>
     {
-        https.get(url, { headers: { "User-Agent": "Code-Bandit-CLI" } }, (response) =>
+        const agent = new https.Agent({ keepAlive: false });
+
+        https.get(url, { headers: { "User-Agent": "Code-Bandit-CLI" }, agent }, (response) =>
         {
             // Handle redirects
             if (response.statusCode === 301 || response.statusCode === 302)

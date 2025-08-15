@@ -148,6 +148,7 @@ export async function installVscodeExtension(version = "latest")
         {
             errorMessage += `\nDetails: ${error.stderr}`;
         }
+
         console.error(errorMessage);
     }
     finally

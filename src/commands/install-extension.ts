@@ -91,6 +91,8 @@ async function downloadFile(url: string, dest: string): Promise<void>
             {
                 file.close((err) =>
                 {
+                    response.destroy();
+
                     if (err)
                     {
                         reject(err);

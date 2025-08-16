@@ -1,6 +1,14 @@
 import pty, { IPty, IPtyForkOptions } from "node-pty";
 import stripAnsi from "strip-ansi";
 
+interface OnDataProps
+{
+    name: string;
+    history: string[];
+    proc: IPty;
+    data: string;
+}
+
 interface OnExitProps
 {
     name: string;
@@ -14,6 +22,7 @@ interface IOptions
 {
     readTimeout?: number;
     sessionTimeout?: number;
+    onData?: (props: OnDataProps) => void;
     onExit?: (props: OnExitProps) => void;
     spawnOptions?: IPtyForkOptions;
 }
@@ -77,6 +86,8 @@ export class PtyManager
                 readTimeout = setTimeout(handleTimeout, options.readTimeout);
             }
 
+            options.onData?.({ name, history, proc, data });
+
             buffer.push(data);
             history.push(data);
         });
@@ -105,11 +116,21 @@ export class PtyManager
         return name;
     }
 
-    write(name: string, input: string): void
+    /** Writes a line of text to the session, automatically adding a newline. */
+    writeLine(name: string, input: string): void
     {
         const session = this.sessions.get(name);
         if (!session) { throw new Error(`Session "${name}" not found`); }
         session.proc.write(input.endsWith("\n") ? input : input + "\n");
+    }
+
+    /** Writes raw data to the session's stdin without modification. */
+    writeRaw(name: string, data: string, eof?: boolean): void
+    {
+        const session = this.sessions.get(name);
+        if (!session) { throw new Error(`Session "${name}" not found`); }
+        session.proc.write(data);
+        eof && session.proc.write("\x04");
     }
 
     /** Get unread output since last call */
@@ -155,6 +176,11 @@ export class PtyManager
         // this.sessions.delete(name);
     }
 
+    get(name: string)
+    {
+        return this.sessions.get(name);
+    }
+
     /**
      * Waits for a session to exit.
      *
@@ -170,7 +196,7 @@ export class PtyManager
             return Promise.reject(new Error(`Session "${name}" not found`));
         }
 
-        if (typeof session.exitCode === 'number')
+        if (typeof session.exitCode === "number")
         {
             return Promise.resolve({ exitCode: session.exitCode, signal: session.signal });
         }

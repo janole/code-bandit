@@ -108,7 +108,7 @@ export class PtyManager
     write(name: string, input: string): void
     {
         const session = this.sessions.get(name);
-        if (!session) {throw new Error(`Session "${name}" not found`);}
+        if (!session) { throw new Error(`Session "${name}" not found`); }
         session.proc.write(input.endsWith("\n") ? input : input + "\n");
     }
 
@@ -116,7 +116,7 @@ export class PtyManager
     read(name: string): string
     {
         const session = this.sessions.get(name);
-        if (!session) {throw new Error(`Session "${name}" not found`);}
+        if (!session) { throw new Error(`Session "${name}" not found`); }
         const output = session.buffer.join("");
         session.buffer.length = 0; // Clear unread buffer
         return output;
@@ -131,7 +131,7 @@ export class PtyManager
     getHistory(name: string): string
     {
         const session = this.sessions.get(name);
-        if (!session) {throw new Error(`Session "${name}" not found`);}
+        if (!session) { throw new Error(`Session "${name}" not found`); }
         return session.history.join("");
     }
 
@@ -143,14 +143,14 @@ export class PtyManager
     resize(name: string, cols: number, rows: number): void
     {
         const session = this.sessions.get(name);
-        if (!session) {throw new Error(`Session "${name}" not found`);}
+        if (!session) { throw new Error(`Session "${name}" not found`); }
         session.proc.resize(cols, rows);
     }
 
     kill(name: string, signal: string = "SIGTERM"): void
     {
         const session = this.sessions.get(name);
-        if (!session) {throw new Error(`Session "${name}" not found`);}
+        if (!session) { throw new Error(`Session "${name}" not found`); }
         session.proc.kill(signal);
         // this.sessions.delete(name);
     }

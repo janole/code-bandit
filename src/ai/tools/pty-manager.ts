@@ -154,4 +154,49 @@ export class PtyManager
         session.proc.kill(signal);
         // this.sessions.delete(name);
     }
+
+    /**
+     * Waits for a session to exit.
+     *
+     * @param name The name of the session.
+     * @param timeout Optional timeout in milliseconds.
+     * @returns A promise that resolves with the exit code and signal, or rejects on timeout.
+     */
+    waitForExit(name: string, timeout?: number): Promise<{ exitCode: number, signal?: number }>
+    {
+        const session = this.sessions.get(name);
+        if (!session)
+        {
+            return Promise.reject(new Error(`Session "${name}" not found`));
+        }
+
+        if (typeof session.exitCode === 'number')
+        {
+            return Promise.resolve({ exitCode: session.exitCode, signal: session.signal });
+        }
+
+        return new Promise((resolve, reject) =>
+        {
+            let timeoutId: NodeJS.Timeout | null = null;
+
+            const disposable = session.proc.onExit(({ exitCode, signal }) =>
+            {
+                if (timeoutId)
+                {
+                    clearTimeout(timeoutId);
+                }
+                disposable.dispose();
+                resolve({ exitCode, signal });
+            });
+
+            if (timeout && timeout > 0)
+            {
+                timeoutId = setTimeout(() =>
+                {
+                    disposable.dispose();
+                    reject(new Error(`Timeout waiting for session "${name}" to exit`));
+                }, timeout);
+            }
+        });
+    }
 }

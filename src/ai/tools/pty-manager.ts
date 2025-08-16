@@ -1,4 +1,5 @@
 import pty, { IPty, IPtyForkOptions } from "node-pty";
+import stripAnsi from "strip-ansi";
 
 interface OnExitProps
 {
@@ -112,12 +113,22 @@ export class PtyManager
         return output;
     }
 
+    readText(name: string): string
+    {
+        return stripAnsi(this.read(name));
+    }
+
     /** Get full history of the session */
     getHistory(name: string): string
     {
         const session = this.sessions.get(name);
         if (!session) {throw new Error(`Session "${name}" not found`);}
         return session.history.join("");
+    }
+
+    getHistoryText(name: string): string
+    {
+        return stripAnsi(this.getHistory(name));
     }
 
     resize(name: string, cols: number, rows: number): void

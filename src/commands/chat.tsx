@@ -4,8 +4,8 @@ import React from "react";
 
 import { ChatService, IChatServiceOptions } from "../ai/chat-service.js";
 import { resolveWithinWorkDir } from "../ai/tools/utils.js";
-import ChatApp from "../app.js";
 import { FileSessionStorage, NodeToolProvider, PromptLoader, TToolMode } from "../index.node.js";
+import ChatApp from "../ui/chat-app.js";
 
 async function chat(options: any)
 {

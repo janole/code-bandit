@@ -4,14 +4,14 @@ import { Box, Static, Text } from "ink";
 import { homedir } from "os";
 import React, { useEffect, useState } from "react";
 
-import { ChatService } from "./ai/chat-service.js";
-import { ChatSession } from "./ai/session/session.js";
+import { ChatService } from "../ai/chat-service.js";
+import { ChatSession } from "../ai/session/session.js";
+import useTerminalSize from "../utils/use-terminal-size.js";
 import { useChatController } from "./chat-controller.js";
-import MemoMessage, { Message } from "./ui/messages/message.js";
-import { Badge } from "./ui/messages/types.js";
-import Spinner from "./ui/spinner.js";
-import TextInput from "./ui/text-input.js";
-import useTerminalSize from "./utils/use-terminal-size.js";
+import MemoMessage, { Message } from "./messages/message.js";
+import { Badge } from "./messages/types.js";
+import Spinner from "./spinner.js";
+import TextInput from "./text-input.js";
 
 interface ChatAppProps
 {

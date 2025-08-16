@@ -1,10 +1,10 @@
 import { Key, useApp } from "ink";
 import { useEffect, useState } from "react";
 
-import { ChatService } from "./ai/chat-service.js";
-import { ErrorMessage, TMessage, ToolProgressMessage } from "./ai/custom-messages.js";
-import { ChatSession } from "./ai/session/session.js";
-import { needsToolConfirmation, work } from "./ai/work.js";
+import { ChatService } from "../ai/chat-service.js";
+import { ErrorMessage, TMessage, ToolProgressMessage } from "../ai/custom-messages.js";
+import { ChatSession } from "../ai/session/session.js";
+import { needsToolConfirmation, work } from "../ai/work.js";
 
 interface UseChatControllerProps
 {

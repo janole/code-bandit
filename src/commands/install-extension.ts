@@ -4,6 +4,8 @@ import https from "https";
 import os from "os";
 import path from "path";
 
+import { getAppTitle } from "../utils/info.js";
+
 const GITHUB_OWNER = "janole";
 const GITHUB_REPO = "code-bandit";
 
@@ -129,7 +131,7 @@ export async function installVscodeExtension(version = "latest")
         await execa("code", ["--install-extension", tempFilePath]);
 
         console.log(
-            "🎉 Successfully installed the Code Bandit VS Code extension!",
+            `🎉 Successfully installed the ${getAppTitle()} VS Code extension!`,
         );
     }
     catch (error: any)

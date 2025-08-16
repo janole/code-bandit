@@ -12,6 +12,7 @@ import { TToolMode } from "./ai/session/session.js";
 import { NodeToolProvider } from "./ai/tools/node-tool-provider.js";
 import App from "./app.js";
 import { installVscodeExtension } from "./commands/install-extension.js";
+import { getAppTitle } from "./utils/info.js";
 
 const program = new Command();
 
@@ -24,7 +25,7 @@ program
     .configureHelp({
         commandUsage: () => `${program.name()} [options] [git-repo-path]`,
     })
-    .description("Start an interactive chat session with Code Bandit.")
+    .description(`Start an interactive chat session with ${getAppTitle()}.`)
     .argument("[git-repo-path]", "The git repository directory to work in", ".")
     .requiredOption("-p, --provider <provider>", "Specify the model provider to be used", process.env["CODE_BANDIT_PROVIDER"])
     .requiredOption("-m, --model <model>", "Specify the model to be used", process.env["CODE_BANDIT_MODEL"])
@@ -80,7 +81,7 @@ program
 
 program
     .command("install-extension")
-    .description("Download and install the official Code Bandit VS Code extension.")
+    .description(`Download and install the official ${getAppTitle()} VS Code extension.`)
     .option("--tag <tag>", "Specify a version tag to install (e.g., v0.1.0)", "latest")
     .action(async (options) =>
     {
@@ -90,7 +91,7 @@ program
 program.helpInformation = () => 
 {
     return [
-        "Code Bandit - Your AI-powered codebase companion",
+        `${getAppTitle()} - Your AI-powered codebase companion`,
         "",
         ...program.commands.map(cmd => cmd.helpInformation()),
     ].join("\n");

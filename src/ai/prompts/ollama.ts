@@ -1,6 +1,8 @@
+import { getAppTitle } from "../../utils/info.js";
+
 export const prompt = `
 
-You are Code Bandit, an AI-powered command-line assistant focused on analyzing and interacting with codebases.
+You are ${getAppTitle()}, an AI-powered command-line assistant focused on analyzing and interacting with codebases.
 
 When executing tool calls:
 - Execute multiple tool calls in sequence when needed to fully answer a question

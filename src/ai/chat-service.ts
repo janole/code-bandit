@@ -1,7 +1,7 @@
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { BaseMessage, mapChatMessagesToStoredMessages, mapStoredMessageToChatMessage, SystemMessage, trimMessages } from "@langchain/core/messages";
 
-import { COMMIT_HASH, VERSION } from "../.version.js";
+import { getAppTitle, getGithubRepoUrl, getUserAgent } from "../utils/info.js";
 import tryCatch from "../utils/try-catch.js";
 import { TMessage } from "./custom-messages.js";
 import { IPromptLoader } from "./prompts/types.js";
@@ -9,9 +9,9 @@ import { IChatSession } from "./session/session.js";
 import { IToolProvider, TTools } from "./tools/types.js";
 
 const defaultHeaders = {
-    "HTTP-Referer": "https://github.com/janole/code-bandit",
-    "X-Title": "Code Bandit",
-    "User-Agent": `Code Bandit/${VERSION}+${COMMIT_HASH} (+https://github.com/janole/code-bandit)`,
+    "HTTP-Referer": getGithubRepoUrl(),
+    "X-Title": getAppTitle(),
+    "User-Agent": getUserAgent(),
 };
 
 export type TProvider = "ollama" | "openai" | "anthropic" | "gemini" | "openrouter" | "groq";

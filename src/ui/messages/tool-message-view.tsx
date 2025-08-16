@@ -12,14 +12,14 @@ const STATE_CONFIG = {
     none: { color: "red", symbol: "✖", label: "Deny All (Read-Only)" },
 };
 
-function ellipsizeVal(val: any | any[], limit: number = 50)
+function ellipsizeVal(val: any | any[], limit: number = 60)
 {
     const line = Array.isArray(val)
         ? val.filter(a => a).map(a => a.toString().replace(/[\r\n]+/g, " ")).join(" ")
         : val.toString().replace(/[\r\n]+/g, " ");
 
     return line.length > limit
-        ? line.slice(0, 20) + " ... " + line.slice(-20)
+        ? line.slice(0, Math.floor(limit / 2)) + " ... " + line.slice(-Math.floor(limit / 2))
         : line;
 }
 

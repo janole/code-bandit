@@ -138,7 +138,7 @@ export async function installVscodeExtension(version = "latest")
 
         if (error.message.includes("ENOENT"))
         {
-            errorMessage += "\nCould not find the 'code' command. Please ensure you have launched VS Code and run the 'Shell Command: Install 'code' command in PATH' command from the command palette (Cmd+Shift+P).";
+            errorMessage += "\nCould not find the 'code' command. Please ensure you have launched VS Code and run the 'Shell Command: Install 'code' command in PATH' command from the command palette (Cmd-Shift-P).";
         }
         else if (error.message)
         {

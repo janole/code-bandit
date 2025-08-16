@@ -1,16 +1,8 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { render } from "ink";
-import { cwd } from "process";
-import React from "react";
 
 import { COMMIT_HASH, VERSION } from "./.version.js";
-import { ChatService, IChatServiceOptions } from "./ai/chat-service.js";
-import { PromptLoader } from "./ai/prompts/prompt-loader.js";
-import { FileSessionStorage } from "./ai/session/file-session-storage.js";
-import { TToolMode } from "./ai/session/session.js";
-import { NodeToolProvider } from "./ai/tools/node-tool-provider.js";
-import App from "./app.js";
+import { chat } from "./commands/chat.js";
 import { installVscodeExtension } from "./commands/install-extension.js";
 import { getAppTitle } from "./utils/info.js";
 
@@ -23,10 +15,9 @@ program
 program
     .command("chat", { isDefault: true })
     .configureHelp({
-        commandUsage: () => `${program.name()} [options] [git-repo-path]`,
+        commandUsage: () => `${program.name()} [options]`,
     })
     .description(`Start an interactive chat session with ${getAppTitle()}.`)
-    .argument("[git-repo-path]", "The git repository directory to work in", ".")
     .requiredOption("-p, --provider <provider>", "Specify the model provider to be used", process.env["CODE_BANDIT_PROVIDER"])
     .requiredOption("-m, --model <model>", "Specify the model to be used", process.env["CODE_BANDIT_MODEL"])
     .option("-u, --api-url <url>", "API URL for the model provider")
@@ -37,46 +28,12 @@ program
     .option("--start-message <message>", "Start chat with this message")
     .option("--read-only", "Start with read-only mode for tools")
     .option("--write-mode", "Enable (destructive!) write mode for tools")
+    .option("-R, --repo-path <path>", "The git repository directory to work in", ".")
     .option("--no-agent-rules", "Disable loading of AGENTS.md, .cursorrules, etc.")
     .option("--debug", "Show debug information")
-    .action(async (gitRepoPath: string, options) =>
+    .action(async (options) =>
     {
-        gitRepoPath && process.chdir(gitRepoPath);
-
-        const workDir = cwd();
-
-        const contextSize = options.contextSize
-            ? parseInt(options.contextSize)
-            : (options.provider === "ollama" ? 8192 : undefined);
-
-        const maxMessages = options.maxMessages
-            ? parseInt(options.maxMessages)
-            : undefined;
-
-        const chatServiceOptions: IChatServiceOptions = {
-            provider: options.provider,
-            model: options.model,
-            contextSize,
-            maxMessages,
-            apiUrl: options.apiUrl,
-            apiKey: options.apiKey,
-            disableAgentRules: options.noAgentRules,
-        };
-
-        const toolMode: TToolMode = options.readOnly ? "read-only" : options.writeMode ? "yolo" : "confirm";
-
-        const session = options.continueSession
-            ? await FileSessionStorage.createFromFile(options.continueSession)
-            : FileSessionStorage.create({ workDir, toolMode, chatServiceOptions });
-
-        const chatService = new ChatService({
-            promptLoader: await PromptLoader.create(session),
-            toolProvider: new NodeToolProvider(),
-        });
-
-        const props = { chatService, session, startMessage: options.startMessage, debug: options.debug };
-
-        render(<App {...props} />, { exitOnCtrlC: false });
+        return chat(options);
     });
 
 program

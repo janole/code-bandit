@@ -77,6 +77,7 @@ async function downloadFile(url: string, dest: string): Promise<void>
                     downloadFile(response.headers.location, dest).then(resolve).catch(reject);
                     return;
                 }
+
                 return reject(new Error("Redirect location not found."));
             }
 
@@ -89,10 +90,10 @@ async function downloadFile(url: string, dest: string): Promise<void>
             response.pipe(file);
             file.on("finish", () =>
             {
+                response.destroy();
+
                 file.close((err) =>
                 {
-                    response.destroy();
-
                     if (err)
                     {
                         reject(err);

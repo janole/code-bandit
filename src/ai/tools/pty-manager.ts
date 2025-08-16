@@ -23,6 +23,8 @@ interface Session
     proc: IPty;
     buffer: string[];
     history: string[];
+    exitCode?: number;
+    signal?: number;
 }
 
 export class PtyManager
@@ -87,6 +89,13 @@ export class PtyManager
             }
 
             options.onExit?.({ name, history, proc, exitCode, signal });
+
+            const session = this.sessions.get(name);
+            if (session)
+            {
+                session.exitCode = exitCode;
+                session.signal = signal;
+            }
 
             // this.sessions.delete(name); // Remove session on exit
         });

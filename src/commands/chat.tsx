@@ -74,4 +74,9 @@ async function exec(message: string, options: any)
         || "ERROR: No reply received.";
 }
 
-export { chat, exec };
+export
+{
+    chat,
+    exec,
+};
+

@@ -38,7 +38,7 @@ program
 
 program
     .command("exec <message...>")
-    .description("Run ")
+    .description(`Run ${getAppTitle()} non-interactively.`)
     .requiredOption("-p, --provider <provider>", "Specify the model provider to be used", process.env["CODE_BANDIT_PROVIDER"])
     .requiredOption("-m, --model <model>", "Specify the model to be used", process.env["CODE_BANDIT_MODEL"])
     .action(async (messages: string[], options) =>

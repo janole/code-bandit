@@ -3,7 +3,6 @@ import { BaseMessage, mapChatMessagesToStoredMessages, mapStoredMessageToChatMes
 
 import { getAppTitle, getGithubRepoUrl, getUserAgent } from "../utils/info.js";
 import tryCatch from "../utils/try-catch.js";
-import { TMessage } from "./custom-messages.js";
 import { IPromptLoader } from "./prompts/types.js";
 import { IChatSession } from "./session/session.js";
 import { IToolProvider, TTools } from "./tools/types.js";
@@ -42,8 +41,6 @@ class ChatService
 
         contextSize?: number;
         maxMessages?: number;
-
-        systemMessage?: SystemMessage;
 
         tools?: TTools;
     };
@@ -137,8 +134,6 @@ class ChatService
             throw new Error(`Unknown provider ${provider}`);
         }
 
-        const systemPrompt = session.systemPrompt || this.promptLoader?.getSystemPrompt(session);
-
         this.current = {
             llm,
             provider,
@@ -146,8 +141,6 @@ class ChatService
 
             contextSize,
             maxMessages,
-
-            systemMessage: systemPrompt ? new SystemMessage(systemPrompt) : undefined,
 
             tools: this.toolProvider?.getTools(session),
         };
@@ -177,17 +170,19 @@ class ChatService
             return llm.bindTools(Object.values(this.tools));
         });
 
-        const preparedMessages = await this.prepareMessages(session.messages);
+        const preparedMessages = await this.prepareMessages(session);
 
         return llm.stream(preparedMessages, { signal });
     }
 
-    private async prepareMessages(messages: readonly TMessage[]): Promise<BaseMessage[]>
+    private async prepareMessages(session: IChatSession): Promise<BaseMessage[]>
     {
         if (!this.current)
         {
             throw new Error("ChatService is not initialized. Call getLLM() first.");
         }
+
+        const messages = session.messages;
 
         let preparedMessages: BaseMessage[] = messages.filter(msg => msg instanceof BaseMessage);
 
@@ -230,9 +225,11 @@ class ChatService
             }
         }
 
-        if (this.current.systemMessage)
+        const systemPrompt = session.systemPrompt || await this.promptLoader?.getSystemPrompt(session);
+
+        if (systemPrompt)
         {
-            return [this.current.systemMessage, ...preparedMessages];
+            return [new SystemMessage(systemPrompt), ...preparedMessages];
         }
 
         return preparedMessages;

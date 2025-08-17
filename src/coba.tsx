@@ -14,10 +14,10 @@ program
 
 program
     .command("chat", { isDefault: true })
+    .description(`Start an interactive chat session with ${getAppTitle()}.`)
     .configureHelp({
         commandUsage: () => `${program.name()} [options]`,
     })
-    .description(`Start an interactive chat session with ${getAppTitle()}.`)
     .requiredOption("-p, --provider <provider>", "Specify the model provider to be used", process.env["CODE_BANDIT_PROVIDER"])
     .requiredOption("-m, --model <model>", "Specify the model to be used", process.env["CODE_BANDIT_MODEL"])
     .option("-u, --api-url <url>", "API URL for the model provider")

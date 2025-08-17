@@ -3,6 +3,7 @@ import { globby } from "globby";
 import path from "path";
 
 import { IChatSession } from "../session/session.js";
+import { getGitBranch } from "../tools/git-tools.js";
 import { prompt as defaultPrompt } from "./default.js";
 import { prompt as ollamaPrompt } from "./ollama.js";
 import { IPromptLoader } from "./types.js";
@@ -58,7 +59,7 @@ export class PromptLoader implements IPromptLoader
                 );
                 const filePath = sortedFiles[0] as string;
                 const content = await fs.readFile(filePath, "utf-8");
-                this.agentRules = content.slice(0, MAX_PROMPT_LENGTH);
+                this.agentRules = content.replace(/<!--.*?-->/gs, "").trim().slice(0, MAX_PROMPT_LENGTH);
             }
         }
         catch (error)
@@ -67,7 +68,7 @@ export class PromptLoader implements IPromptLoader
         }
     }
 
-    getSystemPrompt(): string
+    async getSystemPrompt(_session: IChatSession): Promise<string>
     {
         if (this.systemPrompt)
         {
@@ -75,9 +76,22 @@ export class PromptLoader implements IPromptLoader
             return this.systemPrompt;
         }
 
-        return this.agentRules
-            ? `${this.basePrompt}\n\n--- Project-Specific Instructions ---\n${this.agentRules}\n`
-            : this.basePrompt;
+        const prompt = [this.basePrompt];
+
+        if (this.agentRules)
+        {
+            prompt.push(`--- Project-Specific Instructions ---\n\n${this.agentRules}`);
+        }
+
+        const currentGitBranch = await getGitBranch();
+
+        if (currentGitBranch)
+        {
+            prompt.push("--- Git Status Information ---");
+            prompt.push(`Current git branch: ${currentGitBranch}`);
+        }
+
+        return prompt.join("\n\n");
     }
 
     public static async create(session: IChatSession): Promise<PromptLoader>

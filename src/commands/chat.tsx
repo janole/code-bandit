@@ -4,10 +4,10 @@ import React from "react";
 
 import { ChatService, IChatServiceOptions } from "../ai/chat-service.js";
 import { resolveWithinWorkDir } from "../ai/tools/utils.js";
-import { FileSessionStorage, NodeToolProvider, PromptLoader, TToolMode } from "../index.node.js";
+import { BaseMessage, FileSessionStorage, HumanMessage, NodeToolProvider, PromptLoader, TToolMode, work } from "../index.node.js";
 import ChatApp from "../ui/chat-app.js";
 
-async function chat(options: any)
+async function initChatSession(options: any)
 {
     const gitRepoPath = resolveWithinWorkDir(".", options.repoPath || ".");
 
@@ -44,9 +44,34 @@ async function chat(options: any)
         toolProvider: new NodeToolProvider(),
     });
 
+    return {
+        chatService,
+        session,
+    };
+}
+
+async function chat(options: any)
+{
+    const { session, chatService } = await initChatSession(options);
+
     const props = { chatService, session, startMessage: options.startMessage, debug: options.debug };
 
     render(<ChatApp {...props} />, { exitOnCtrlC: false });
 }
 
-export { chat };
+async function exec(message: string, options: any)
+{
+    const { chatService, session } = await initChatSession(options);
+
+    session.messages.push(new HumanMessage(message));
+
+    const messages = await work({
+        chatService,
+        session,
+    });
+
+    return messages.filter(m => m instanceof BaseMessage)?.slice(-1)?.[0]?.text
+        || "ERROR: No reply received.";
+}
+
+export { chat, exec };

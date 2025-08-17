@@ -2,7 +2,7 @@
 import { Command } from "commander";
 
 import { COMMIT_HASH, VERSION } from "./.version.js";
-import { chat } from "./commands/chat.js";
+import { chat, exec } from "./commands/chat.js";
 import { installVscodeExtension } from "./commands/install-extension.js";
 import { getAppTitle } from "./utils/info.js";
 
@@ -34,6 +34,17 @@ program
     .action(async (options) =>
     {
         return chat(options);
+    });
+
+program
+    .command("exec <message...>")
+    .description("Run ")
+    .requiredOption("-p, --provider <provider>", "Specify the model provider to be used", process.env["CODE_BANDIT_PROVIDER"])
+    .requiredOption("-m, --model <model>", "Specify the model to be used", process.env["CODE_BANDIT_MODEL"])
+    .action(async (messages: string[], options) =>
+    {
+        const answer = await exec(messages.join(" "), options);
+        console.log(answer);
     });
 
 program

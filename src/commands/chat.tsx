@@ -2,10 +2,12 @@ import { render } from "ink";
 import { cwd } from "process";
 import React from "react";
 
+import { Command } from "commander";
 import { ChatService, IChatServiceOptions } from "../ai/chat-service.js";
 import { resolveWithinWorkDir } from "../ai/tools/utils.js";
 import { BaseMessage, FileSessionStorage, HumanMessage, NodeToolProvider, PromptLoader, TToolMode, work } from "../index.node.js";
 import ChatApp from "../ui/chat-app.js";
+import { getAppTitle } from "../utils/info.js";
 
 async function initChatSession(options: any)
 {
@@ -74,9 +76,46 @@ async function exec(message: string, options: any)
         || "ERROR: No reply received.";
 }
 
+function addChatCommands(program: Command)
+{
+    const addSharedOptions = (command: Command) => 
+    {
+        return command
+            .requiredOption("-p, --provider <provider>", "Specify the model provider to be used", process.env["CODE_BANDIT_PROVIDER"])
+            .requiredOption("-m, --model <model>", "Specify the model to be used", process.env["CODE_BANDIT_MODEL"])
+            .option("-u, --api-url <url>", "API URL for the model provider")
+            .option("-k, --api-key <key>", "API key for the model provider")
+            .option("--context-size <size>", "Context size in tokens used for chat history")
+            .option("--max-messages <count>", "Maximum number of messages to keep in chat history", "10")
+            .option("--read-only", "Start with read-only mode for tools")
+            .option("--write-mode", "Enable (destructive!) write mode for tools")
+            .option("-R, --repo-path <path>", "The git repository directory to work in", ".")
+            .option("--no-agent-rules", "Disable loading of AGENTS.md, .cursorrules, etc.")
+            .option("--debug", "Show debug information");
+    }
+
+    addSharedOptions(program.command("chat", { isDefault: true }))
+        .description(`Start an interactive chat session with ${getAppTitle()}.`)
+        .configureHelp({
+            commandUsage: () => `${program.name()} [options]`,
+        })
+        .option("-C, --continue-session <filename>", "Continue with session loaded from filename")
+        .option("--start-message <message>", "Start chat with this message")
+        .action(async (options) =>
+        {
+            return chat(options);
+        });
+
+    addSharedOptions(program.command("exec <message...>"))
+        .description(`Run ${getAppTitle()} non-interactively.`)
+        .action(async (messages: string[], options) =>
+        {
+            const answer = await exec(messages.join(" "), options);
+            console.log(answer);
+        });
+}
+
 export
 {
-    chat,
-    exec,
+    addChatCommands
 };
-

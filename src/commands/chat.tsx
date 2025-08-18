@@ -125,6 +125,6 @@ function addChatCommands(program: Command)
 
 export
 {
-    addChatCommands
+    addChatCommands,
 };
 

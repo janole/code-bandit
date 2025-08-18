@@ -20,3 +20,20 @@ export function resolveWithinWorkDir(userPath: string, workDir?: unknown): strin
 
     return resolvedPath;
 }
+
+export function funcName(f: Function): string
+{
+    return f.name
+        .replace(/([a-z])([A-Z])/g, "$1-$2") // insert hyphen before capitals
+        .toLowerCase();                      // down-case everything
+}
+
+export function toolError(f: Function, error: string)
+{
+    return `ERROR: Tool \`${funcName(f)}\` failed with: ${error}.`;
+}
+
+export function toolNoOutput(f: Function)
+{
+    return `Tool \`${funcName(f)}\` produced no output.`;
+}

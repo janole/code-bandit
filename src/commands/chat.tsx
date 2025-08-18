@@ -4,6 +4,7 @@ import { cwd } from "process";
 import React from "react";
 
 import { ChatService, IChatServiceOptions } from "../ai/chat-service.js";
+import { ToolProgressMessage } from "../ai/custom-messages.js";
 import { resolveWithinWorkDir } from "../ai/tools/utils.js";
 import { BaseMessage, FileSessionStorage, HumanMessage, NodeToolProvider, PromptLoader, TToolMode, work } from "../index.node.js";
 import ChatApp from "../ui/chat-app.js";
@@ -72,6 +73,13 @@ async function exec(message: string, options: any)
         session,
     });
 
+    const pendingConfirmation = messages.find(m => ToolProgressMessage.isTypeOf(m) && m.status === "pending-confirmation") as ToolProgressMessage | undefined;
+
+    if (pendingConfirmation)
+    {
+        return `ERROR: Pending confirmation for tool "${pendingConfirmation.toolCall?.name}".`;
+    }
+
     return messages.filter(m => m instanceof BaseMessage)?.slice(-1)?.[0]?.text
         || "ERROR: No reply received.";
 }
@@ -117,5 +125,6 @@ function addChatCommands(program: Command)
 
 export
 {
-    addChatCommands,
+    addChatCommands
 };
+

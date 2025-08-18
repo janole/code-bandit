@@ -1,8 +1,8 @@
+import { Command } from "commander";
 import { render } from "ink";
 import { cwd } from "process";
 import React from "react";
 
-import { Command } from "commander";
 import { ChatService, IChatServiceOptions } from "../ai/chat-service.js";
 import { resolveWithinWorkDir } from "../ai/tools/utils.js";
 import { BaseMessage, FileSessionStorage, HumanMessage, NodeToolProvider, PromptLoader, TToolMode, work } from "../index.node.js";
@@ -92,7 +92,7 @@ function addChatCommands(program: Command)
             .option("-R, --repo-path <path>", "The git repository directory to work in", ".")
             .option("--no-agent-rules", "Disable loading of AGENTS.md, .cursorrules, etc.")
             .option("--debug", "Show debug information");
-    }
+    };
 
     addSharedOptions(program.command("chat", { isDefault: true }))
         .description(`Start an interactive chat session with ${getAppTitle()}.`)
@@ -117,5 +117,5 @@ function addChatCommands(program: Command)
 
 export
 {
-    addChatCommands
+    addChatCommands,
 };

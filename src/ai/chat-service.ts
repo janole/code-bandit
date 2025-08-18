@@ -153,9 +153,9 @@ class ChatService
         return this.current?.tools;
     }
 
-    async stream(session: IChatSession, signal?: AbortSignal)
+    async bindTools(session: IChatSession)
     {
-        const llm = await this.getLLM(session).then(llm => 
+        return await this.getLLM(session).then(llm => 
         {
             if (!this.tools || Object.keys(this.tools).length === 0)
             {
@@ -169,10 +169,24 @@ class ChatService
 
             return llm.bindTools(Object.values(this.tools));
         });
+    }
+
+    async stream(session: IChatSession, signal?: AbortSignal)
+    {
+        const llm = await this.bindTools(session);
 
         const preparedMessages = await this.prepareMessages(session);
 
         return llm.stream(preparedMessages, { signal });
+    }
+
+    async generate(session: IChatSession, signal?: AbortSignal)
+    {
+        const llm = await this.bindTools(session);
+
+        const preparedMessages = await this.prepareMessages(session);
+
+        return llm.invoke(preparedMessages, { signal });
     }
 
     private async prepareMessages(session: IChatSession): Promise<BaseMessage[]>

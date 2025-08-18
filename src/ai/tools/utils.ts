@@ -1,3 +1,5 @@
+import { RunnableConfig } from "@langchain/core/runnables";
+import { tool as createTool } from "@langchain/core/tools";
 import { realpathSync } from "fs";
 import path from "path";
 
@@ -26,6 +28,12 @@ export function funcName(f: Function): string
     return f.name
         .replace(/([a-z])([A-Z])/g, "$1-$2") // insert hyphen before capitals
         .toLowerCase();                      // down-case everything
+}
+
+/** create tool and automatically infer tool name from function */
+export function tool(f: (p: any, config: RunnableConfig) => unknown, fields: Omit<Parameters<typeof createTool>[1], "name">)
+{
+    return createTool(f, { ...fields, name: funcName(f) });
 }
 
 export function toolError(f: Function, error: string)

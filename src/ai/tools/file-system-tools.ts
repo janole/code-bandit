@@ -1,11 +1,11 @@
 import { RunnableConfig } from "@langchain/core/runnables";
-import { DynamicStructuredTool, tool } from "@langchain/core/tools";
+import { DynamicStructuredTool } from "@langchain/core/tools";
 import { mkdirSync, readFileSync, realpathSync, renameSync, unlinkSync, writeFileSync } from "fs";
 import { globbySync } from "globby";
 import path from "path";
 import { z } from "zod";
 
-import { resolveWithinWorkDir } from "./utils.js";
+import { createTool, resolveWithinWorkDir } from "./utils.js";
 
 function listDirectory({ directory = "." }: { directory: string }, config?: RunnableConfig): string
 {
@@ -198,23 +198,20 @@ function searchInFiles({ pattern, glob: globPattern, directory = ".", isCaseSens
 }
 
 const _tools = [
-    tool(listDirectory, {
-        name: "listDirectory",
+    createTool(listDirectory, {
         description: "List the files and folders inside a given directory (relative to the working directory). Use ONLY when the user wants to browse or inspect the contents of a folder.",
         schema: z.object({
             directory: z.string().describe("Path to the directory to list, relative to the working directory.").optional().default("."),
         }),
     }),
-    tool(readFile, {
-        name: "readFile",
+    createTool(readFile, {
         description: "Read the contents of a file. Use ONLY when the user wants to retrieve or inspect saved content (e.g., source code, configuration files, etc.).",
         schema: z.object({
             fileName: z.string().describe("Path to the file to read, relative to the working directory."),
             maxLength: z.number().optional().describe("Optionally limit the number of characters to read."),
         }),
     }),
-    tool(writeFile, {
-        name: "writeFile",
+    createTool(writeFile, {
         description: "Write content to a file (create or overwrite). Use ONLY when the user wants to persist generated or modified content to disk.",
         schema: z.object({
             fileName: z.string().describe("Path to the file to write, relative to the working directory."),
@@ -224,8 +221,7 @@ const _tools = [
             destructive: true,
         },
     }),
-    tool(deleteFile, {
-        name: "deleteFile",
+    createTool(deleteFile, {
         description: "Delete a file from disk. Use ONLY when the user clearly wants to remove a file permanently.",
         schema: z.object({
             fileName: z.string().describe("Path to the file to delete, relative to the working directory."),
@@ -234,8 +230,7 @@ const _tools = [
             destructive: true,
         },
     }),
-    tool(moveFile, {
-        name: "moveFile",
+    createTool(moveFile, {
         description: "Rename or move a file within the working directory. Use ONLY when the user asks to rename or move a file.",
         schema: z.object({
             sourceFileName: z.string().describe("Path of the file to move or rename, relative to the working directory."),
@@ -245,23 +240,20 @@ const _tools = [
             destructive: true,
         },
     }),
-    tool(createDirectory, {
-        name: "createDirectory",
+    createTool(createDirectory, {
         description: "Create a directory (and any necessary parent directories) at the given path. Use ONLY when the user wants to make a new folder.",
         schema: z.object({
             fileName: z.string().describe("Path to the directory to create, relative to the working directory."),
         }),
     }),
-    tool(findFiles, {
-        name: "findFiles",
+    createTool(findFiles, {
         description: "Finds files recursively within the project based on a glob pattern. Use this to search for files by name, extension, or pattern.",
         schema: z.object({
             pattern: z.string().describe("The glob pattern to search for (e.g., '**/*.md', 'src/**/*.js')."),
             directory: z.string().describe("The base directory to start the search from.").optional().default("."),
         }),
     }),
-    tool(searchInFiles, {
-        name: "searchInFiles",
+    createTool(searchInFiles, {
         description: "Search for a pattern within files in the project. This is much more efficient than reading each file manually.",
         schema: z.object({
             pattern: z.string().describe("The string or regex pattern to search for."),

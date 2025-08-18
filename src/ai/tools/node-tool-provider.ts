@@ -2,6 +2,7 @@ import { IChatSession } from "../session/session.js";
 import { getTools as getClipboardTools } from "./clipboard-tools.js";
 import { getTools as getCommandExecutionTools } from "./command-execution-tools.js";
 import { getTools as getFileSystemTools } from "./file-system-tools.js";
+import { getTools as getGitTools } from "./git-tools.js";
 import { IToolProvider } from "./types.js";
 
 class NodeToolProvider implements IToolProvider
@@ -14,6 +15,7 @@ class NodeToolProvider implements IToolProvider
             ...getFileSystemTools(props),
             ...getCommandExecutionTools(props),
             ...getClipboardTools(), // Clipboard tools are always available (non-destructive)
+            ...getGitTools(props),
         };
     }
 }

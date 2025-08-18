@@ -71,17 +71,25 @@ async function exec(message: string, options: any)
     const messages = await work({
         chatService,
         session,
+        streaming: false,
     });
 
-    const pendingConfirmation = messages.find(m => ToolProgressMessage.isTypeOf(m) && m.status === "pending-confirmation") as ToolProgressMessage | undefined;
+    const pendingConfirmation = messages.filter(m => ToolProgressMessage.isTypeOf(m)).find(m => m.status === "pending-confirmation");
 
-    if (pendingConfirmation)
-    {
-        return `ERROR: Pending confirmation for tool "${pendingConfirmation.toolCall?.name}".`;
-    }
+    const text = messages.filter(m => m instanceof BaseMessage)?.at(-1)?.text;
 
-    return messages.filter(m => m instanceof BaseMessage)?.slice(-1)?.[0]?.text
-        || "ERROR: No reply received.";
+    const error = pendingConfirmation
+        ? `ERROR: Pending confirmation for tool "${pendingConfirmation.toolCall?.name}".`
+        : !text?.length && "No response received.";
+
+    return {
+        text,
+        error,
+        messages,
+        pendingConfirmation,
+    };
+
+    // // writeFileSync("debug.json", JSON.stringify(messages, null, "  "));
 }
 
 function addChatCommands(program: Command)
@@ -118,8 +126,12 @@ function addChatCommands(program: Command)
         .description(`Run ${getAppTitle()} non-interactively.`)
         .action(async (messages: string[], options) =>
         {
-            const answer = await exec(messages.join(" "), options);
-            console.log(answer);
+            const { text, error } = await exec(messages.join(" "), options);
+
+            error && console.error(error);
+            text && console.log(text);
+
+            process.exit(error ? -1 : 0);
         });
 }
 

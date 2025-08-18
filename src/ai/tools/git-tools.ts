@@ -1,11 +1,10 @@
 import { RunnableConfig } from "@langchain/core/runnables";
-import { DynamicStructuredTool, tool } from "@langchain/core/tools";
 import { execa } from "execa";
 import { parse } from "shell-quote";
 import { z } from "zod";
 
 import tryCatch from "../../utils/try-catch.js";
-import { funcName, toolError, toolNoOutput } from "./utils.js";
+import { tool, toolError, toolNoOutput } from "./utils.js";
 
 async function execGit(args: string[] = [], options: { cwd?: string; timeout?: number; } = {}): Promise<string | null>
 {
@@ -57,15 +56,14 @@ async function gitDiff({ argsString = "" }: { argsString: string }, _config?: Ru
 
 const _tools = [
     tool(gitDiff, {
-        name: funcName(gitDiff),
-        description: "Run git diff <argsString...>",
+        description: "Run git diff <args...>",
         schema: z.object({
             argsString: z.string().describe("All the parameters for git diff as a string").optional(),
         }),
     }),
 ];
 
-function getTools(props: { includeDestructiveTools?: boolean }): { [key: string]: DynamicStructuredTool }
+function getTools(props: { includeDestructiveTools?: boolean })
 {
     return _tools
         .filter(t => props.includeDestructiveTools || !t.metadata?.["destructive"])
@@ -77,4 +75,3 @@ export
     getGitBranch,
     getGitStatus, getTools,
 };
-

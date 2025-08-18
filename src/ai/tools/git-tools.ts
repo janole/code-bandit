@@ -21,13 +21,6 @@ async function getGitBranch(): Promise<string | null>
         || await execGit(["rev-parse", "--short", "HEAD"]);
 }
 
-async function getGitStatus(): Promise<string | undefined | null>
-{
-    const worktrees = await execGit(["worktree", "list"]);
-
-    return worktrees;
-}
-
 function parseArgsString(argsString: string)
 {
     const args = parse(argsString);
@@ -73,6 +66,6 @@ function getTools(props: { includeDestructiveTools?: boolean })
 export
 {
     getGitBranch,
-    getGitStatus, getTools,
+    getTools,
 };
 

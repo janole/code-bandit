@@ -74,7 +74,6 @@
         "marked": "^15.0.12",
         "marked-terminal": "^7.3.0",
         "react": "^19.1.0",
-        "shell-quote": "^1.8.3",
         "ulid": "^3.0.1",
         "write-file-atomic": "^6.0.0"
     },
@@ -87,7 +86,6 @@
         "@types/marked-terminal": "^6.1.1",
         "@types/node": "^24.0.10",
         "@types/react": "^19.1.8",
-        "@types/shell-quote": "^1.7.5",
         "@types/write-file-atomic": "^4.0.3",
         "@typescript-eslint/eslint-plugin": "^8.36.0",
         "esbuild": "^0.25.6",

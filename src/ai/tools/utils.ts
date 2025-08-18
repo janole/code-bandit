@@ -1,5 +1,5 @@
 import { RunnableConfig } from "@langchain/core/runnables";
-import { tool as createTool } from "@langchain/core/tools";
+import { tool } from "@langchain/core/tools";
 import { realpathSync } from "fs";
 import path from "path";
 
@@ -31,17 +31,17 @@ export function funcName(f: Function): string
 }
 
 /** create tool and automatically infer tool name from function */
-export function tool(f: (p: any, config: RunnableConfig) => unknown, fields: Omit<Parameters<typeof createTool>[1], "name">)
+export function createTool(f: (p: any, config: RunnableConfig) => unknown, fields: Omit<Parameters<typeof tool>[1], "name">)
 {
-    return createTool(f, { ...fields, name: funcName(f) });
+    return tool(f, { ...fields, name: funcName(f) });
 }
 
-export function toolError(f: Function, error: string)
+export function formatToolError(f: Function, error: string)
 {
     return `ERROR: Tool \`${funcName(f)}\` failed with: ${error}.`;
 }
 
-export function toolNoOutput(f: Function)
+export function formatEmptyToolOutput(f: Function)
 {
     return `Tool \`${funcName(f)}\` produced no output.`;
 }

@@ -4,7 +4,7 @@ import { parse } from "shell-quote";
 import { z } from "zod";
 
 import tryCatch from "../../utils/try-catch.js";
-import { tool, toolError, toolNoOutput } from "./utils.js";
+import { createTool, formatEmptyToolOutput, formatToolError } from "./utils.js";
 
 async function execGit(args: string[] = [], options: { cwd?: string; timeout?: number; } = {}): Promise<string | null>
 {
@@ -46,16 +46,16 @@ async function gitDiff({ argsString = "" }: { argsString: string }, _config?: Ru
 
     if (!args)
     {
-        return toolError(gitDiff, "non-compliant `argsString`.");
+        return formatToolError(gitDiff, "non-compliant `argsString`.");
     }
 
     const diff = await execGit(["diff", ...args]);
 
-    return diff || toolNoOutput(gitDiff);
+    return diff || formatEmptyToolOutput(gitDiff);
 }
 
 const _tools = [
-    tool(gitDiff, {
+    createTool(gitDiff, {
         description: "Run git diff <args...>",
         schema: z.object({
             argsString: z.string().describe("All the parameters for git diff as a string").optional(),
@@ -75,3 +75,4 @@ export
     getGitBranch,
     getGitStatus, getTools,
 };
+

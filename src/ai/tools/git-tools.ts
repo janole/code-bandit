@@ -47,11 +47,31 @@ async function gitDiff({ argsString = "" }: { argsString: string }, _config?: Ru
     return diff || formatEmptyToolOutput(gitDiff);
 }
 
+async function gitLog({ argsString = "" }: { argsString: string }, _config?: RunnableConfig): Promise<string>
+{
+    const args = parseArgsString(argsString);
+
+    if (!args)
+    {
+        return formatToolError(gitLog, "non-compliant `argsString`.");
+    }
+
+    const diff = await execGit(["log", ...args]);
+
+    return diff || formatEmptyToolOutput(gitLog);
+}
+
 const _tools = [
     createTool(gitDiff, {
         description: "Run git diff <args...>",
         schema: z.object({
             argsString: z.string().describe("All the parameters for git diff as a string").optional(),
+        }),
+    }),
+    createTool(gitLog, {
+        description: "Run git log <args...>",
+        schema: z.object({
+            argsString: z.string().describe("All the parameters for git log as a string").optional(),
         }),
     }),
 ];
@@ -66,6 +86,6 @@ function getTools(props: { includeDestructiveTools?: boolean })
 export
 {
     getGitBranch,
-    getTools,
+    getTools
 };
 

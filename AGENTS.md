@@ -38,26 +38,6 @@ The main application component, `ChatApp`, manages the chat history and user int
 
 The AI model's response is then parsed and executed by the application. The results of the execution are then displayed to the user in the command-line interface.
 
-## Getting Started
-
-To get started with the project, you will need to have Node.js and npm installed. Then, you can install the dependencies and run the application in development mode:
-
-```bash
-npm install
-npm run dev
-```
-
-This will start the application in development mode, which will automatically reload the application when you make changes to the code.
-
-## Contributing
-
-Contributions to the project are welcome. If you would like to contribute, please fork the repository and create a pull request with your changes. Before submitting a pull request, please make sure to run the linter and tests to ensure that your changes are consistent with the project's coding style.
-
-```bash
-npm run lint
-npm run typecheck
-```
-
 ### Release Notes
 
 When creating release notes, please use the template located in `docs/RELEASE_NOTES_TEMPLATE.md`. This ensures that all release notes are consistent in their format and content.

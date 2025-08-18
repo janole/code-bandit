@@ -1,6 +1,7 @@
-import { DynamicStructuredTool, tool } from "@langchain/core/tools";
 import clipboard from "clipboardy";
 import { z } from "zod";
+
+import { createTool } from "./utils.js";
 
 /**
  * Copy text content to the system clipboard
@@ -20,8 +21,7 @@ function copyToClipboard({ data }: { data: string }): string
 }
 
 const _tools = [
-    tool(copyToClipboard, {
-        name: "copyToClipboard",
+    createTool(copyToClipboard, {
         description: "Copies the given text to the system clipboard. Use this when the user wants to copy content for use outside of the terminal (e.g., sharing code snippets, copying outputs, or saving text for external use).",
         schema: z.object({
             data: z.string().describe("The text content to copy to the clipboard."),
@@ -29,7 +29,7 @@ const _tools = [
     }),
 ];
 
-function getTools(): { [key: string]: DynamicStructuredTool }
+function getTools()
 {
     return _tools.reduce((tools, t) => ({ ...tools, [t.name]: t }), {});
 }

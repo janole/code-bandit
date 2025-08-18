@@ -1,10 +1,9 @@
 import { RunnableConfig } from "@langchain/core/runnables";
 import { execa } from "execa";
-import { parse } from "shell-quote";
 import { z } from "zod";
 
 import tryCatch from "../../utils/try-catch.js";
-import { createTool, formatEmptyToolOutput, formatToolError } from "./utils.js";
+import { createTool, formatEmptyToolOutput } from "./utils.js";
 
 async function execGit(args: string[] = [], options: { cwd?: string; timeout?: number; } = {}): Promise<string | null>
 {
@@ -21,41 +20,15 @@ async function getGitBranch(): Promise<string | null>
         || await execGit(["rev-parse", "--short", "HEAD"]);
 }
 
-function parseArgsString(argsString: string)
+async function gitDiff({ args = [] }: { args: string[] }, _config?: RunnableConfig): Promise<string>
 {
-    const args = parse(argsString);
-
-    if (args.find(arg => typeof arg !== "string"))
-    {
-        return null;
-    }
-
-    return args.map(arg => arg.toString());
-}
-
-async function gitDiff({ argsString = "" }: { argsString: string }, _config?: RunnableConfig): Promise<string>
-{
-    const args = parseArgsString(argsString);
-
-    if (!args)
-    {
-        return formatToolError(gitDiff, "non-compliant `argsString`.");
-    }
-
     const diff = await execGit(["diff", ...args]);
 
     return diff || formatEmptyToolOutput(gitDiff);
 }
 
-async function gitLog({ argsString = "" }: { argsString: string }, _config?: RunnableConfig): Promise<string>
+async function gitLog({ args = [] }: { args: string[] }, _config?: RunnableConfig): Promise<string>
 {
-    const args = parseArgsString(argsString);
-
-    if (!args)
-    {
-        return formatToolError(gitLog, "non-compliant `argsString`.");
-    }
-
     const diff = await execGit(["log", ...args]);
 
     return diff || formatEmptyToolOutput(gitLog);
@@ -65,13 +38,13 @@ const _tools = [
     createTool(gitDiff, {
         description: "Run git diff <args...>",
         schema: z.object({
-            argsString: z.string().describe("All the parameters for git diff as a string").optional(),
+            args: z.array(z.string()).describe("An array of arguments to pass to the git diff command (e.g., ['main...branch', '--cached']).").optional().default([]),
         }),
     }),
     createTool(gitLog, {
         description: "Run git log <args...>",
         schema: z.object({
-            argsString: z.string().describe("All the parameters for git log as a string").optional(),
+            args: z.array(z.string()).describe("An array of arguments to pass to the git log command (e.g., ['-n', '5', '--oneline']).").optional().default([]),
         }),
     }),
 ];
@@ -86,6 +59,6 @@ function getTools(props: { includeDestructiveTools?: boolean })
 export
 {
     getGitBranch,
-    getTools
+    getTools,
 };
 

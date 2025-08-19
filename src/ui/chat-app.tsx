@@ -12,6 +12,7 @@ import MemoMessage, { Message } from "./messages/message.js";
 import { Badge } from "./messages/types.js";
 import Spinner from "./spinner.js";
 import TextInput from "./text-input.js";
+import { TokenUsageText } from "./token-usage.js";
 
 interface ChatAppProps
 {
@@ -118,22 +119,8 @@ function ChatApp(props: ChatAppProps)
                     }
                 </Spinner>
 
-                <Box flexShrink={0} paddingLeft={1}>
-                    <Text color="blackBright">[{session.workDir.replace(homedir(), "~")}]</Text>
-                </Box>
-
-                {tokenUsage && (tokenUsage.total_tokens / 1000 >= 1) &&
-                    <Box flexShrink={0} paddingLeft={1}>
-                        <Text color="blackBright">
-                            {`[`}
-                        </Text>
-                        <Text color="magentaBright">
-                            {(tokenUsage.total_tokens / 1000).toFixed(1)}k
-                        </Text>
-                        <Text color="blackBright">
-                            {`]`}
-                        </Text>
-                    </Box>
+                {tokenUsage &&
+                    <TokenUsageText tokenUsage={tokenUsage} />
                 }
             </Box>
         </Box>

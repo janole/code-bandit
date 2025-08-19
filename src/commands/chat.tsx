@@ -59,7 +59,13 @@ async function chat(options: any)
 {
     const { session, chatService } = await initChatSession(options);
 
-    const props = { chatService, session, startMessage: options.startMessage, debug: options.debug };
+    const props = {
+        chatService,
+        session,
+        startMessage: options.startMessage,
+        streaming: options.stream !== false,
+        debug: options.debug,
+    };
 
     render(<ChatApp {...props} />, { exitOnCtrlC: false });
 }
@@ -121,6 +127,7 @@ function addChatCommands(program: Command)
         })
         .option("-C, --continue-session <filename>", "Continue with session loaded from filename")
         .option("--start-message <message>", "Start chat with this message")
+        .option("--no-stream", "Disable streaming responses")
         .action(async (options) =>
         {
             return chat(options);

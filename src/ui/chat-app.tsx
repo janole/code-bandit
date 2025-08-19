@@ -18,12 +18,13 @@ interface ChatAppProps
     chatService: ChatService;
     session: ChatSession;
     startMessage?: string;
+    streaming?: boolean;
     debug?: boolean;
 }
 
 function ChatApp(props: ChatAppProps)
 {
-    const { chatService, session, startMessage, debug } = props;
+    const { chatService, session, startMessage, streaming = true, debug } = props;
     const { chatServiceOptions } = session;
 
     const [_message, setMessage] = useState("");
@@ -38,6 +39,7 @@ function ChatApp(props: ChatAppProps)
     } = useChatController({
         chatService,
         session,
+        streaming,
     });
 
     useEffect(() =>

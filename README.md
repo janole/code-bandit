@@ -72,7 +72,7 @@ npx @janole/code-bandit -p ollama -m magistral:24b
 ```bash
 # Set your API key
 export OPENAI_API_KEY="your-key-here"
-coba -p openai -m gpt-4-turbo
+coba -p openai -m gpt-5
 ```
 
 **With Ollama (local):**
@@ -134,8 +134,8 @@ You: "Configure Jest for testing"
 
 | Option | Description | Default / Examples |
 |--------|-------------|--------------------|
-| `-p, --provider <provider>` | Model provider to use | env: `CODE_BANDIT_PROVIDER` (e.g. `ollama`, `openai`, `anthropic`, `gemini`, `groq`) |
-| `-m, --model <model>` | Model identifier | env: `CODE_BANDIT_MODEL` (e.g. `gpt-4-turbo`, `llama3.2:3b`, `claude-3-5-sonnet`) |
+| `-p, --provider <provider>` | Model provider to use | env: `CODE_BANDIT_PROVIDER` (e.g. `ollama`, `openai`, `anthropic`, `gemini`) |
+| `-m, --model <model>` | Model identifier | env: `CODE_BANDIT_MODEL` (e.g. `gpt-5`, `gpt-oss`, `claude-sonnet-4-20250514`) |
 | `-u, --api-url <url>` | API base URL for provider | e.g. self-hosted endpoint |
 | `-k, --api-key <key>` | API key passed to the provider | Your API key |
 | `--context-size <size>` | Max context window (tokens) used for chat history | Default: `8192` for `ollama`, provider default otherwise |

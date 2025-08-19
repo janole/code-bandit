@@ -19,6 +19,7 @@
 - 🔍 **Instant code analysis** — "Find all unused imports" or "Show me the database schema"
 - ⚡ **AI-powered refactoring** — "Convert this class to TypeScript" or "Add unit tests for this module"
 - 🛠️ **Smart automation** — "Set up ESLint" or "Generate API documentation"
+- 🔒 **Safe by default** — Built-in safety modes and confirmation prompts
 - 🎯 **Multiple interfaces** — CLI, VS Code extension, and programmatic API
 
 **Perfect for:**

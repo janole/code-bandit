@@ -38,6 +38,7 @@ function ChatApp(props: ChatAppProps)
         chatHistory,
         handleSendHistory,
         tokenUsage,
+        currentGitBranch,
     } = useChatController({
         chatService,
         session,
@@ -118,6 +119,17 @@ function ChatApp(props: ChatAppProps)
                         <Text> (ctx:{chatServiceOptions.contextSize})</Text>
                     }
                 </Spinner>
+
+                <Box flexShrink={0} paddingLeft={1}>
+                    <Text color="blackBright">
+                        [{session.workDir.replace(homedir(), "~")}]
+                    </Text>
+                    {currentGitBranch &&
+                        <Text color="black">
+                            {` ${currentGitBranch}`}
+                        </Text>
+                    }
+                </Box>
 
                 {tokenUsage &&
                     <TokenUsageText tokenUsage={tokenUsage} />

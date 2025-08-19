@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ChatService } from "../ai/chat-service.js";
 import { ErrorMessage, TMessage, ToolProgressMessage } from "../ai/custom-messages.js";
 import { ChatSession } from "../ai/session/session.js";
-import { countTokens, TTokenUsage } from "../ai/tokens.js";
+import { getGitBranch } from "../ai/tools/git-tools.js";
 import { needsToolConfirmation, work } from "../ai/work.js";
 
 interface UseChatControllerProps
@@ -33,6 +33,7 @@ export function useChatController(props: UseChatControllerProps)
     });
 
     const [tokenUsage, setTokenUsage] = useState<TTokenUsage>();
+    const [currentGitBranch, setCurrentGitBranch] = useState<string | null>();
 
     const selectedIndex = chatHistory.messages.findIndex(m => ToolProgressMessage.isTypeOf(m) && m.status === "pending-confirmation");
     const confirm = selectedIndex !== -1;
@@ -178,6 +179,8 @@ export function useChatController(props: UseChatControllerProps)
         {
             session.setMessages(chatHistory.messages, chatHistory.finished);
             setTokenUsage(countTokens(chatHistory.messages));
+
+            getGitBranch().then(branch => setCurrentGitBranch(branch));
         }
     }, [
         working,
@@ -205,5 +208,6 @@ export function useChatController(props: UseChatControllerProps)
         chatHistory,
         handleSendHistory,
         tokenUsage,
+        currentGitBranch,
     };
 }

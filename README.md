@@ -264,11 +264,18 @@ Check out our [development guide](AGENTS.md) for more details.
 
 🚧 **Alpha Release** — Code Bandit is experimental but rapidly evolving. We recommend using it in git repositories so you can easily review and revert changes.
 
-**Coming Soon:**
-- 🌐 Web interface
+**Recent Additions:**
+- 🎯 VS Code extension with smart commit messages
+- 📝 Comprehensive command options and session management  
+- 🔧 Enhanced tool safety and file system operations
+- 📊 Multiple output formats and stdin support
+- 🌐 Expanded AI provider support
+
+**Roadmap:**
+- 🌐 Web interface and dashboard
+- 🔌 Plugin ecosystem for custom tools
 - 📱 Mobile companion app
-- 🔌 Plugin ecosystem
-- 📊 Analytics dashboard
+- 🤖 Advanced code understanding and suggestions
 
 ---
 

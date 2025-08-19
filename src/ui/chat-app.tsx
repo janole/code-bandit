@@ -124,14 +124,14 @@ function ChatApp(props: ChatAppProps)
 
                 {tokenUsage && (tokenUsage.total_tokens / 1000 >= 1) &&
                     <Box flexShrink={0} paddingLeft={1}>
-                        <Text color="black">
-                            {"[⅀ "}
+                        <Text color="blackBright">
+                            {`[`}
                         </Text>
                         <Text color="magentaBright">
                             {(tokenUsage.total_tokens / 1000).toFixed(1)}k
                         </Text>
-                        <Text color="black">
-                            {"]"}
+                        <Text color="blackBright">
+                            {`]`}
                         </Text>
                     </Box>
                 }

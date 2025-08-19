@@ -63,7 +63,7 @@ async function chat(options: any)
         chatService,
         session,
         startMessage: options.startMessage,
-        disableStreaming: options.stream === false,
+        streaming: options.stream !== false,
         debug: options.debug,
     };
 
@@ -177,4 +177,3 @@ export
 {
     addChatCommands,
 };
-

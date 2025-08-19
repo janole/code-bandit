@@ -10,12 +10,12 @@ interface UseChatControllerProps
 {
     chatService: ChatService;
     session: ChatSession;
-    disableStreaming?: boolean;
+    streaming?: boolean;
 }
 
 export function useChatController(props: UseChatControllerProps)
 {
-    const { chatService, session, disableStreaming } = props;
+    const { chatService, session, streaming = true } = props;
 
     const { exit } = useApp();
 
@@ -48,7 +48,7 @@ export function useChatController(props: UseChatControllerProps)
         work({
             chatService,
             session,
-            streaming: !disableStreaming,
+            streaming,
             send: (messages: TMessage[]) => setChatHistory(history => ({ ...history, messages })),
             signal: abortController.signal,
         })

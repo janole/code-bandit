@@ -195,6 +195,11 @@ You: "Generate a changelog from recent commits"
 |---------|-------------|
 | `coba install-extension --tag <tag>` | Download and install the official VS Code extension. Use `--tag vX.Y.Z` for a specific version or omit for `latest`. Requires the `code` CLI in PATH. |
 
+**Extension Features:**
+- **Smart Commit Messages**: Auto-generate conventional commit messages from your staged changes
+- **Keyboard Shortcut**: `Ctrl+Alt+C` (Windows/Linux) or `Cmd+Alt+C` (Mac)
+- **Configurable Models**: Choose your preferred AI model for commit generation
+
 ---
 
 ## 🔒 Safety First

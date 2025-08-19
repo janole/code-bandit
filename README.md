@@ -27,6 +27,7 @@
 - 📚 Learning from existing projects
 - 🐛 Debugging and troubleshooting
 - 📝 Documentation and analysis
+- 🔄 Automated commit message generation
 
 ---
 
@@ -66,6 +67,15 @@ npm install -g @janole/code-bandit
 npx @janole/code-bandit -p ollama -m magistral:24b
 ```
 
+### VS Code Extension
+```bash
+# Install the official VS Code extension
+coba install-extension
+
+# Or install a specific version
+coba install-extension --tag v0.3.6
+```
+
 ### Quick Examples
 
 **With OpenAI:**
@@ -86,6 +96,12 @@ coba -p ollama -m llama3.2:3b
 ```bash
 export GOOGLE_API_KEY="your-key-here"
 coba -p gemini -m gemini-2.5-pro
+```
+
+**With Anthropic Claude:**
+```bash
+export ANTHROPIC_API_KEY="your-key-here"
+coba -p anthropic -m claude-sonnet-4-20250514
 ```
 
 ---
@@ -118,6 +134,15 @@ You: "Convert this callback to async/await"
 You: "Set up ESLint with TypeScript"
 You: "Add a pre-commit hook for formatting"
 You: "Configure Jest for testing"
+
+### 📝 **Git & Documentation**
+```bash
+# One-shot commit message generation
+echo "Brief context about changes" | coba exec "Generate a conventional commit message" -o -
+
+# Interactive documentation help
+You: "Update the API documentation for the new endpoints"
+You: "Generate a changelog from recent commits"
 ```
 
 ---
@@ -160,8 +185,9 @@ You: "Configure Jest for testing"
 |--------|-------------|
 | `-o <file>` | Write the model's final text output to a file (`-` for stdout) |
 
-Notes:
+**Notes:**
 - `exec` also reads from stdin and appends it to the message. Example: `echo "extra context" | coba exec "Summarize this" -p openai -m gpt-4o`.
+- Environment variables `CODE_BANDIT_PROVIDER` and `CODE_BANDIT_MODEL` can be used to set default provider/model.
 
 ### VS Code extension
 

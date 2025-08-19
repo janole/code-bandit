@@ -76,20 +76,22 @@ async function exec(message: string, options: any)
 
     const pendingConfirmation = messages.filter(m => ToolProgressMessage.isTypeOf(m)).find(m => m.status === "pending-confirmation");
 
-    const text = messages.filter(m => m instanceof BaseMessage)?.at(-1)?.text;
+    if (pendingConfirmation)
+    {
+        return {
+            error: `ERROR: Pending confirmation for tool "${pendingConfirmation.toolCall?.name}".`,
+            pendingConfirmation,
+            messages,
+        };
+    }
 
-    const error = pendingConfirmation
-        ? `ERROR: Pending confirmation for tool "${pendingConfirmation.toolCall?.name}".`
-        : !text?.length && "No response received.";
+    const text = messages.filter(m => m instanceof BaseMessage)?.at(-1)?.text;
 
     return {
         text,
-        error,
+        error: text?.length,
         messages,
-        pendingConfirmation,
     };
-
-    // // writeFileSync("debug.json", JSON.stringify(messages, null, "  "));
 }
 
 function addChatCommands(program: Command)

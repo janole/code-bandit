@@ -162,7 +162,17 @@ function searchInFiles({ pattern, glob: globPattern, directory = ".", isCaseSens
         });
 
         const searchResults = [];
-        const regex = new RegExp(pattern, isCaseSensitive ? "" : "i");
+        let matcher: { test: (line: string) => boolean };
+
+        try
+        {
+            matcher = new RegExp(pattern, isCaseSensitive ? "" : "i");
+        }
+        catch
+        {
+            const p = isCaseSensitive ? pattern : pattern.toLowerCase();
+            matcher = { test: line => (isCaseSensitive ? line : line.toLowerCase()).includes(p) };
+        }
 
         for (const file of files)
         {
@@ -173,7 +183,7 @@ function searchInFiles({ pattern, glob: globPattern, directory = ".", isCaseSens
             {
                 const line = lines[i] || "";
 
-                if (regex.test(line))
+                if (matcher.test(line))
                 {
                     searchResults.push({
                         fileName: path.relative(workDir, file),

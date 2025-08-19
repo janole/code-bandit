@@ -19,7 +19,7 @@
 - 🔍 **Instant code analysis** — "Find all unused imports" or "Show me the database schema"
 - ⚡ **AI-powered refactoring** — "Convert this class to TypeScript" or "Add unit tests for this module"
 - 🛠️ **Smart automation** — "Set up ESLint" or "Generate API documentation"
-- 🔒 **Safe by default** — Built-in confirmation prompts and Docker sandboxing
+- 🎯 **Multiple interfaces** — CLI, VS Code extension, and programmatic API
 
 **Perfect for:**
 - 🧑‍💻 Developers exploring new codebases
@@ -247,7 +247,7 @@ Code Bandit is designed with safety in mind:
 
 ## 🤝 Contributing
 
-We love contributions! Code Bandit is in active development and there's lots of exciting work ahead.
+We love contributions! Code Bandit is actively developed and there's exciting work ahead.
 
 ```bash
 git clone https://github.com/janole/code-bandit.git

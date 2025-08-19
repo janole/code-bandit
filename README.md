@@ -236,11 +236,12 @@ Code Bandit is designed with safety in mind:
 
 ## 🏗️ Built With Modern Tech
 
-- **🔥 TypeScript** — Type-safe development
-- **⚛️ Ink + React** — Beautiful terminal UI
-- **🦜 LangChain.js** — Multi-provider AI integration
-- **🐳 Docker** — Secure command execution
-- **⚡ ESBuild** — Lightning-fast builds
+- **🔥 TypeScript** — Type-safe development experience
+- **⚛️ Ink + React** — Beautiful, responsive terminal UI
+- **🦜 LangChain.js** — Multi-provider AI integration with tool calling
+- **⚡ ESBuild** — Lightning-fast builds and bundling
+- **🎯 Commander.js** — Robust CLI argument parsing
+- **📱 VS Code API** — Native editor integration
 
 ---
 

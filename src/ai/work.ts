@@ -11,12 +11,13 @@ interface WorkProps
     chatService: ChatService;
     session: IChatSession;
     send?: (messages: TMessage[]) => void;
+    streaming?: boolean;
     signal?: AbortSignal;
 }
 
 async function work(props: WorkProps)
 {
-    const { session, chatService, send, signal } = props;
+    const { session, chatService, send, streaming = true, signal } = props;
 
     const messages = await workTools({ ...props, session });
 
@@ -25,34 +26,49 @@ async function work(props: WorkProps)
         return messages;
     }
 
-    const { result: stream, error } = await tryCatch(chatService.stream(session, signal));
-
-    if (!stream)
-    {
-        messages.push(new ErrorMessage(`ERROR: ${error?.message || error?.toString() || "llm.stream(...) failed."}`, error));
-        return messages;
-    }
-
     let aiMessage: AIMessageChunk | undefined = undefined;
     let toolProgressMessages: ToolProgressMessage[] = [];
 
-    for await (const chunk of stream)
+    if (streaming)
     {
-        aiMessage = aiMessage !== undefined ? concat(aiMessage, chunk) : chunk;
+        const { result: stream, error } = await tryCatch(chatService.stream(session, signal));
 
-        if (!aiMessage?.tool_calls?.length && !aiMessage?.tool_call_chunks?.length)
+        if (!stream)
         {
-            send?.([...messages, aiMessage]); // TODO: check for race conditions
+            messages.push(new ErrorMessage(`ERROR: ${error?.message || error?.toString() || "llm.stream(...) failed."}`, error));
+            return messages;
         }
-        else
-        {
-            toolProgressMessages = ToolProgressMessage.createFromChunks(aiMessage.tool_call_chunks);
 
-            if (toolProgressMessages.length)
+        for await (const chunk of stream)
+        {
+            aiMessage = aiMessage !== undefined ? concat(aiMessage, chunk) : chunk;
+
+            if (!aiMessage?.tool_calls?.length && !aiMessage?.tool_call_chunks?.length)
             {
-                send?.([...messages, aiMessage, ...toolProgressMessages]);
+                send?.([...messages, aiMessage]); // TODO: check for race conditions
+            }
+            else
+            {
+                toolProgressMessages = ToolProgressMessage.createFromChunks(aiMessage.tool_call_chunks);
+
+                if (toolProgressMessages.length)
+                {
+                    send?.([...messages, aiMessage, ...toolProgressMessages]);
+                }
             }
         }
+    }
+    else
+    {
+        const { result, error } = await tryCatch(chatService.generate(session, signal));
+
+        if (!result || error)
+        {
+            messages.push(new ErrorMessage(`ERROR: ${error?.message || error?.toString() || "llm.generate(...) failed."}`, error));
+            return messages;
+        }
+
+        aiMessage = result;
     }
 
     if (aiMessage)

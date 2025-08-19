@@ -1,13 +1,17 @@
+import { Command } from "commander";
+import { writeFile } from "fs/promises";
 import { render } from "ink";
 import { cwd } from "process";
 import React from "react";
 
 import { ChatService, IChatServiceOptions } from "../ai/chat-service.js";
+import { ToolProgressMessage } from "../ai/custom-messages.js";
 import { resolveWithinWorkDir } from "../ai/tools/utils.js";
-import { FileSessionStorage, NodeToolProvider, PromptLoader, TToolMode } from "../index.node.js";
+import { BaseMessage, FileSessionStorage, HumanMessage, NodeToolProvider, PromptLoader, TToolMode, work } from "../index.node.js";
 import ChatApp from "../ui/chat-app.js";
+import { getAppTitle } from "../utils/info.js";
 
-async function chat(options: any)
+async function initChatSession(options: any)
 {
     const gitRepoPath = resolveWithinWorkDir(".", options.repoPath || ".");
 
@@ -44,9 +48,113 @@ async function chat(options: any)
         toolProvider: new NodeToolProvider(),
     });
 
+    return {
+        chatService,
+        session,
+    };
+}
+
+async function chat(options: any)
+{
+    const { session, chatService } = await initChatSession(options);
+
     const props = { chatService, session, startMessage: options.startMessage, debug: options.debug };
 
     render(<ChatApp {...props} />, { exitOnCtrlC: false });
 }
 
-export { chat };
+async function exec(message: string, options: any)
+{
+    const { chatService, session } = await initChatSession(options);
+
+    session.messages.push(new HumanMessage(message));
+
+    const messages = await work({
+        chatService,
+        session,
+        streaming: false,
+    });
+
+    const pendingConfirmation = messages.filter(m => ToolProgressMessage.isTypeOf(m)).find(m => m.status === "pending-confirmation");
+
+    if (pendingConfirmation)
+    {
+        return {
+            error: `Pending confirmation for tool "${pendingConfirmation.toolCall?.name}".`,
+            pendingConfirmation,
+            messages,
+        };
+    }
+
+    const text = messages.filter(m => m instanceof BaseMessage)?.at(-1)?.text;
+
+    return {
+        text,
+        error: text?.length === 0 ? "Empty response." : undefined,
+        messages,
+    };
+}
+
+function addChatCommands(program: Command)
+{
+    const addSharedOptions = (command: Command) => 
+    {
+        return command
+            .requiredOption("-p, --provider <provider>", "Specify the model provider to be used", process.env["CODE_BANDIT_PROVIDER"])
+            .requiredOption("-m, --model <model>", "Specify the model to be used", process.env["CODE_BANDIT_MODEL"])
+            .option("-u, --api-url <url>", "API URL for the model provider")
+            .option("-k, --api-key <key>", "API key for the model provider")
+            .option("--context-size <size>", "Context size in tokens used for chat history")
+            .option("--max-messages <count>", "Maximum number of messages to keep in chat history", "10")
+            .option("--read-only", "Start with read-only mode for tools")
+            .option("--write-mode", "Enable (destructive!) write mode for tools")
+            .option("-R, --repo-path <path>", "The git repository directory to work in", ".")
+            .option("--no-agent-rules", "Disable loading of AGENTS.md, .cursorrules, etc.")
+            .option("--debug", "Show debug information");
+    };
+
+    addSharedOptions(program.command("chat", { isDefault: true }))
+        .description(`Start an interactive chat session with ${getAppTitle()}.`)
+        .configureHelp({
+            commandUsage: () => `${program.name()} [options]`,
+        })
+        .option("-C, --continue-session <filename>", "Continue with session loaded from filename")
+        .option("--start-message <message>", "Start chat with this message")
+        .action(async (options) =>
+        {
+            return chat(options);
+        });
+
+    addSharedOptions(program.command("exec <message...>"))
+        .description(`Run ${getAppTitle()} non-interactively.`)
+        .option("-o <file>", "Write output to file")
+        .action(async (messages: string[], options) =>
+        {
+            const { text, error } = await exec(messages.join(" "), options);
+
+            if (error)
+            {
+                console.error(`ERROR: ${error}`);
+            }
+
+            if (text)
+            {
+                if (options.o && options.o !== "-")
+                {
+                    await writeFile(options.o, text);
+                }
+                else
+                {
+                    console.log(text);
+                }
+            }
+
+            process.exit(error ? -1 : 0);
+        });
+}
+
+export
+{
+    addChatCommands,
+};
+

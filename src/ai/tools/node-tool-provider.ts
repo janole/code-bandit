@@ -13,9 +13,9 @@ class NodeToolProvider implements IToolProvider
 
         return {
             ...getFileSystemTools(props),
-            ...getCommandExecutionTools(props),
             ...getClipboardTools(), // Clipboard tools are always available (non-destructive)
             ...getGitTools(props),
+            ...getCommandExecutionTools(props),
         };
     }
 }

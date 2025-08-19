@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import { writeFile } from "fs/promises";
 import { render } from "ink";
 import { cwd } from "process";
 import React from "react";

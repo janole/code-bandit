@@ -5,7 +5,7 @@ import { globbySync } from "globby";
 import path from "path";
 import { z } from "zod";
 
-import { createTool, resolveWithinWorkDir } from "./utils.js";
+import { createTool, funcName, resolveWithinWorkDir } from "./utils.js";
 
 function listDirectory({ directory = "." }: { directory: string }, config?: RunnableConfig): string
 {
@@ -49,6 +49,33 @@ function readFile({ fileName, maxLength }: { fileName: string; maxLength?: numbe
     {
         return "ERROR: Tool `readFile` failed with: " + error.message;
     }
+};
+
+function readMultipleFiles({ fileNames, maxLength }: { fileNames: string[], maxLength?: number }, config: RunnableConfig): string
+{
+    let result = "";
+
+    for (const fileName of fileNames)
+    {
+        result += `# ${fileName}:\n`;
+
+        try
+        {
+            const resolvedPath = resolveWithinWorkDir(fileName, config?.metadata?.["workDir"]);
+
+            const content = readFileSync(resolvedPath).toString().slice(0, maxLength);
+
+            result += content?.trim() || `The file "${fileName}" is empty.`;
+        }
+        catch (error: any)
+        {
+            result += `ERROR: ${error.message}`;
+        }
+
+        result += "\n---\n";
+    }
+
+    return result;
 };
 
 function writeFile({ fileName, fileData }: { fileName: string; fileData: string }, config: RunnableConfig): string
@@ -208,7 +235,14 @@ const _tools = [
         description: "Read the contents of a file. Use ONLY when the user wants to retrieve or inspect saved content (e.g., source code, configuration files, etc.).",
         schema: z.object({
             fileName: z.string().describe("Path to the file to read, relative to the working directory."),
-            maxLength: z.number().optional().describe("Optionally limit the number of characters to read."),
+            maxLength: z.number().describe("Optionally limit the number of characters to read.").optional(),
+        }),
+    }),
+    createTool(readMultipleFiles, {
+        description: `Read the contents of multiple files. Use instead of ${funcName(readFile)} when you want to read multiple files at once.`,
+        schema: z.object({
+            fileNames: z.array(z.string()).describe("An array of file names to read."),
+            maxLength: z.number().describe("Optionally limit the number of characters to read for each file.").optional(),
         }),
     }),
     createTool(writeFile, {

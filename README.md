@@ -19,7 +19,8 @@
 - 🔍 **Instant code analysis** — "Find all unused imports" or "Show me the database schema"
 - ⚡ **AI-powered refactoring** — "Convert this class to TypeScript" or "Add unit tests for this module"
 - 🛠️ **Smart automation** — "Set up ESLint" or "Generate API documentation"
-- 🔒 **Safe by default** — Built-in confirmation prompts and Docker sandboxing
+- 🔒 **Safe by default** — Built-in safety modes and confirmation prompts
+- 🎯 **Multiple interfaces** — CLI, VS Code extension, and programmatic API
 
 **Perfect for:**
 - 🧑‍💻 Developers exploring new codebases
@@ -27,6 +28,7 @@
 - 📚 Learning from existing projects
 - 🐛 Debugging and troubleshooting
 - 📝 Documentation and analysis
+- 🔄 Automated commit message generation
 
 ---
 
@@ -66,13 +68,22 @@ npm install -g @janole/code-bandit
 npx @janole/code-bandit -p ollama -m magistral:24b
 ```
 
+### VS Code Extension
+```bash
+# Install the official VS Code extension
+coba install-extension
+
+# Or install a specific version
+coba install-extension --tag v0.3.6
+```
+
 ### Quick Examples
 
 **With OpenAI:**
 ```bash
 # Set your API key
 export OPENAI_API_KEY="your-key-here"
-coba -p openai -m gpt-4-turbo
+coba -p openai -m gpt-5
 ```
 
 **With Ollama (local):**
@@ -86,6 +97,12 @@ coba -p ollama -m llama3.2:3b
 ```bash
 export GOOGLE_API_KEY="your-key-here"
 coba -p gemini -m gemini-2.5-pro
+```
+
+**With Anthropic Claude:**
+```bash
+export ANTHROPIC_API_KEY="your-key-here"
+coba -p anthropic -m claude-sonnet-4-20250514
 ```
 
 ---
@@ -120,20 +137,70 @@ You: "Add a pre-commit hook for formatting"
 You: "Configure Jest for testing"
 ```
 
+### 📝 **Git & Documentation**
+```bash
+# One-shot commit message generation
+echo "Brief context about changes" | coba exec "Generate a conventional commit message" -o -
+
+# Interactive documentation help
+You: "Update the API documentation for the new endpoints"
+You: "Generate a changelog from recent commits"
+```
+
 ---
 
 ## 🎛️ Command Options
 
-| Option | Description | Example |
-|--------|-------------|---------|
-| `-p, --provider` | Choose AI provider | `ollama`, `openai`, `anthropic`, `gemini`, `groq` |
-| `-m, --model` | Select model | `gpt-4-turbo`, `llama3.2:3b`, `claude-3-5-sonnet` |
-| `-k, --api-key` | API key for remote providers | Your API key |
-| `-u, --api-url` | Custom API URL | For self-hosted models |
-| `--max-messages` | Chat history limit | Default: 10 |
-| `-C, --continue-session` | Resume previous chat | `--continue-session ./my-session.json` |
-| `--read-only` | Safe mode (no file changes) | Perfect for exploration |
-| `--write-mode` | Full access mode | ⚠️ Use with caution! |
+### Commands
+
+- `coba` or `coba chat [options]` — Start an interactive chat session (default command)
+- `coba exec <message...> [options]` — Run a one-off, non-interactive request
+- `coba install-extension [--tag <tag>]` — Install the official VS Code extension
+
+### Global/chat options
+
+| Option | Description | Default / Examples |
+|--------|-------------|--------------------|
+| `-p, --provider <provider>` | Model provider to use | env: `CODE_BANDIT_PROVIDER` (e.g. `ollama`, `openai`, `anthropic`, `gemini`) |
+| `-m, --model <model>` | Model identifier | env: `CODE_BANDIT_MODEL` (e.g. `gpt-5`, `gpt-oss`, `claude-sonnet-4-20250514`) |
+| `-u, --api-url <url>` | API base URL for provider | e.g. self-hosted endpoint |
+| `-k, --api-key <key>` | API key passed to the provider | Your API key |
+| `--context-size <size>` | Max context window (tokens) used for chat history | Default: `8192` for `ollama`, provider default otherwise |
+| `--max-messages <count>` | Max number of messages to retain in history | Default: `10` |
+| `-R, --repo-path <path>` | Git repository directory to work in | Default: `.` |
+| `--read-only` | Use read-only tool mode (no file changes) | Safe exploration |
+| `--write-mode` | Enable YOLO write mode for tools (destructive) | Use with caution |
+| `--no-agent-rules` | Disable loading of AGENTS.md, .cursorrules, etc. | — |
+| `--debug` | Show debug information | — |
+
+### Chat-only options
+
+| Option | Description |
+|--------|-------------|
+| `-C, --continue-session <filename>` | Continue with a previous session file |
+| `--start-message <message>` | Start the chat by sending an initial message |
+| `--no-stream` | Disable streaming responses |
+
+### Exec-only options
+
+| Option | Description |
+|--------|-------------|
+| `-o <file>` | Write the model's final text output to a file (`-` for stdout) |
+
+**Notes:**
+- `exec` also reads from stdin and appends it to the message. Example: `echo "extra context" | coba exec "Summarize this" -p openai -m gpt-4o`.
+- Environment variables `CODE_BANDIT_PROVIDER` and `CODE_BANDIT_MODEL` can be used to set default provider/model.
+
+### VS Code extension
+
+| Command | Description |
+|---------|-------------|
+| `coba install-extension --tag <tag>` | Download and install the official VS Code extension. Use `--tag vX.Y.Z` for a specific version or omit for `latest`. Requires the `code` CLI in PATH. |
+
+**Extension Features:**
+- **Smart Commit Messages**: Auto-generate conventional commit messages from your staged changes
+- **Keyboard Shortcut**: `Ctrl+Alt+C` (Windows/Linux) or `Cmd+Alt+C` (Mac)
+- **Configurable Models**: Choose your preferred AI model for commit generation
 
 ---
 
@@ -151,34 +218,42 @@ Code Bandit is designed with safety in mind:
 - All shell commands run in isolated Docker containers, protecting your system from potentially harmful operations.
 
 ### 📋 **Always Available Tools**
-- `listDirectory` — Browse project structure
-- `readFile` — Examine file contents
-- `findFiles` — Search by patterns (`**/*.ts`, `src/**/*.js`)
-- `searchInFiles` — Find text across your codebase
-- `executeCommandReadOnly` — Safe commands (`git status`, `npm test`)
+- `list-directory` — Browse project structure
+- `read-file` — Examine file contents  
+- `find-files` — Search by patterns (`**/*.ts`, `src/**/*.js`)
+- `search-in-files` — Find text across your codebase
+- `git-diff` — View git changes
+- `git-log` — Check commit history
+- `copy-to-clipboard` — Copy content for external use
 
-### ⚠️ **Destructive Tools** *(with confirmation)*
-- `writeFile` — Create or modify files
-- `deleteFile` — Remove files permanently
-- `moveFile` — Rename or relocate files
-- `createDirectory` — Create new folders
-- `executeCommand` — Run any shell command
+### ⚡ **Write Mode Tools** *(requires `--write-mode`)*
+- `write-file` — Create or modify files
+- `delete-file` — Remove files permanently  
+- `move-file` — Rename or relocate files
+- `create-directory` — Create new folders
+- `execute-command` — Run shell commands
+
+### 🎯 **Best Practices**
+- **Always use git**: Work in git repositories so you can easily review and revert changes
+- **Review changes**: Use `git diff` to review all modifications before committing
+- **Session continuity**: Use `--continue-session` to maintain context across multiple interactions
 
 ---
 
 ## 🏗️ Built With Modern Tech
 
-- **🔥 TypeScript** — Type-safe development
-- **⚛️ Ink + React** — Beautiful terminal UI
-- **🦜 LangChain.js** — Multi-provider AI integration
-- **🐳 Docker** — Secure command execution
-- **⚡ ESBuild** — Lightning-fast builds
+- **🔥 TypeScript** — Type-safe development experience
+- **⚛️ Ink + React** — Beautiful, responsive terminal UI
+- **🦜 LangChain.js** — Multi-provider AI integration with tool calling
+- **⚡ ESBuild** — Lightning-fast builds and bundling
+- **🎯 Commander.js** — Robust CLI argument parsing
+- **📱 VS Code API** — Native editor integration
 
 ---
 
 ## 🤝 Contributing
 
-We love contributions! Code Bandit is in active development and there's lots of exciting work ahead.
+We love contributions! Code Bandit is actively developed and there's exciting work ahead.
 
 ```bash
 git clone https://github.com/janole/code-bandit.git
@@ -195,11 +270,18 @@ Check out our [development guide](AGENTS.md) for more details.
 
 🚧 **Alpha Release** — Code Bandit is experimental but rapidly evolving. We recommend using it in git repositories so you can easily review and revert changes.
 
-**Coming Soon:**
-- 🌐 Web interface
+**Recent Additions:**
+- 🎯 VS Code extension with smart commit messages
+- 📝 Comprehensive command options and session management  
+- 🔧 Enhanced tool safety and file system operations
+- 📊 Multiple output formats and stdin support
+- 🌐 Expanded AI provider support
+
+**Roadmap:**
+- 🌐 Web interface and dashboard
+- 🔌 Plugin ecosystem for custom tools
 - 📱 Mobile companion app
-- 🔌 Plugin ecosystem
-- 📊 Analytics dashboard
+- 🤖 Advanced code understanding and suggestions
 
 ---
 

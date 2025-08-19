@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ChatService } from "../ai/chat-service.js";
 import { ErrorMessage, TMessage, ToolProgressMessage } from "../ai/custom-messages.js";
 import { ChatSession } from "../ai/session/session.js";
+import { countTokens, TTokenUsage } from "../ai/tokens.js";
 import { needsToolConfirmation, work } from "../ai/work.js";
 
 interface UseChatControllerProps
@@ -30,6 +31,8 @@ export function useChatController(props: UseChatControllerProps)
         messages: session.messages,
         finished: session.finished || 0,
     });
+
+    const [tokenUsage, setTokenUsage] = useState<TTokenUsage>();
 
     const selectedIndex = chatHistory.messages.findIndex(m => ToolProgressMessage.isTypeOf(m) && m.status === "pending-confirmation");
     const confirm = selectedIndex !== -1;
@@ -171,7 +174,11 @@ export function useChatController(props: UseChatControllerProps)
 
     useEffect(() =>
     {
-        !working && session.setMessages(chatHistory.messages, chatHistory.finished);
+        if (!working)
+        {
+            session.setMessages(chatHistory.messages, chatHistory.finished);
+            setTokenUsage(countTokens(chatHistory.messages));
+        }
     }, [
         working,
         session,
@@ -197,5 +204,6 @@ export function useChatController(props: UseChatControllerProps)
         setToolMode,
         chatHistory,
         handleSendHistory,
+        tokenUsage,
     };
 }

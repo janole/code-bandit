@@ -10,6 +10,7 @@ import { resolveWithinWorkDir } from "../ai/tools/utils.js";
 import { BaseMessage, FileSessionStorage, HumanMessage, NodeToolProvider, PromptLoader, TToolMode, work } from "../index.node.js";
 import ChatApp from "../ui/chat-app.js";
 import { getAppTitle } from "../utils/info.js";
+import { hasStdin, readAllStdin } from "../utils/stdio.js";
 
 async function initChatSession(options: any)
 {
@@ -130,7 +131,19 @@ function addChatCommands(program: Command)
         .option("-o <file>", "Write output to file")
         .action(async (messages: string[], options) =>
         {
-            const { text, error } = await exec(messages.join(" "), options);
+            let message = messages.join(" ");
+
+            if (hasStdin)
+            {
+                const stdin = await readAllStdin();
+
+                if (stdin)
+                {
+                    message += "\n" + stdin;
+                }
+            }
+
+            const { text, error } = await exec(message, options);
 
             if (error)
             {
@@ -157,4 +170,3 @@ export
 {
     addChatCommands,
 };
-

@@ -1,9 +1,11 @@
+import clipboard from "clipboardy";
 import { Key, useApp } from "ink";
 import { useEffect, useState } from "react";
 
 import { ChatService } from "../ai/chat-service.js";
 import { ErrorMessage, TMessage, ToolProgressMessage } from "../ai/custom-messages.js";
 import { ChatSession } from "../ai/session/session.js";
+import { countTokens, lastMessageFromAI, TTokenUsage } from "../ai/tokens.js";
 import { getGitBranch } from "../ai/tools/git-tools.js";
 import { needsToolConfirmation, work } from "../ai/work.js";
 
@@ -150,6 +152,13 @@ export function useChatController(props: UseChatControllerProps)
                 ]);
             }
 
+            return true;
+        }
+
+        if (key.ctrl && input === "y")
+        {
+            const text = lastMessageFromAI(chatHistory.messages)?.text;
+            text && clipboard.write(text);
             return true;
         }
 

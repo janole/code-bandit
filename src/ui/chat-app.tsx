@@ -36,6 +36,7 @@ function ChatApp(props: ChatAppProps)
         selected,
         chatHistory,
         handleSendHistory,
+        tokenUsage,
     } = useChatController({
         chatService,
         session,
@@ -120,6 +121,15 @@ function ChatApp(props: ChatAppProps)
                 <Box flexShrink={0} paddingLeft={1}>
                     <Text color="blackBright">[{session.workDir.replace(homedir(), "~")}]</Text>
                 </Box>
+
+                {tokenUsage && (tokenUsage.total_tokens / 1000 >= 1) &&
+                    <Box flexShrink={0} paddingLeft={1}>
+                        <Text color="magenta">
+                            TOK {(tokenUsage.total_tokens / 1000).toFixed(1)}
+                            (↑{(tokenUsage.input_tokens / 1000).toFixed(1)} ↓{(tokenUsage.output_tokens / 1000).toFixed(1)})
+                        </Text>
+                    </Box>
+                }
             </Box>
         </Box>
     );

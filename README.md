@@ -135,6 +135,7 @@ You: "Convert this callback to async/await"
 You: "Set up ESLint with TypeScript"
 You: "Add a pre-commit hook for formatting"
 You: "Configure Jest for testing"
+```
 
 ### 📝 **Git & Documentation**
 ```bash

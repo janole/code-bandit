@@ -233,6 +233,10 @@ Code Bandit is designed with safety in mind:
 - `create-directory` — Create new folders
 - `execute-command` — Run shell commands
 
+### 🎯 **Best Practices**
+- **Always use git**: Work in git repositories so you can easily review and revert changes
+- **Review changes**: Use `git diff` to review all modifications before committing
+- **Session continuity**: Use `--continue-session` to maintain context across multiple interactions
 
 ---
 

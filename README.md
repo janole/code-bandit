@@ -124,16 +124,50 @@ You: "Configure Jest for testing"
 
 ## 🎛️ Command Options
 
-| Option | Description | Example |
-|--------|-------------|---------|
-| `-p, --provider` | Choose AI provider | `ollama`, `openai`, `anthropic`, `gemini`, `groq` |
-| `-m, --model` | Select model | `gpt-4-turbo`, `llama3.2:3b`, `claude-3-5-sonnet` |
-| `-k, --api-key` | API key for remote providers | Your API key |
-| `-u, --api-url` | Custom API URL | For self-hosted models |
-| `--max-messages` | Chat history limit | Default: 10 |
-| `-C, --continue-session` | Resume previous chat | `--continue-session ./my-session.json` |
-| `--read-only` | Safe mode (no file changes) | Perfect for exploration |
-| `--write-mode` | Full access mode | ⚠️ Use with caution! |
+### Commands
+
+- `coba` or `coba chat [options]` — Start an interactive chat session (default command)
+- `coba exec <message...> [options]` — Run a one-off, non-interactive request
+- `coba install-extension [--tag <tag>]` — Install the official VS Code extension
+
+### Global/chat options
+
+| Option | Description | Default / Examples |
+|--------|-------------|--------------------|
+| `-p, --provider <provider>` | Model provider to use | env: `CODE_BANDIT_PROVIDER` (e.g. `ollama`, `openai`, `anthropic`, `gemini`, `groq`) |
+| `-m, --model <model>` | Model identifier | env: `CODE_BANDIT_MODEL` (e.g. `gpt-4-turbo`, `llama3.2:3b`, `claude-3-5-sonnet`) |
+| `-u, --api-url <url>` | API base URL for provider | e.g. self-hosted endpoint |
+| `-k, --api-key <key>` | API key passed to the provider | Your API key |
+| `--context-size <size>` | Max context window (tokens) used for chat history | Default: `8192` for `ollama`, provider default otherwise |
+| `--max-messages <count>` | Max number of messages to retain in history | Default: `10` |
+| `-R, --repo-path <path>` | Git repository directory to work in | Default: `.` |
+| `--read-only` | Use read-only tool mode (no file changes) | Safe exploration |
+| `--write-mode` | Enable YOLO write mode for tools (destructive) | Use with caution |
+| `--no-agent-rules` | Disable loading of AGENTS.md, .cursorrules, etc. | — |
+| `--debug` | Show debug information | — |
+
+### Chat-only options
+
+| Option | Description |
+|--------|-------------|
+| `-C, --continue-session <filename>` | Continue with a previous session file |
+| `--start-message <message>` | Start the chat by sending an initial message |
+| `--no-stream` | Disable streaming responses |
+
+### Exec-only options
+
+| Option | Description |
+|--------|-------------|
+| `-o <file>` | Write the model's final text output to a file (`-` for stdout) |
+
+Notes:
+- `exec` also reads from stdin and appends it to the message. Example: `echo "extra context" | coba exec "Summarize this" -p openai -m gpt-4o`.
+
+### VS Code extension
+
+| Command | Description |
+|---------|-------------|
+| `coba install-extension --tag <tag>` | Download and install the official VS Code extension. Use `--tag vX.Y.Z` for a specific version or omit for `latest`. Requires the `code` CLI in PATH. |
 
 ---
 

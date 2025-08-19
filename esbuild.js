@@ -36,6 +36,7 @@ const cliBuild = {
     platform: "node",
     target: ["node20"],
     minify: true,
+    keepNames: true,
     sourcemap: false,
     plugins: [nodeExternalsPlugin({ allowList: ["@langchain/ollama"] })],
 };

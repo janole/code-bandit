@@ -126,12 +126,27 @@ function addChatCommands(program: Command)
 
     addSharedOptions(program.command("exec <message...>"))
         .description(`Run ${getAppTitle()} non-interactively.`)
+        .option("-o <file>", "Write output to file")
         .action(async (messages: string[], options) =>
         {
             const { text, error } = await exec(messages.join(" "), options);
 
-            error && console.error(error);
-            text && console.log(text);
+            if (error)
+            {
+                console.error(error);
+            }
+
+            if (text)
+            {
+                if (options.o && options.o !== "-")
+                {
+                    await writeFile(options.o, text);
+                }
+                else
+                {
+                    console.log(text);
+                }
+            }
 
             process.exit(error ? -1 : 0);
         });

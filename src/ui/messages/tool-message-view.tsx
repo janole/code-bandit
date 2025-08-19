@@ -150,8 +150,8 @@ export function ToolMessageView(props: MessageProps)
                     </Box>
                     {msg.status === "error" &&
                         <Box marginLeft={2} marginTop={1}>
-                            <Box width={2}>
-                                <Text color={colors.error}>✖</Text>
+                            <Box>
+                                <Text color={colors.error}>{"✖ "}</Text>
                             </Box>
                             <Box>
                                 <Text color="blackBright">{msg.content?.trim()}</Text>

@@ -216,18 +216,21 @@ Code Bandit is designed with safety in mind:
 - All shell commands run in isolated Docker containers, protecting your system from potentially harmful operations.
 
 ### 📋 **Always Available Tools**
-- `listDirectory` — Browse project structure
-- `readFile` — Examine file contents
-- `findFiles` — Search by patterns (`**/*.ts`, `src/**/*.js`)
-- `searchInFiles` — Find text across your codebase
-- `executeCommandReadOnly` — Safe commands (`git status`, `npm test`)
+- `list-directory` — Browse project structure
+- `read-file` — Examine file contents  
+- `find-files` — Search by patterns (`**/*.ts`, `src/**/*.js`)
+- `search-in-files` — Find text across your codebase
+- `git-diff` — View git changes
+- `git-log` — Check commit history
+- `copy-to-clipboard` — Copy content for external use
 
-### ⚠️ **Destructive Tools** *(with confirmation)*
-- `writeFile` — Create or modify files
-- `deleteFile` — Remove files permanently
-- `moveFile` — Rename or relocate files
-- `createDirectory` — Create new folders
-- `executeCommand` — Run any shell command
+### ⚡ **Write Mode Tools** *(requires `--write-mode`)*
+- `write-file` — Create or modify files
+- `delete-file` — Remove files permanently  
+- `move-file` — Rename or relocate files
+- `create-directory` — Create new folders
+- `execute-command` — Run shell commands
+
 
 ---
 

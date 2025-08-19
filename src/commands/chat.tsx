@@ -80,7 +80,7 @@ async function exec(message: string, options: any)
     if (pendingConfirmation)
     {
         return {
-            error: `ERROR: Pending confirmation for tool "${pendingConfirmation.toolCall?.name}".`,
+            error: `Pending confirmation for tool "${pendingConfirmation.toolCall?.name}".`,
             pendingConfirmation,
             messages,
         };
@@ -90,7 +90,7 @@ async function exec(message: string, options: any)
 
     return {
         text,
-        error: text?.length,
+        error: text?.length === 0 ? "Empty response." : undefined,
         messages,
     };
 }
@@ -134,7 +134,7 @@ function addChatCommands(program: Command)
 
             if (error)
             {
-                console.error(error);
+                console.error(`ERROR: ${error}`);
             }
 
             if (text)

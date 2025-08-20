@@ -3,7 +3,7 @@ import { execa } from "execa";
 import { z } from "zod";
 
 import tryCatch from "../../utils/try-catch.js";
-import { createTool, formatEmptyToolOutput, resolveWithinWorkDir } from "./utils.js";
+import { createTool, resolveWithinWorkDir } from "./utils.js";
 
 async function runNpm(args: string[] = [], config?: RunnableConfig, opts: { timeout?: number } = {}): Promise<string>
 {
@@ -116,8 +116,7 @@ async function npmLs(
         workspace ?? "",
     ].filter(Boolean) as string[];
 
-    const out = await runNpm(args, config);
-    return out || formatEmptyToolOutput(npmLs);
+    return runNpm(args, config);
 }
 
 async function npmView(
@@ -132,8 +131,7 @@ async function npmView(
         "--json",
     ].filter(Boolean) as string[];
 
-    const out = await runNpm(args, config);
-    return out || formatEmptyToolOutput(npmView);
+    return runNpm(args, config);
 }
 
 async function npmOutdated(
@@ -148,8 +146,7 @@ async function npmOutdated(
         workspace ?? "",
     ].filter(Boolean) as string[];
 
-    const out = await runNpm(args, config);
-    return out || formatEmptyToolOutput(npmOutdated);
+    return runNpm(args, config);
 }
 
 const _tools = [

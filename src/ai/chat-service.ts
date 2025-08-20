@@ -92,7 +92,7 @@ class ChatService
 
             llm = new ChatAnthropic({
                 model,
-                maxTokens: 16384,
+                maxTokens: 32678,
                 anthropicApiKey: apiKey,
                 anthropicApiUrl: apiUrl,
             });

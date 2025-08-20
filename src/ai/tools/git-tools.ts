@@ -34,6 +34,25 @@ async function gitLog({ args = [] }: { args: string[] }, _config?: RunnableConfi
     return diff || formatEmptyToolOutput(gitLog);
 }
 
+async function gitTag({ pattern, sortKey }: { pattern?: string; sortKey?: string }, _config?: RunnableConfig): Promise<string>
+{
+    const args = ["tag", "--list"];
+
+    if (sortKey)
+    {
+        args.push("--sort", sortKey);
+    }
+
+    if (pattern)
+    {
+        args.push(pattern);
+    }
+
+    const tagList = await execGit(args);
+
+    return tagList || "No tags found.";
+}
+
 const _tools = [
     createTool(gitDiff, {
         description: "Run git diff <args...>",
@@ -45,6 +64,13 @@ const _tools = [
         description: "Run git log <args...>",
         schema: z.object({
             args: z.array(z.string()).describe("An array of arguments to pass to the git log command (e.g., ['-n', '5', '--oneline']).").optional().default([]),
+        }),
+    }),
+    createTool(gitTag, {
+        description: "A read-only tool to list git tags, with optional filtering and sorting. The sort key can be prefixed with '-' for descending order (e.g., '-version:refname').",
+        schema: z.object({
+            pattern: z.string().describe("An optional pattern to filter the tag list (e.g., 'v1.*'). If omitted, all tags are listed.").optional(),
+            sortKey: z.string().describe("Optional key to sort tags. Common keys: 'refname', 'version:refname', 'creatordate'. Prefix with '-' for descending order.").optional(),
         }),
     }),
 ];

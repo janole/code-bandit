@@ -29,6 +29,30 @@ async function runNpm(args: string[] = [], config?: RunnableConfig, opts: { time
     return output || `npm ${args.join(" ")} produced no output.`;
 }
 
+async function runNpx(args: string[] = [], config?: RunnableConfig, opts: { timeout?: number } = {}): Promise<string>
+{
+    const timeout = opts.timeout ?? 120_000;
+
+    const cwd = resolveWithinWorkDir(".", config?.metadata?.["workDir"]);
+
+    const { result, error } = await tryCatch(async () => execa("npx", args, { cwd, timeout, env: { CI: "true", npm_config_color: "always" } }));
+
+    // Prefer including both stdout and stderr to capture warnings/info
+    const stdout = result?.stdout?.toString() ?? "";
+    const stderr = (result?.stderr?.toString() || (error as any)?.stderr?.toString()) ?? "";
+
+    const output = [stdout && `STDOUT:\n${stdout}`.trim(), stderr && `STDERR:\n${stderr}`.trim()].filter(Boolean).join("\n\n");
+
+    if (!result)
+    {
+        // If execa failed before producing a result (timeout, spawn error, etc.)
+        const message = (error as Error)?.message ?? "Unknown error";
+        return `ERROR: npx ${args.join(" ")} failed: ${message}${output ? `\n\n${output}` : ""}`;
+    }
+
+    return output || `npx ${args.join(" ")} produced no output.`;
+}
+
 // Destructive tools
 async function npmInstall(
     { packages = [], dev = false, exact = false, workspace }: { packages?: string[]; dev?: boolean; exact?: boolean; workspace?: string },
@@ -149,6 +173,20 @@ async function npmOutdated(
     return runNpm(args, config);
 }
 
+async function npx(
+    { command, args: npxArgs = [], workspace }: { command: string; args?: string[], workspace?: string },
+    config?: RunnableConfig,
+): Promise<string>
+{
+    const args = [
+        ...(workspace ? ["-w", workspace] : []),
+        command,
+        ...npxArgs,
+    ].filter(Boolean) as string[];
+
+    return runNpx(args, config);
+}
+
 const _tools = [
     // destructive
     createTool(npmInstall, {
@@ -208,6 +246,15 @@ const _tools = [
             json: z.boolean().describe("Output JSON.").optional().default(true),
             workspace: z.string().describe("Workspace name or path to run the command in.").optional(),
         }),
+    }),
+    createTool(npx, {
+        description: "Execute a package command with npx (npx <command> -- <args...>).",
+        schema: z.object({
+            command: z.string().describe("The package/command to execute."),
+            args: z.array(z.string()).describe("Additional arguments passed to the command.").optional().default([]),
+            workspace: z.string().describe("Workspace name or path to run the command in.").optional(),
+        }),
+        metadata: { destructive: true },
     }),
 ];
 

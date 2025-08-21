@@ -74,7 +74,7 @@ npx @janole/code-bandit -p ollama -m magistral:24b
 coba install-extension
 
 # Or install a specific version
-coba install-extension --tag v0.3.6
+coba install-extension --tag v0.3.13
 ```
 
 ### Quick Examples

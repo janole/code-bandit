@@ -56,6 +56,8 @@ function writeFile({ fileName, fileData }: { fileName: string; fileData: string 
     try
     {
         const resolvedPath = resolveWithinWorkDir(fileName, config?.metadata?.["workDir"]);
+        
+        mkdirSync(path.dirname(resolvedPath), { recursive: true });
 
         writeFileSync(resolvedPath, fileData);
 

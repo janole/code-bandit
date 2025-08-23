@@ -207,8 +207,7 @@ class ApiClient
             // Node environment: try to dynamically load `eventsource` package (or `eventsource` polyfill)
             try 
             {
-                // prefer dynamic import
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // prefer dynamic import                 
                 // @ts-ignore
                 const mod = await import("eventsource");
                 const EventSourceImpl = mod.default ?? mod;

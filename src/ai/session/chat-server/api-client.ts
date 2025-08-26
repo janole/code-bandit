@@ -87,6 +87,27 @@ class ApiClient
         return this._request<Document[]>("api/documents", { method: "GET" });
     }
 
+    /**
+     * List documents that directly link to the given parent/target document.
+     * i.e., rows in `links` where links.to_id = targetDocumentId.
+     * Optionally filter by link `type`.
+     *
+     * Note: The server route `GET /api/documents` must support the
+     * `linked_to` (and optional `type`) query parameters.
+     */
+    listDocumentsLinkingTo(targetDocumentId: string, opts?: { type?: string }): Promise<Document[]> 
+    {
+        const searchParams = new URLSearchParams({ linked_to: targetDocumentId });
+        if (opts?.type) { searchParams.set("type", opts.type); }
+        return this._request<Document[]>(`api/documents?${searchParams.toString()}`, { method: "GET" });
+    }
+
+    /** Convenience alias for readability when treating the target as a parent node. */
+    listChildrenOf(parentDocumentId: string, opts?: { type?: string }): Promise<Document[]> 
+    {
+        return this.listDocumentsLinkingTo(parentDocumentId, opts);
+    }
+
     // --- Document access by internal UUID ---
 
     getDocumentById(id: string): Promise<Document> 
@@ -230,7 +251,6 @@ class ApiClient
         {
             try 
             {
-                console.log("EVT", evt);
                 // evt.data may contain comments like ': ping' which should be ignored
                 if (!evt?.data) { return; }
                 // Some SSE libraries deliver comments as data starting with ':'. Ignore those.

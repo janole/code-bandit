@@ -1,11 +1,11 @@
+import { HumanMessage } from "@langchain/core/messages";
 import clipboard from "clipboardy";
 import { Key, useApp } from "ink";
 import { useCallback, useEffect, useState } from "react";
 
-import { HumanMessage } from "@langchain/core/messages";
 import { ChatService } from "../ai/chat-service.js";
 import { ErrorMessage, TMessage, ToolProgressMessage } from "../ai/custom-messages.js";
-import { addCommandListener, removeCommandListener } from "../ai/session/chat-server/chat-server-client.js";
+import { chatServerClient } from "../ai/session/chat-server/chat-server-client.js";
 import { ChatSession } from "../ai/session/session.js";
 import { countTokens, lastMessageFromAI, TTokenUsage } from "../ai/tokens.js";
 import { getGitBranch } from "../ai/tools/git-tools.js";
@@ -223,17 +223,19 @@ export function useChatController(props: UseChatControllerProps)
                 if (message && !working)
                 {
                     const messages = [...chatHistory.messages, new HumanMessage(message)];
+                    session.setMessages(messages, messages.length);
                     handleSendHistory(messages, messages.length);
                 }
             }
         };
 
-        addCommandListener(commandListener);
+        chatServerClient?.addCommandListener(commandListener);
 
-        return () => { removeCommandListener(commandListener); };
+        return () => { chatServerClient?.removeCommandListener(commandListener); };
     }, [
         session,
         working,
+        chatHistory,
     ]);
 
     // TODO: refactor

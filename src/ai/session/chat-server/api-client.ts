@@ -72,6 +72,8 @@ class ApiClient
     private baseUrl: string;
     private token?: string;
 
+    private authData?: AuthData;
+
     private supabase?: SupabaseClient;
     private channel?: RealtimeChannel;
 
@@ -156,7 +158,7 @@ class ApiClient
 
         const authData = await this.getAuthData();
 
-        console.log(authData);
+        console.log(this.authData);
 
         const supabase = createClient(authData.api_url, authData.api_key, {
             accessToken: async () => 
@@ -167,6 +169,7 @@ class ApiClient
         });
 
         this.supabase = supabase;
+        this.authData = authData;
 
         this.channel = await supabase.channel(authData.channel)
             .on(
@@ -206,11 +209,16 @@ class ApiClient
         await this.ensureSupabaseClient();
     }
 
-    async setStatus(status: ClientStatus)
+    async setStatus(status: ClientStatus["status"], external_id: ClientStatus["external_id"])
     {
         await this.ensureSupabaseClient();
 
-        await this.channel?.track(status);
+        await this.channel?.track({
+            user_id: this.authData!.user_id,
+            type: "super-client",
+            external_id,
+            status,
+        } satisfies ClientStatus);
     }
 
     // --- Documents API ---

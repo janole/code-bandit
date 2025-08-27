@@ -11,6 +11,14 @@ export interface AuthData
     channel: string;
 }
 
+export interface ClientStatus
+{
+    type: "consumer-client" | "super-client";
+    user_id: string;
+    external_id: string;
+    status: "idle" | "working";
+}
+
 export interface Document 
 {
     id: string; // Internal UUID
@@ -138,6 +146,7 @@ class ApiClient
     }
 
     // --- Realtime API ---
+
     private async ensureSupabaseClient()
     {
         if (this.supabase)
@@ -176,13 +185,15 @@ class ApiClient
 
         this.channel.subscribe(async (status: any) =>
         {
-            if (status !== "SUBSCRIBED")
-            {
-                return;
-            }
+            console.log("SUBSCRIBE", status);
 
-            const presenceTrackStatus = await this.channel?.track({ userId: authData.user_id, type: "super-client" });
-            console.log(presenceTrackStatus);
+            // if (status !== "SUBSCRIBED")
+            // {
+            //     return;
+            // }
+
+            // const presenceTrackStatus = await this.channel?.track({ userId: authData.user_id, type: "super-client" });
+            // console.log(presenceTrackStatus);
         });
 
         // await this.channel.track(currentStatus);
@@ -195,13 +206,11 @@ class ApiClient
         await this.ensureSupabaseClient();
     }
 
-    async setStatus(status: string)
+    async setStatus(status: ClientStatus)
     {
         await this.ensureSupabaseClient();
 
-        this.channel?.track({
-            status,
-        });
+        await this.channel?.track(status);
     }
 
     // --- Documents API ---
@@ -310,131 +319,6 @@ class ApiClient
             searchParams.set("type", params.type);
         }
         return this._request<Link>(`api/links?${searchParams.toString()}`, { method: "DELETE" });
-    }
-
-    // --- Realtime (SSE) consumer for documents ---
-    /**
-     * Subscribes to server-sent events for document changes.
-     * The server SSE endpoint is expected at `api/documents/realtime`.
-     *
-     * Usage:
-     *   const sub = await apiClient.subscribeDocuments((payload) => { ... });
-     *   // later: sub.close();
-     *
-     * Notes:
-     * - In browsers EventSource does not support custom headers; the token will be passed
-     *   via the `token` query parameter when running in the browser.
-     * - In Node, this will try to dynamically import the `eventsource` package and set
-     *   the Authorization header.
-     */
-    async subscribeDocuments(
-        onPayload: (payload: any) => void,
-        opts?: { onOpen?: () => void; onError?: (err: any) => void; eventName?: string },
-    ): Promise<SSESubscription> 
-    {
-        const path = "api/documents/realtime";
-        const urlObj = new URL(path, this.baseUrl);
-
-        let es: any = null;
-        const eventName = opts?.eventName ?? "document";
-
-        // Browser: use native EventSource. Native EventSource cannot set headers, so pass token in query.
-        if (typeof window !== "undefined" && (window as any).EventSource) 
-        {
-            if (this.token) 
-            {
-                urlObj.searchParams.set("token", this.token);
-            }
-            es = new (window as any).EventSource(urlObj.href);
-        }
-        else 
-        {
-            // Node environment: try to dynamically load `eventsource` package (or `eventsource` polyfill)
-            try 
-            {
-                // prefer dynamic import
-                 
-                // @ts-ignore
-                const mod = await import("eventsource");
-                const EventSourceImpl = mod.default ?? mod;
-
-                const headers: Record<string, string> = {};
-                if (this.token) 
-                {
-                    headers["authorization"] = `Bearer ${this.token}`;
-                }
-
-                es = new EventSourceImpl(urlObj.href, { headers });
-            }
-            catch 
-            {
-                throw new Error("EventSource is not available in this environment. Install the `eventsource` package in Node to use SSE.");
-            }
-        }
-
-        const onMessage = (evt: any) => 
-        {
-            try 
-            {
-                // evt.data may contain comments like ': ping' which should be ignored
-                if (!evt?.data) { return; }
-                // Some SSE libraries deliver comments as data starting with ':'. Ignore those.
-                if (typeof evt.data === "string" && evt.data.trim().startsWith(":")) { return; }
-
-                // The server uses named events like `document`; we listen to the specific event below.
-                // For `message` events, parse JSON if possible and forward.
-                let parsed = null;
-                try 
-                {
-                    parsed = JSON.parse(evt.data);
-                }
-                catch 
-                {
-                    parsed = evt.data;
-                }
-                onPayload(parsed);
-            }
-            catch (err) 
-            {
-                // swallow user handler errors
-                console.error("Error in SSE onMessage handler:", err);
-            }
-        };
-
-        const onError = (err: any) => 
-        {
-            if (opts?.onError) { opts.onError(err); }
-        };
-
-        const onOpen = () => 
-        {
-            if (opts?.onOpen) { opts.onOpen(); }
-        };
-
-        // Attach listeners
-        es.addEventListener("message", onMessage);
-        es.addEventListener(eventName, onMessage);
-        es.addEventListener("open", onOpen);
-        es.addEventListener("error", onError);
-
-        return {
-            close: () => 
-            {
-                try 
-                {
-                    es.removeEventListener("message", onMessage);
-                    es.removeEventListener(eventName, onMessage);
-                    es.removeEventListener("open", onOpen);
-                    es.removeEventListener("error", onError);
-                }
-                catch
-                {
-                    // ignore
-                }
-                try { es.close(); }
-                catch { /* ignore */ }
-            },
-        };
     }
 }
 

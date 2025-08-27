@@ -9,5 +9,5 @@ chatServerClient?.start();
 
 export
 {
-    chatServerClient
+    chatServerClient,
 };

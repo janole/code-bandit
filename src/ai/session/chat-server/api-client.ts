@@ -1,5 +1,16 @@
 // A simple, configurable client library for the documents and links APIs.
 
+import { createClient, RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
+
+export interface AuthData
+{
+    user_id: string;
+    access_token: string;
+    api_url: string;
+    api_key: string;
+    channel: string;
+}
+
 export interface Document 
 {
     id: string; // Internal UUID
@@ -46,10 +57,17 @@ export type SSESubscription = {
     close: () => void;
 };
 
+type TCommandListenerFunc = (payload: any) => void;
+
 class ApiClient 
 {
     private baseUrl: string;
     private token?: string;
+
+    private supabase?: SupabaseClient;
+    private channel?: RealtimeChannel;
+
+    private commandListeners: TCommandListenerFunc[] = [];
 
     constructor(options: ApiClientOptions = {}) 
     {
@@ -78,6 +96,112 @@ class ApiClient
 
         const text = await response.text();
         return text ? JSON.parse(text) as T : {} as T;
+    }
+
+    // --- ----
+    addCommandListener(f: TCommandListenerFunc)
+    {
+        if (!this.commandListeners.includes(f))
+        {
+            this.commandListeners.push(f);
+        }
+    };
+
+    removeCommandListener(f: TCommandListenerFunc)
+    {
+        const i = this.commandListeners.indexOf(f);
+
+        if (i !== -1)
+        {
+            this.commandListeners.splice(i, 1);
+        }
+    };
+
+    private pushCommand(payload: any)
+    {
+        console.log("PAYLOAD", payload);
+
+        for (const f of this.commandListeners)
+        {
+            if (payload.table === "documents" && payload.eventType === "INSERT" && payload.new?.data?.external_id)
+            {
+                f(payload.new.data);
+            }
+        }
+    }
+
+    // --- Auth API ---
+
+    getAuthData(): Promise<AuthData>
+    {
+        return this._request<AuthData>("api/auth/access-token", { method: "POST" });
+    }
+
+    // --- Realtime API ---
+    private async ensureSupabaseClient()
+    {
+        if (this.supabase)
+        {
+            return this.supabase;
+        }
+
+        const authData = await this.getAuthData();
+
+        console.log(authData);
+
+        const supabase = createClient(authData.api_url, authData.api_key, {
+            accessToken: async () => 
+            {
+                console.log("GET ACCESS-TOKEN");
+                return authData.access_token;
+            },
+        });
+
+        this.supabase = supabase;
+
+        this.channel = await supabase.channel(authData.channel)
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "documents",
+                    filter: `user_id=eq.${authData.user_id}`,
+                },
+                (payload: any) => this.pushCommand(payload),
+            )
+            .on("presence", { event: "sync" }, () => this.pushCommand({ presenceState: this.channel?.presenceState() }))
+            .on("presence", { event: "join" }, (args: any) => this.pushCommand({ args, presenceState: this.channel?.presenceState() }))
+            .on("presence", { event: "leave" }, (args: any) => this.pushCommand({ args, presenceState: this.channel?.presenceState() }));
+
+        this.channel.subscribe(async (status: any) =>
+        {
+            if (status !== "SUBSCRIBED")
+            {
+                return;
+            }
+
+            const presenceTrackStatus = await this.channel?.track({ userId: authData.user_id, type: "super-client" });
+            console.log(presenceTrackStatus);
+        });
+
+        // await this.channel.track(currentStatus);
+
+        return this.supabase;
+    }
+
+    async start()
+    {
+        await this.ensureSupabaseClient();
+    }
+
+    async setStatus(status: string)
+    {
+        await this.ensureSupabaseClient();
+
+        this.channel?.track({
+            status,
+        });
     }
 
     // --- Documents API ---
@@ -228,7 +352,8 @@ class ApiClient
             // Node environment: try to dynamically load `eventsource` package (or `eventsource` polyfill)
             try 
             {
-                // prefer dynamic import                 
+                // prefer dynamic import
+                 
                 // @ts-ignore
                 const mod = await import("eventsource");
                 const EventSourceImpl = mod.default ?? mod;

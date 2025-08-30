@@ -203,6 +203,12 @@ export function useChatController(props: UseChatControllerProps)
             setTokenUsage(countTokens(chatHistory.messages));
 
             getGitBranch().then(branch => setCurrentGitBranch(branch));
+
+            chatServerClient?.setStatus("idle", session.id);
+        }
+        else
+        {
+            chatServerClient?.setStatus("working", session.id);
         }
     }, [
         working,

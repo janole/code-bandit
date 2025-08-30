@@ -80,15 +80,20 @@ export class PromptLoader implements IPromptLoader
 
         if (this.agentRules)
         {
-            prompt.push(`--- Project-Specific Instructions ---\n\n${this.agentRules}`);
+            prompt.push(...[
+                "### Project-Specific Guidelines",
+                this.agentRules,
+            ]);
         }
 
         const currentGitBranch = await getGitBranch();
 
         if (currentGitBranch)
         {
-            prompt.push("--- Git Status Information ---");
-            prompt.push(`Current git branch: ${currentGitBranch}`);
+            prompt.push(...[
+                "### Current State",
+                `The current git branch is: ${currentGitBranch}`,
+            ]);
         }
 
         return prompt.join("\n\n");

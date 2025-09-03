@@ -67,6 +67,29 @@ export type SSESubscription = {
 
 type TCommandListenerFunc = (payload: any) => void;
 
+// export class Mutex
+// {
+//     private _locked = false;
+//     private _queue: (() => void)[] = [];
+
+//     async acquire(): Promise<() => void>
+//     {
+//         while (this._locked)
+//         {
+//             await new Promise<void>(resolve => this._queue.push(resolve));
+//         }
+
+//         this._locked = true;
+
+//         return () =>
+//         {
+//             this._locked = false;
+//             // resume the next waiter (if any)
+//             this._queue.shift()?.();
+//         };
+//     }
+// }
+
 class ApiClient 
 {
     private baseUrl: string;

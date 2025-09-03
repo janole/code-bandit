@@ -3,7 +3,7 @@
 import { createClient, RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { Mutex } from "async-mutex";
 
-export interface AuthData
+export interface IAuthData
 {
     user_id: string;
     access_token: string;
@@ -12,7 +12,7 @@ export interface AuthData
     channel: string;
 }
 
-export interface ClientStatus
+export interface IClientStatus
 {
     type: "consumer-client" | "super-client";
     user_id: string;
@@ -20,7 +20,7 @@ export interface ClientStatus
     status: "idle" | "working";
 }
 
-export interface Document 
+export interface IDocument 
 {
     id: string; // Internal UUID
     external_id: string | null;
@@ -31,7 +31,7 @@ export interface Document
     updated_at: string;
 }
 
-export interface Link 
+export interface ILink 
 {
     id: string;
     user_id: string;
@@ -42,7 +42,7 @@ export interface Link
 }
 
 // Type for creating a new document, with optional external_id and links
-export interface NewDocument 
+export interface INewDocument 
 {
     data: Record<string, any>;
     external_id?: string;
@@ -50,21 +50,17 @@ export interface NewDocument
     links?: Array<{ to_id: string; type?: string } | { from_id: string; type?: string }>;
 }
 
-export type NewLink = {
+export type INewLink = {
     from_id: string;
     to_id: string;
     type?: string;
 };
 
-export interface ApiClientOptions 
+export interface IApiClientOptions 
 {
     baseUrl?: string;
     token?: string;
 }
-
-export type SSESubscription = {
-    close: () => void;
-};
 
 type TCommandListenerFunc = (payload: any) => void;
 
@@ -73,14 +69,14 @@ class ApiClient
     private baseUrl: string;
     private token?: string;
 
-    private authData?: AuthData;
+    private authData?: IAuthData;
 
     private supabase?: SupabaseClient;
     private channel?: RealtimeChannel;
 
     private commandListeners: TCommandListenerFunc[] = [];
 
-    constructor(options: ApiClientOptions = {}) 
+    constructor(options: IApiClientOptions = {}) 
     {
         this.baseUrl = options.baseUrl || "";
         this.token = options.token;
@@ -144,23 +140,20 @@ class ApiClient
 
     // --- Auth API ---
 
-    getAuthData(): Promise<AuthData>
+    getAuthData(): Promise<IAuthData>
     {
-        return this._request<AuthData>("api/auth/access-token", { method: "POST" });
+        return this._request<IAuthData>("api/auth/access-token", { method: "POST" });
     }
 
     // --- Realtime API ---
 
     private async createSupabaseClient()
     {
-        console.log("createSupabaseClient");
-
         const authData = await this.getAuthData();
 
         const supabase = createClient(authData.api_url, authData.api_key, {
             accessToken: async () => 
             {
-                console.log("GET ACCESS-TOKEN");
                 return authData.access_token;
             },
         });
@@ -216,7 +209,7 @@ class ApiClient
         await this.ensureSupabaseClient();
     }
 
-    async setStatus(status: ClientStatus["status"], external_id: ClientStatus["external_id"])
+    async setStatus(status: IClientStatus["status"], external_id: IClientStatus["external_id"])
     {
         await this.ensureSupabaseClient();
 
@@ -225,7 +218,7 @@ class ApiClient
             type: "super-client",
             external_id,
             status,
-        } satisfies ClientStatus);
+        } satisfies IClientStatus);
     }
 
     // --- Documents API ---
@@ -303,7 +296,7 @@ class ApiClient
 
     // --- Document Creation ---
 
-    createDocument(doc: NewDocument): Promise<Document> 
+    createDocument(doc: INewDocument): Promise<Document> 
     {
         return this._request<Document>("api/documents", {
             method: "POST",
@@ -313,27 +306,27 @@ class ApiClient
 
     // --- Links API ---
 
-    createLinks(links: NewLink[]): Promise<Link[]> 
+    createLinks(links: INewLink[]): Promise<ILink[]> 
     {
-        return this._request<Link[]>("api/links", {
+        return this._request<ILink[]>("api/links", {
             method: "POST",
             body: JSON.stringify(links),
         });
     }
 
-    deleteLinkById(id: string): Promise<Link> 
+    deleteLinkById(id: string): Promise<ILink> 
     {
-        return this._request<Link>(`api/links?id=${id}`, { method: "DELETE" });
+        return this._request<ILink>(`api/links?id=${id}`, { method: "DELETE" });
     }
 
-    deleteLinkByFromTo(params: { from_id: string; to_id: string; type?: string }): Promise<Link> 
+    deleteLinkByFromTo(params: { from_id: string; to_id: string; type?: string }): Promise<ILink> 
     {
         const searchParams = new URLSearchParams({ from_id: params.from_id, to_id: params.to_id });
         if (params.type) 
         {
             searchParams.set("type", params.type);
         }
-        return this._request<Link>(`api/links?${searchParams.toString()}`, { method: "DELETE" });
+        return this._request<ILink>(`api/links?${searchParams.toString()}`, { method: "DELETE" });
     }
 }
 

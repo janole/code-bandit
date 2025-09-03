@@ -180,6 +180,7 @@ class ApiClient
                 },
                 (payload: any) => this.pushCommand(payload),
             )
+            .on("broadcast", { event: "command" }, (args: any) => this.pushCommand({ args }))
             .on("presence", { event: "sync" }, () => this.pushCommand({ presenceState: this.channel?.presenceState() }))
             .on("presence", { event: "join" }, (args: any) => this.pushCommand({ args, presenceState: this.channel?.presenceState() }))
             .on("presence", { event: "leave" }, (args: any) => this.pushCommand({ args, presenceState: this.channel?.presenceState() }));

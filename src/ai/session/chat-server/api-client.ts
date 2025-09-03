@@ -130,13 +130,14 @@ class ApiClient
 
     private pushCommand(payload: any)
     {
-        console.log("PAYLOAD", payload);
-
         for (const f of this.commandListeners)
         {
-            if (payload.table === "documents" && payload.eventType === "INSERT" && payload.new?.data?.external_id)
+            if (payload.args?.event === "command" && payload.args.payload)
             {
-                f(payload.new.data);
+                f({
+                    external_id: payload.args.payload?.external_id,
+                    message: payload.args.payload?.message,
+                });
             }
         }
     }

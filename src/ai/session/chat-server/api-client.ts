@@ -158,8 +158,6 @@ class ApiClient
 
         const authData = await this.getAuthData();
 
-        console.log(this.authData);
-
         const supabase = createClient(authData.api_url, authData.api_key, {
             accessToken: async () => 
             {

@@ -220,8 +220,6 @@ export function useChatController(props: UseChatControllerProps)
     {
         const commandListener = (command: any) =>
         {
-            console.log("COMMAND", command, session.id);
-
             if (command.external_id === session.id)
             {
                 const message = command.message?.trim();

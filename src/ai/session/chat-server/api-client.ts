@@ -1,6 +1,7 @@
 // A simple, configurable client library for the documents and links APIs.
 
 import { createClient, RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
+import { Mutex } from "async-mutex";
 
 export interface AuthData
 {
@@ -149,12 +150,9 @@ class ApiClient
 
     // --- Realtime API ---
 
-    private async ensureSupabaseClient()
+    private async createSupabaseClient()
     {
-        if (this.supabase)
-        {
-            return this.supabase;
-        }
+        console.log("createSupabaseClient");
 
         const authData = await this.getAuthData();
 
@@ -185,22 +183,31 @@ class ApiClient
             .on("presence", { event: "join" }, (args: any) => this.pushCommand({ args, presenceState: this.channel?.presenceState() }))
             .on("presence", { event: "leave" }, (args: any) => this.pushCommand({ args, presenceState: this.channel?.presenceState() }));
 
-        this.channel.subscribe(async (status: any) =>
-        {
-            console.log("SUBSCRIBE", status);
-
-            // if (status !== "SUBSCRIBED")
-            // {
-            //     return;
-            // }
-
-            // const presenceTrackStatus = await this.channel?.track({ userId: authData.user_id, type: "super-client" });
-            // console.log(presenceTrackStatus);
-        });
-
-        // await this.channel.track(currentStatus);
+        this.channel.subscribe();
 
         return this.supabase;
+    }
+
+    private _mutex = new Mutex();
+
+    private async ensureSupabaseClient()
+    {
+        if (!this.supabase)
+        {
+            const release = await this._mutex.acquire();
+
+            try
+            {
+                if (!this.supabase)
+                {
+                    this.supabase = await this.createSupabaseClient();
+                }
+            }
+            finally
+            {
+                release();
+            }
+        }
     }
 
     async start()

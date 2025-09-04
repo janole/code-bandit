@@ -245,6 +245,7 @@ export function useChatController(props: UseChatControllerProps)
         session,
         working,
         chatHistory,
+        handleSendHistory,
     ]);
 
     // TODO: refactor

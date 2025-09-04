@@ -194,6 +194,8 @@ export function useChatController(props: UseChatControllerProps)
         working,
     ]);
 
+    const statusRef = useRef<"idle" | "working">(null);
+
     useEffect(() =>
     {
         if (!working)
@@ -204,11 +206,14 @@ export function useChatController(props: UseChatControllerProps)
 
             getGitBranch().then(branch => setCurrentGitBranch(branch));
 
-            chatServerClient?.setStatus("idle", session.id);
+            if (statusRef.current !== "idle")
+            {
+                chatServerClient?.setStatus(statusRef.current = "idle", session.id);
+            }
         }
-        else
+        else if (statusRef.current !== "working")
         {
-            chatServerClient?.setStatus("working", session.id);
+            chatServerClient?.setStatus(statusRef.current = "working", session.id);
         }
     }, [
         working,

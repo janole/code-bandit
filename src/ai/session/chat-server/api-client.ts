@@ -223,9 +223,9 @@ class ApiClient
 
     // --- Documents API ---
 
-    listDocuments(): Promise<Document[]> 
+    listDocuments(): Promise<IDocument[]> 
     {
-        return this._request<Document[]>("api/documents", { method: "GET" });
+        return this._request<IDocument[]>("api/documents", { method: "GET" });
     }
 
     /**
@@ -236,44 +236,44 @@ class ApiClient
      * Note: The server route `GET /api/documents` must support the
      * `linked_to` (and optional `type`) query parameters.
      */
-    listDocumentsLinkingTo(targetDocumentId: string, opts?: { type?: string }): Promise<Document[]> 
+    listDocumentsLinkingTo(targetDocumentId: string, opts?: { type?: string }): Promise<IDocument[]> 
     {
         const searchParams = new URLSearchParams({ linked_to: targetDocumentId });
         if (opts?.type) { searchParams.set("type", opts.type); }
-        return this._request<Document[]>(`api/documents?${searchParams.toString()}`, { method: "GET" });
+        return this._request<IDocument[]>(`api/documents?${searchParams.toString()}`, { method: "GET" });
     }
 
     /** Convenience alias for readability when treating the target as a parent node. */
-    listChildrenOf(parentDocumentId: string, opts?: { type?: string }): Promise<Document[]> 
+    listChildrenOf(parentDocumentId: string, opts?: { type?: string }): Promise<IDocument[]> 
     {
         return this.listDocumentsLinkingTo(parentDocumentId, opts);
     }
 
     // --- Document access by internal UUID ---
 
-    getDocumentById(id: string): Promise<Document> 
+    getDocumentById(id: string): Promise<IDocument> 
     {
-        return this._request<Document>(`api/documents?id=${id}`, { method: "GET" });
+        return this._request<IDocument>(`api/documents?id=${id}`, { method: "GET" });
     }
 
-    updateDocumentById(id: string, updates: { data?: Record<string, any>, schema_id?: string | null }): Promise<Document> 
+    updateDocumentById(id: string, updates: { data?: Record<string, any>, schema_id?: string | null }): Promise<IDocument> 
     {
-        return this._request<Document>("api/documents", {
+        return this._request<IDocument>("api/documents", {
             method: "PUT",
             body: JSON.stringify({ id, ...updates }),
         });
     }
 
-    deleteDocumentById(id: string): Promise<Document> 
+    deleteDocumentById(id: string): Promise<IDocument> 
     {
-        return this._request<Document>(`api/documents?id=${id}`, { method: "DELETE" });
+        return this._request<IDocument>(`api/documents?id=${id}`, { method: "DELETE" });
     }
 
     // --- Document access by external_id ---
 
-    getDocumentByExternalId(externalId: string): Promise<Document> 
+    getDocumentByExternalId(externalId: string): Promise<IDocument> 
     {
-        return this._request<Document>(`api/documents/external/${externalId}`, { method: "GET" });
+        return this._request<IDocument>(`api/documents/external/${externalId}`, { method: "GET" });
     }
 
     /**
@@ -281,24 +281,24 @@ class ApiClient
      * @param externalId The external ID of the document to upsert.
      * @param documentData The data for the document.
      */
-    upsertDocument(externalId: string, documentData: { data: Record<string, any>, schema_id?: string | null }): Promise<Document> 
+    upsertDocument(externalId: string, documentData: { data: Record<string, any>, schema_id?: string | null }): Promise<IDocument> 
     {
-        return this._request<Document>(`api/documents/external/${externalId}`, {
+        return this._request<IDocument>(`api/documents/external/${externalId}`, {
             method: "PUT",
             body: JSON.stringify(documentData),
         });
     }
 
-    deleteDocumentByExternalId(externalId: string): Promise<Document> 
+    deleteDocumentByExternalId(externalId: string): Promise<IDocument> 
     {
-        return this._request<Document>(`api/documents/external/${externalId}`, { method: "DELETE" });
+        return this._request<IDocument>(`api/documents/external/${externalId}`, { method: "DELETE" });
     }
 
     // --- Document Creation ---
 
-    createDocument(doc: INewDocument): Promise<Document> 
+    createDocument(doc: INewDocument): Promise<IDocument> 
     {
-        return this._request<Document>("api/documents", {
+        return this._request<IDocument>("api/documents", {
             method: "POST",
             body: JSON.stringify(doc),
         });

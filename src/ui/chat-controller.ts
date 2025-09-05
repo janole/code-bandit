@@ -36,6 +36,8 @@ export function useChatController(props: UseChatControllerProps)
         finished: session.finished || 0,
     });
 
+    const messagesQueueRef = useRef<Promise<void>>(Promise.resolve());
+
     const [tokenUsage, setTokenUsage] = useState<TTokenUsage>();
     const [currentGitBranch, setCurrentGitBranch] = useState<string | null>();
 

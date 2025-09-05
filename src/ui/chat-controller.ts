@@ -235,7 +235,6 @@ export function useChatController(props: UseChatControllerProps)
                 if (message && !working)
                 {
                     const messages = [...chatHistory.messages, new HumanMessage(message)];
-                    session.setMessages(messages, messages.length);
                     handleSendHistory(messages, messages.length);
                 }
             }

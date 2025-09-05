@@ -244,7 +244,7 @@ export function useChatController(props: UseChatControllerProps)
 
         return () => { chatServerClient?.removeCommandListener(commandListener); };
     }, [
-        session,
+        session.id,
         working,
         chatHistory,
         handleSendHistory,

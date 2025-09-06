@@ -168,7 +168,9 @@ export type TChatMessageRole =
     | "private"
     ;
 
-type TConfirmState = "no" | "yes" | "none" | "all";
+export const CONFIRM_STATES = ["no", "yes", "none", "all"] as const;
+
+export type TConfirmState = typeof CONFIRM_STATES[number];
 
 export interface IChatMessageBase
 {

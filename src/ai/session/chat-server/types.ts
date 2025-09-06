@@ -124,6 +124,39 @@ export interface IChatModelInfo
     options?: IChatModelOptions;
 }
 
+export type TAddChatModel = { provider: TChatModelProvider; modelUri: string; startDownload?: boolean; };
+
+export type TRemoveChatModel = { provider: TChatModelProvider; modelUri: string; };
+
+export interface IAddAccountOpenAI
+{
+    name: string;
+    provider: "openai";
+    type: "openai";
+    apiKey: string;
+    baseURL?: string;
+}
+
+export interface IAddAccountOpenRouter extends Omit<IAddAccountOpenAI, "type">
+{
+    type: "openrouter";
+}
+
+interface IAddAccountGoogleAI
+{
+    name: string;
+    provider: "googleai";
+    apiKey: string;
+}
+
+export type TAddAccount = IAddAccountOpenAI | IAddAccountOpenRouter | IAddAccountGoogleAI;
+
+export interface TRemoveAccount
+{
+    provider: TChatModelProvider;
+    id: string;
+}
+
 export type TChatMessageRole =
     | "system"
     | "user"
@@ -203,3 +236,5 @@ export interface IChat
     updatedAt?: number;
     deletedAt?: number | "deleted";
 }
+
+export type TProviderInfo = { [key: string]: any };

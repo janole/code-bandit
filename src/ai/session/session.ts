@@ -132,7 +132,7 @@ export class ChatSession implements IChatSession
         this.storage = storage;
         return this;
     }
-    
+
     private notifyListeners(): void
     {
         for (const listener of this.onUpdateListeners)

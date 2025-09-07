@@ -4,13 +4,14 @@ import { concat } from "@langchain/core/utils/stream";
 import tryCatch from "../utils/try-catch.js";
 import { ChatService } from "./chat-service.js";
 import { ErrorMessage, TMessage, ToolProgressMessage } from "./custom-messages.js";
+import { chatServerClient } from "./session/chat-server/chat-server-client.js";
 import { IChatSession } from "./session/session.js";
 
 interface WorkProps
 {
     chatService: ChatService;
     session: IChatSession;
-    send?: (messages: TMessage[]) => void;
+    send?: (messages: TMessage[], inStream: boolean) => Promise<void>;
     streaming?: boolean;
     signal?: AbortSignal;
 }
@@ -39,13 +40,15 @@ async function work(props: WorkProps)
             return messages;
         }
 
+        let chunkNumber = 0;
+        let throttle = Date.now();
         for await (const chunk of stream)
         {
             aiMessage = aiMessage !== undefined ? concat(aiMessage, chunk) : chunk;
 
             if (!aiMessage?.tool_calls?.length && !aiMessage?.tool_call_chunks?.length)
             {
-                send?.([...messages, aiMessage]); // TODO: check for race conditions
+                await send?.([...messages, aiMessage], true); // TODO: check for race conditions
             }
             else
             {
@@ -53,8 +56,35 @@ async function work(props: WorkProps)
 
                 if (toolProgressMessages.length)
                 {
-                    send?.([...messages, aiMessage, ...toolProgressMessages]);
+                    await send?.([...messages, aiMessage, ...toolProgressMessages], true);
                 }
+            }
+
+            if (chatServerClient && aiMessage.text)
+            {
+                if (Date.now() > throttle + 100)
+                {
+                    await chatServerClient?.upsertDocument2(session.id + "/rt", {
+                        data: {
+                            type: "chunk",
+                            external_id: session.id,
+                            chat_id: session.id,
+                            message_number: messages.length,
+                            index: chunkNumber++,
+                            content: aiMessage.text,
+                        },
+                    });
+                    throttle = Date.now();
+                }
+
+                // await chatServerClient?.addDoc(session.id, {
+                //     type: "chunk",
+                //     external_id: session.id,
+                //     chat_id: session.id,
+                //     message_number: messages.length,
+                //     index: chunkNumber++,
+                //     content: chunk.text,
+                // });
             }
         }
     }
@@ -145,7 +175,7 @@ async function workTools(props: Pick<WorkProps, "session" | "chatService" | "sen
             continue;
         }
 
-        send?.([...messages]);
+        await send?.([...messages], false);
 
         const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, { metadata }));
 
@@ -165,7 +195,7 @@ async function workTools(props: Pick<WorkProps, "session" | "chatService" | "sen
         toolProgressMessage.content = error?.message || "Unknown Error";
     }
 
-    send?.([...messages]);
+    await send?.([...messages], false);
 
     return [...messages];
 }

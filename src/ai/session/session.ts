@@ -84,6 +84,8 @@ export interface ICreateChatSession extends Omit<IChatSession, "id" | "messages"
     finished?: IChatSession["finished"];
 }
 
+type TUpdateListener = (messages: TMessage[], finished: number) => void;
+
 export class ChatSession implements IChatSession
 {
     id: string;
@@ -98,6 +100,7 @@ export class ChatSession implements IChatSession
     finished: number = 0;
 
     storage?: ISessionStorage;
+    private onUpdateListeners: TUpdateListener[] = [];
 
     private constructor(props: IChatSession, storage: ISessionStorage | undefined)
     {
@@ -129,17 +132,36 @@ export class ChatSession implements IChatSession
         this.storage = storage;
         return this;
     }
+    
+    private notifyListeners(): void
+    {
+        for (const listener of this.onUpdateListeners)
+        {
+            listener([...this.messages], this.finished);
+        }
+    }
+
+    public onUpdate(listener: TUpdateListener): () => void
+    {
+        this.onUpdateListeners.push(listener);
+        return () =>
+        {
+            this.onUpdateListeners = this.onUpdateListeners.filter(l => l !== listener);
+        };
+    }
 
     async setMessages(messages: TMessage[], finished: number, autoSave: boolean = true): Promise<void>
     {
         const empty = messages.length === 0 && this.messages.length === 0;
 
         this.messages = messages;
-        this.finished = finished;
+        this.finished = Math.min(finished, this.messages.length);
+
+        this.notifyListeners();
 
         if (autoSave && !empty)
         {
-            return this.save();
+            await this.save();
         }
     }
 

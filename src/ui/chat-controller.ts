@@ -1,6 +1,6 @@
 import clipboard from "clipboardy";
 import { Key, useApp } from "ink";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ChatService } from "../ai/chat-service.js";
 import { ErrorMessage, TMessage, ToolProgressMessage } from "../ai/custom-messages.js";
@@ -34,6 +34,8 @@ export function useChatController(props: UseChatControllerProps)
         finished: session.finished || 0,
     });
 
+    const messagesQueueRef = useRef<Promise<void>>(Promise.resolve());
+
     const [tokenUsage, setTokenUsage] = useState<TTokenUsage>();
     const [currentGitBranch, setCurrentGitBranch] = useState<string | null>();
 
@@ -48,8 +50,9 @@ export function useChatController(props: UseChatControllerProps)
         const abortController = new AbortController();
         setAbortController(abortController);
 
-        // TODO: refactor session.messages and setMessage/setState handling
-        session.setMessages(messages, messages.length, false);
+        messagesQueueRef.current = messagesQueueRef.current
+            .then(() => session.setMessages(messages, session.finished))
+            .catch(() => { }); // keep the chain alive
 
         work({
             chatService,
@@ -186,7 +189,10 @@ export function useChatController(props: UseChatControllerProps)
     {
         if (!working)
         {
-            session.setMessages(chatHistory.messages, chatHistory.finished);
+            messagesQueueRef.current = messagesQueueRef.current
+                .then(() => session.setMessages(chatHistory.messages, chatHistory.finished))
+                .catch(() => { }); // keep the chain alive
+
             setTokenUsage(countTokens(chatHistory.messages));
 
             getGitBranch().then(branch => setCurrentGitBranch(branch));

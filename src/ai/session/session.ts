@@ -84,7 +84,7 @@ export interface ICreateChatSession extends Omit<IChatSession, "id" | "messages"
     finished?: IChatSession["finished"];
 }
 
-type TUpdateListener = (messages: TMessage[], finished: number) => void;
+type TUpdateListener = (props: { messages: TMessage[]; finished: number; }) => void;
 
 export class ChatSession implements IChatSession
 {
@@ -135,15 +135,14 @@ export class ChatSession implements IChatSession
 
     private notifyListeners(): void
     {
-        for (const listener of this.onUpdateListeners)
-        {
-            listener([...this.messages], this.finished);
-        }
+        const props = { messages: [...this.messages], finished: this.finished };
+        this.onUpdateListeners.forEach(listener => listener(props));
     }
 
     public onUpdate(listener: TUpdateListener): () => void
     {
         this.onUpdateListeners.push(listener);
+
         return () =>
         {
             this.onUpdateListeners = this.onUpdateListeners.filter(l => l !== listener);

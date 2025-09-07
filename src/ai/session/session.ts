@@ -84,6 +84,8 @@ export interface ICreateChatSession extends Omit<IChatSession, "id" | "messages"
     finished?: IChatSession["finished"];
 }
 
+type TUpdateListener = (props: { messages: TMessage[]; finished: number; }) => void;
+
 export class ChatSession implements IChatSession
 {
     id: string;
@@ -98,6 +100,7 @@ export class ChatSession implements IChatSession
     finished: number = 0;
 
     storage?: ISessionStorage;
+    private onUpdateListeners: TUpdateListener[] = [];
 
     private constructor(props: IChatSession, storage: ISessionStorage | undefined)
     {
@@ -130,18 +133,31 @@ export class ChatSession implements IChatSession
         return this;
     }
 
-    async setMessages(messages: TMessage[], finished: number, autoSave: boolean = true): Promise<void>
+    private notifyListeners(): void
     {
-        const empty = messages.length === 0 && this.messages.length === 0;
-
-        this.messages = messages;
-        this.finished = finished;
-
-        if (autoSave && !empty)
-        {
-            return this.save();
-        }
+        const props = { messages: [...this.messages], finished: this.finished };
+        this.onUpdateListeners.forEach(listener => listener(props));
     }
+
+    public onUpdate(listener: TUpdateListener): () => void
+    {
+        this.onUpdateListeners.push(listener);
+
+        return () =>
+        {
+            this.onUpdateListeners = this.onUpdateListeners.filter(l => l !== listener);
+        };
+    }
+
+    async setMessages(messages: TMessage[], finished: number): Promise<void>
+    {
+        this.messages = messages;
+        this.finished = Math.min(finished, this.messages.length);
+
+        this.notifyListeners();
+    }
+
+    private saveQueue: Promise<any> = Promise.resolve();
 
     async save(): Promise<void>
     {
@@ -150,6 +166,16 @@ export class ChatSession implements IChatSession
             throw new Error("No storage configured!");
         }
 
-        return this.storage.saveSession(this);
+        this.saveQueue = this.saveQueue
+            .then(async () =>
+            {
+                await this.storage!.saveSession(this);
+            })
+            .catch((error) =>
+            {
+                console.error("ERROR: Session save failed!", error);
+            });
+
+        return this.saveQueue;
     }
 }

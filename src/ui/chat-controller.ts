@@ -51,9 +51,6 @@ export function useChatController(props: UseChatControllerProps)
         const abortController = new AbortController();
         setAbortController(abortController);
 
-        // TODO: refactor session.messages and setMessage/setState handling
-        session.setMessages(messages, messages.length, false);
-
         work({
             chatService,
             session,
@@ -85,9 +82,13 @@ export function useChatController(props: UseChatControllerProps)
             {
                 setWorking(false);
             });
-    };
+    }, [
+        chatService,
+        session,
+        streaming,
+    ]);
 
-    const handleInput = (input: string, key: Key): boolean =>
+    const handleInput = useCallback((input: string, key: Key): boolean =>
     {
         if (key.ctrl && input === "c")
         {

@@ -46,6 +46,7 @@ export class FileSessionStorage implements ISessionStorage
 
         if (chatServerClient)
         {
+            console.log("UPSERT", session.messages.length, session.finished);
             await chatServerClient.upsertDocument(session.id, { data: mapSessionToChat(session) });
         }
     }

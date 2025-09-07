@@ -150,19 +150,12 @@ export class ChatSession implements IChatSession
         };
     }
 
-    async setMessages(messages: TMessage[], finished: number, autoSave: boolean = true): Promise<void>
+    async setMessages(messages: TMessage[], finished: number): Promise<void>
     {
-        const empty = messages.length === 0 && this.messages.length === 0;
-
         this.messages = messages;
         this.finished = Math.min(finished, this.messages.length);
 
         this.notifyListeners();
-
-        if (autoSave && !empty)
-        {
-            await this.save();
-        }
     }
 
     async save(): Promise<void>

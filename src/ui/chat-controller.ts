@@ -42,7 +42,7 @@ export function useChatController(props: UseChatControllerProps)
     const selectedIndex = chatHistory.messages.findIndex(m => ToolProgressMessage.isTypeOf(m) && m.status === "pending-confirmation");
     const confirm = selectedIndex !== -1;
 
-    const handleSendHistory = (messages: TMessage[], finished?: number) =>
+    const handleSendHistory = useCallback((messages: TMessage[], finished?: number) =>
     {
         setChatHistory(history => ({ messages, finished: Math.max(finished || 0, history.finished) }));
         setWorking(true);
@@ -86,7 +86,11 @@ export function useChatController(props: UseChatControllerProps)
             {
                 setWorking(false);
             });
-    };
+    }, [
+        chatService,
+        session,
+        streaming,
+    ]);
 
     const handleInput = (input: string, key: Key): boolean =>
     {

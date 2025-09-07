@@ -55,6 +55,10 @@ export function useChatController(props: UseChatControllerProps)
         const abortController = new AbortController();
         setAbortController(abortController);
 
+        messagesQueueRef.current = messagesQueueRef.current
+            .then(() => session.setMessages(messages, session.finished))
+            .catch(() => { }); // keep the chain alive
+
         work({
             chatService,
             // TODO: refactor session.messages and setMessage/setState handling

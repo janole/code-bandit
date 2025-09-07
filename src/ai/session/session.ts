@@ -157,6 +157,8 @@ export class ChatSession implements IChatSession
         this.notifyListeners();
     }
 
+    private saveQueue: Promise<any> = Promise.resolve();
+
     async save(): Promise<void>
     {
         if (!this.storage)
@@ -164,6 +166,16 @@ export class ChatSession implements IChatSession
             throw new Error("No storage configured!");
         }
 
-        return this.storage.saveSession(this);
+        this.saveQueue = this.saveQueue
+            .then(async () =>
+            {
+                await this.storage!.saveSession(this);
+            })
+            .catch((error) =>
+            {
+                console.error("ERROR: Session save failed!", error);
+            });
+
+        return this.saveQueue;
     }
 }

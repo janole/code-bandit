@@ -16,7 +16,7 @@ export class CustomMessage
         this._type = type;
     }
 
-    getType(): string
+    getType(): TCustomMessageType
     {
         return this._type;
     }
@@ -154,3 +154,4 @@ export
     ErrorMessage,
     ToolProgressMessage,
 };
+

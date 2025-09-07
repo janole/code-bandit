@@ -328,6 +328,63 @@ class ApiClient
         }
         return this._request<ILink>(`api/links?${searchParams.toString()}`, { method: "DELETE" });
     }
+
+    // --- Broadcast API ---
+
+    broadcast(event: string, payload: { [key: string]: any })
+    {
+        return this.channel?.send({
+            type: "broadcast",
+            event,
+            payload,
+        });
+    }
+
+    // --- Test API ---
+
+    private documentId: string | undefined;
+
+    async addDoc(externalId: string, data: any)
+    {
+        if (!this.documentId)
+        {
+            const document = await this.getDocumentByExternalId(externalId);
+
+            if (!document)
+            {
+                return;
+            }
+
+            this.documentId = document.id;
+        }
+
+        // Prepare the parameters for the RPC call
+        const rpcParams: {
+            data: any;
+            external_id?: string | null;
+            schema_id?: string | null;
+            links?: any[];
+        } = {
+            data,
+            links: [{
+                to_id: this.documentId,
+                type: "llm-chunk",
+            }],
+        };
+
+        await this.supabase?.rpc("create_document_with_links", rpcParams).select().single();
+    }
+
+    async upsertDocument2(externalId: string, documentData: { data: Record<string, any>, schema_id?: string | null })
+    {
+        const rpcParams = {
+            p_external_id: externalId,
+            p_data: documentData.data,
+            p_schema_id: documentData.schema_id,
+        } as const;
+
+        await this.supabase?.rpc("upsert_document", rpcParams).select().single();
+    }
 }
 
 export { ApiClient };

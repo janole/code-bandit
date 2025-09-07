@@ -1,6 +1,6 @@
 import clipboard from "clipboardy";
 import { Key, useApp } from "ink";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { ChatService } from "../ai/chat-service.js";
 import { ErrorMessage, TMessage, ToolProgressMessage } from "../ai/custom-messages.js";
@@ -34,56 +34,63 @@ export function useChatController(props: UseChatControllerProps)
         finished: session.finished || 0,
     });
 
-    const messagesQueueRef = useRef<Promise<void>>(Promise.resolve());
-
     const [tokenUsage, setTokenUsage] = useState<TTokenUsage>();
     const [currentGitBranch, setCurrentGitBranch] = useState<string | null>();
 
     const selectedIndex = chatHistory.messages.findIndex(m => ToolProgressMessage.isTypeOf(m) && m.status === "pending-confirmation");
     const confirm = selectedIndex !== -1;
 
+    // This effect subscribes to the session, making it the single source of truth.
+    useEffect(() =>
+    {
+        // The listener updates the React state whenever the session's messages change.
+        const unsubscribe = session.onUpdate((messages, finished) =>
+        {
+            setChatHistory({ messages, finished });
+        });
+
+        // Cleanup subscription on component unmount
+        return unsubscribe;
+    }, [
+        session,
+    ]);
+
     const handleSendHistory = useCallback((messages: TMessage[], finished?: number) =>
     {
-        setChatHistory(history => ({ messages, finished: Math.max(finished || 0, history.finished) }));
+        session.setMessages(messages, Math.max(finished || 0, session.finished));
         setWorking(true);
 
         const abortController = new AbortController();
         setAbortController(abortController);
 
-        messagesQueueRef.current = messagesQueueRef.current
-            .then(() => session.setMessages(messages, session.finished))
-            .catch(() => { }); // keep the chain alive
-
         work({
             chatService,
-            // TODO: refactor session.messages and setMessage/setState handling
-            session: { ...session, messages, finished: messages.length },
+            session,
             streaming,
-            send: (messages: TMessage[]) => setChatHistory(history => ({ ...history, messages })),
+            send: (messages: TMessage[]) => session.setMessages(messages, session.finished),
             signal: abortController.signal,
         })
-            .then(messages => 
+            .then(messages =>
             {
                 if (needsToolConfirmation(messages))
                 {
-                    setChatHistory(history => ({ ...history, messages }));
+                    // Update the session, which will trigger the UI update.
+                    session.setMessages(messages, session.finished);
                 }
                 else
                 {
-                    setChatHistory({ messages, finished: messages.length });
+                    session.setMessages(messages, messages.length);
                 }
             })
-            .catch(error => 
+            .catch(error =>
             {
-                setChatHistory(history => ({
-                    messages: [
-                        ...history.messages,
-                        new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`, error),
-                    ],
-                    finished: history.messages.length + 1,
-                }));
+                const newMessages = [
+                    ...session.messages,
+                    new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`, error),
+                ];
+                session.setMessages(newMessages, newMessages.length);
             })
-            .finally(() => 
+            .finally(() =>
             {
                 setWorking(false);
             });
@@ -127,14 +134,13 @@ export function useChatController(props: UseChatControllerProps)
             {
                 const direction = key.leftArrow ? -1 : 1;
 
-                setChatHistory(history => ({
-                    ...history,
-                    messages: [
-                        ...history.messages.slice(0, selectedIndex),
-                        (history.messages[selectedIndex] as ToolProgressMessage).toggleConfirmState({ direction }),
-                        ...history.messages.slice(selectedIndex + 1),
-                    ],
-                }));
+                // Instead of setChatHistory, we now update the session directly.
+                const newMessages = [
+                    ...chatHistory.messages.slice(0, selectedIndex),
+                    (chatHistory.messages[selectedIndex] as ToolProgressMessage).toggleConfirmState({ direction }),
+                    ...chatHistory.messages.slice(selectedIndex + 1),
+                ];
+                session.setMessages(newMessages, chatHistory.finished);
             }
 
             if (key.return)
@@ -203,17 +209,14 @@ export function useChatController(props: UseChatControllerProps)
     {
         if (!working)
         {
-            messagesQueueRef.current = messagesQueueRef.current
-                .then(() => session.setMessages(chatHistory.messages, chatHistory.finished))
-                .catch(() => { }); // keep the chain alive
-
+            session.save();
+            // The promise queue for session.setMessages is no longer needed.
             setTokenUsage(countTokens(chatHistory.messages));
-
             getGitBranch().then(branch => setCurrentGitBranch(branch));
         }
     }, [
         working,
-        session,
+        // session is removed as a dependency since we are not calling session.setMessages here anymore.
         chatHistory,
     ]);
 

@@ -1,0 +1,24 @@
+diff --git a/node_modules/@langchain/ollama/dist/utils.cjs b/node_modules/@langchain/ollama/dist/utils.cjs
+index 1d8dc2a..ddc5279 100644
+--- a/node_modules/@langchain/ollama/dist/utils.cjs
++++ b/node_modules/@langchain/ollama/dist/utils.cjs
+@@ -11,7 +11,6 @@ function convertOllamaMessagesToLangChain(messages, extra) {
+             name: tc.function.name,
+             args: JSON.stringify(tc.function.arguments),
+             type: "tool_call_chunk",
+-            index: 0,
+             id: (0, uuid_1.v4)(),
+         })),
+         response_metadata: extra?.responseMetadata,
+diff --git a/node_modules/@langchain/ollama/dist/utils.js b/node_modules/@langchain/ollama/dist/utils.js
+index 8c78182..3f0d074 100644
+--- a/node_modules/@langchain/ollama/dist/utils.js
++++ b/node_modules/@langchain/ollama/dist/utils.js
+@@ -7,7 +7,6 @@ export function convertOllamaMessagesToLangChain(messages, extra) {
+             name: tc.function.name,
+             args: JSON.stringify(tc.function.arguments),
+             type: "tool_call_chunk",
+-            index: 0,
+             id: uuidv4(),
+         })),
+         response_metadata: extra?.responseMetadata,

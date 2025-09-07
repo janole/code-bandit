@@ -50,7 +50,8 @@
         "prebuild": "npm run genversion && patch-package && npm run ok",
         "build": "rimraf dist && tsc -p tsconfig.dts.json && node esbuild.js",
         "genversion": "COMMIT_HASH=$(git rev-parse --short HEAD) && echo \"export const VERSION = \\\"${npm_package_version}\\\";\\nexport const COMMIT_HASH = \\\"${COMMIT_HASH}\\\";\" > src/.version.ts",
-        "prepack": "npm run build"
+        "prepack": "npm run build",
+        "postinstall": "patch-package"
     },
     "files": [
         "dist",
@@ -66,7 +67,6 @@
         "chalk": "^5.4.1",
         "clipboardy": "^4.0.0",
         "commander": "^14.0.0",
-        "eslint-plugin-unicorn": "^60.0.0",
         "execa": "^9.6.0",
         "fast-glob": "^3.3.3",
         "globby": "^14.1.0",
@@ -96,6 +96,7 @@
         "eslint-plugin-jsonc": "^2.20.1",
         "eslint-plugin-react-hooks": "^5.2.0",
         "eslint-plugin-simple-import-sort": "^12.1.1",
+        "eslint-plugin-unicorn": "^61.0.1",
         "globals": "^16.3.0",
         "patch-package": "^8.0.0",
         "rimraf": "^6.0.1",

@@ -1,11 +1,9 @@
-import { HumanMessage } from "@langchain/core/messages";
 import clipboard from "clipboardy";
 import { Key, useApp } from "ink";
 import { useCallback, useEffect, useState } from "react";
 
 import { ChatService } from "../ai/chat-service.js";
 import { ErrorMessage, TMessage, ToolProgressMessage } from "../ai/custom-messages.js";
-import { chatServerClient } from "../ai/session/chat-server/chat-server-client.js";
 import { ChatSession } from "../ai/session/session.js";
 import { countTokens, lastMessageFromAI, TTokenUsage } from "../ai/tokens.js";
 import { getGitBranch } from "../ai/tools/git-tools.js";
@@ -36,8 +34,6 @@ export function useChatController(props: UseChatControllerProps)
         finished: session.finished || 0,
     });
 
-    const messagesQueueRef = useRef<Promise<void>>(Promise.resolve());
-
     const [tokenUsage, setTokenUsage] = useState<TTokenUsage>();
     const [currentGitBranch, setCurrentGitBranch] = useState<string | null>();
 
@@ -55,14 +51,12 @@ export function useChatController(props: UseChatControllerProps)
         const abortController = new AbortController();
         setAbortController(abortController);
 
-        messagesQueueRef.current = messagesQueueRef.current
-            .then(() => session.setMessages(messages, session.finished))
-            .catch(() => { }); // keep the chain alive
+        // TODO: refactor session.messages and setMessage/setState handling
+        session.setMessages(messages, messages.length, false);
 
         work({
             chatService,
-            // TODO: refactor session.messages and setMessage/setState handling
-            session: { ...session, messages, finished: messages.length },
+            session,
             streaming,
             send: (messages: TMessage[]) => session.setMessages(messages, session.finished),
             signal: abortController.signal,
@@ -91,13 +85,9 @@ export function useChatController(props: UseChatControllerProps)
             {
                 setWorking(false);
             });
-    }, [
-        chatService,
-        session,
-        streaming,
-    ]);
+    };
 
-    const handleInput = useCallback((input: string, key: Key): boolean =>
+    const handleInput = (input: string, key: Key): boolean =>
     {
         if (key.ctrl && input === "c")
         {
@@ -201,8 +191,6 @@ export function useChatController(props: UseChatControllerProps)
         working,
     ]);
 
-    const statusRef = useRef<"idle" | "working">(null);
-
     useEffect(() =>
     {
         if (!working)
@@ -212,46 +200,11 @@ export function useChatController(props: UseChatControllerProps)
             setTokenUsage(countTokens(chatHistory.messages));
 
             getGitBranch().then(branch => setCurrentGitBranch(branch));
-
-            if (statusRef.current !== "idle")
-            {
-                chatServerClient?.setStatus(statusRef.current = "idle", session.id);
-            }
-        }
-        else if (statusRef.current !== "working")
-        {
-            chatServerClient?.setStatus(statusRef.current = "working", session.id);
         }
     }, [
         working,
         chatHistory.messages,
         session,
-    ]);
-
-    useEffect(() =>
-    {
-        const commandListener = (command: any) =>
-        {
-            if (command.external_id === session.id)
-            {
-                const message = command.message?.trim();
-
-                if (message && !working)
-                {
-                    const messages = [...chatHistory.messages, new HumanMessage(message)];
-                    handleSendHistory(messages, messages.length);
-                }
-            }
-        };
-
-        chatServerClient?.addCommandListener(commandListener);
-
-        return () => { chatServerClient?.removeCommandListener(commandListener); };
-    }, [
-        session.id,
-        working,
-        chatHistory,
-        handleSendHistory,
     ]);
 
     // TODO: refactor

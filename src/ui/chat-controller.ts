@@ -92,7 +92,7 @@ export function useChatController(props: UseChatControllerProps)
         streaming,
     ]);
 
-    const handleInput = (input: string, key: Key): boolean =>
+    const handleInput = useCallback((input: string, key: Key): boolean =>
     {
         if (key.ctrl && input === "c")
         {
@@ -176,7 +176,16 @@ export function useChatController(props: UseChatControllerProps)
         }
 
         return !!confirm; // do not allow input as long as tool-confirmation is needed
-    };
+    }, [
+        abortController,
+        chatHistory.messages,
+        confirm,
+        ctrlC,
+        exit,
+        handleSendHistory,
+        selectedIndex,
+        session,
+    ]);
 
     useEffect(() =>
     {

@@ -205,7 +205,8 @@ export function useChatController(props: UseChatControllerProps)
         }
     }, [
         working,
-        chatHistory,
+        chatHistory.messages,
+        session,
     ]);
 
     // TODO: refactor

@@ -56,7 +56,8 @@ export function useChatController(props: UseChatControllerProps)
 
         work({
             chatService,
-            session,
+            // TODO: refactor session.messages and setMessage/setState handling
+            session: { ...session, messages, finished: messages.length },
             streaming,
             send: (messages: TMessage[]) => setChatHistory(history => ({ ...history, messages })),
             signal: abortController.signal,

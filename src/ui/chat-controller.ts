@@ -210,13 +210,13 @@ export function useChatController(props: UseChatControllerProps)
         if (!working)
         {
             session.save();
-            // The promise queue for session.setMessages is no longer needed.
+
             setTokenUsage(countTokens(chatHistory.messages));
+
             getGitBranch().then(branch => setCurrentGitBranch(branch));
         }
     }, [
         working,
-        // session is removed as a dependency since we are not calling session.setMessages here anymore.
         chatHistory,
     ]);
 

@@ -41,19 +41,7 @@ export function useChatController(props: UseChatControllerProps)
     const confirm = selectedIndex !== -1;
 
     // This effect subscribes to the session, making it the single source of truth.
-    useEffect(() =>
-    {
-        // The listener updates the React state whenever the session's messages change.
-        const unsubscribe = session.onUpdate((messages, finished) =>
-        {
-            setChatHistory({ messages, finished });
-        });
-
-        // Cleanup subscription on component unmount
-        return unsubscribe;
-    }, [
-        session,
-    ]);
+    useEffect(() => session.onUpdate(setChatHistory), [session]);
 
     const handleSendHistory = useCallback((messages: TMessage[], finished?: number) =>
     {

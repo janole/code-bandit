@@ -3,7 +3,7 @@ import { homedir } from "os";
 import { join } from "path";
 import writeFileAtomic from "write-file-atomic";
 
-import { chatServerClient } from "./chat-server/chat-server-client.js";
+import { chatServerClient, mapSessionToChat } from "./chat-server/chat-server-client.js";
 import { ChatSession, IChatSession, ICreateChatSession, ISessionStorage, mapSessionDataToSession, mapSessionToSessionData } from "./session.js";
 
 export class FileSessionStorage implements ISessionStorage
@@ -46,7 +46,7 @@ export class FileSessionStorage implements ISessionStorage
 
         if (chatServerClient)
         {
-            await chatServerClient.upsertDocument(session.id, { data: session });
+            await chatServerClient.upsertDocument(session.id, { data: mapSessionToChat(session) });
         }
     }
 

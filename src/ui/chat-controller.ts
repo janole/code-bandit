@@ -124,16 +124,16 @@ export function useChatController(props: UseChatControllerProps)
 
                 // Instead of setChatHistory, we now update the session directly.
                 const newMessages = [
-                    ...chatHistory.messages.slice(0, selectedIndex),
-                    (chatHistory.messages[selectedIndex] as ToolProgressMessage).toggleConfirmState({ direction }),
-                    ...chatHistory.messages.slice(selectedIndex + 1),
+                    ...session.messages.slice(0, selectedIndex),
+                    (session.messages[selectedIndex] as ToolProgressMessage).toggleConfirmState({ direction }),
+                    ...session.messages.slice(selectedIndex + 1),
                 ];
-                session.setMessages(newMessages, chatHistory.finished);
+                session.setMessages(newMessages, session.finished);
             }
 
             if (key.return)
             {
-                const confirmState = (chatHistory.messages[selectedIndex] as ToolProgressMessage).confirmState;
+                const confirmState = (session.messages[selectedIndex] as ToolProgressMessage).confirmState;
 
                 if (confirmState === "none")
                 {
@@ -145,12 +145,12 @@ export function useChatController(props: UseChatControllerProps)
                 }
 
                 handleSendHistory([
-                    ...chatHistory.messages.slice(0, selectedIndex),
-                    (chatHistory.messages[selectedIndex] as ToolProgressMessage).clone({
+                    ...session.messages.slice(0, selectedIndex),
+                    (session.messages[selectedIndex] as ToolProgressMessage).clone({
                         status: (confirmState === "yes" || confirmState === "all") ? "confirmed" : "declined",
                         confirmState,
                     }),
-                    ...chatHistory.messages.slice(selectedIndex + 1),
+                    ...session.messages.slice(selectedIndex + 1),
                 ]);
             }
 
@@ -159,7 +159,7 @@ export function useChatController(props: UseChatControllerProps)
 
         if (key.ctrl && input === "y")
         {
-            const text = lastMessageFromAI(chatHistory.messages)?.text;
+            const text = lastMessageFromAI(session.messages)?.text;
             text && clipboard.write(text);
             return true;
         }
@@ -173,7 +173,6 @@ export function useChatController(props: UseChatControllerProps)
         return !!confirm; // do not allow input as long as tool-confirmation is needed
     }, [
         abortController,
-        chatHistory.messages,
         confirm,
         ctrlC,
         exit,

@@ -128,11 +128,11 @@ export class ChatSession implements IChatSession
         return this;
     };
 
-    private notifyListeners(): void
+    notifyListeners = (): void =>
     {
         const props = { messages: [...this.messages], finished: this.finished };
         this.onUpdateListeners.forEach(listener => listener(props));
-    }
+    };
 
     public onUpdate(listener: TUpdateListener): () => void
     {

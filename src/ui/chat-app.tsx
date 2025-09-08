@@ -5,6 +5,7 @@ import { homedir } from "os";
 import React, { useEffect, useState } from "react";
 
 import { ChatService } from "../ai/chat-service.js";
+import { isMessageFinished } from "../ai/custom-messages.js";
 import { ChatSession } from "../ai/session/session.js";
 import useTerminalSize from "../utils/use-terminal-size.js";
 import { useChatController } from "./chat-controller.js";
@@ -59,29 +60,32 @@ function ChatApp(props: ChatAppProps)
         if (_message.trim() && !working)
         {
             const messages = [...chatHistory.messages, new HumanMessage(_message)];
-            handleSendHistory(messages, messages.length);
+            handleSendHistory(messages);
             setMessage("");
         }
     };
 
     const terminalSize = useTerminalSize();
 
+    let finished = chatHistory.messages.findIndex(m => !isMessageFinished(m));
+    if (finished === -1) { finished = chatHistory.messages.length; }
+
     return (
         <Box flexDirection="column" width={terminalSize.columns}>
 
             {/* Messages Area */}
             <Box flexDirection="column" paddingRight={1} width={terminalSize.columns}>
-                <Static items={chatHistory.messages.slice(0, chatHistory.finished)}>
+                <Static items={chatHistory.messages.slice(0, finished)}>
                     {(message, index) => (
                         <MemoMessage key={index} msg={message} debug={debug} />
                     )}
                 </Static>
 
-                {chatHistory.messages.slice(chatHistory.finished).map((workingItem, index) => (
+                {chatHistory.messages.slice(finished).map((workingItem, index) => (
                     <Message
                         key={index}
                         msg={workingItem}
-                        selected={selected === index + chatHistory.finished}
+                        selected={selected === index + finished}
                         debug={debug}
                     />
                 ))}

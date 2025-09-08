@@ -2,7 +2,8 @@ import { mapChatMessagesToStoredMessages, mapStoredMessageToChatMessage, StoredM
 import { ulid } from "ulid";
 
 import { IChatServiceOptions } from "../chat-service.js";
-import { CustomMessage, isCustomMessage, TMessage } from "../custom-messages.js";
+import { CustomMessage, isCustomMessage, isMessageStreaming, TMessage, ToolProgressMessage } from "../custom-messages.js";
+import { chatServerClient, mapSessionToChat } from "./chat-server/chat-server-client.js";
 
 export type TToolMode = "confirm" | "read-only" | "yolo";
 
@@ -46,7 +47,6 @@ export function mapSessionToSessionData(session: IChatSession)
         chatServiceOptions: session.chatServiceOptions,
         systemPrompt: session.systemPrompt,
         messages: session.messages.map(mapMessageToObject).filter(m => m),
-        finished: session.finished,
     };
 }
 
@@ -59,7 +59,6 @@ export function mapSessionDataToSession(data: any): IChatSession
         chatServiceOptions: data.chatServiceOptions,
         systemPrompt: data.systemPrompt,
         messages: data.messages.map(mapObjectToMessage).filter((m: TMessage | undefined) => m),
-        finished: data.finished,
     };
 }
 
@@ -74,14 +73,12 @@ export interface IChatSession
     systemPrompt?: string; // TODO: extend into service or template like "%{DEFAULT}% ..."
 
     messages: TMessage[];
-    finished: number;
 }
 
-export interface ICreateChatSession extends Omit<IChatSession, "id" | "messages" | "finished">
+export interface ICreateChatSession extends Omit<IChatSession, "id" | "messages">
 {
     id?: IChatSession["id"];
     messages?: IChatSession["messages"];
-    finished?: IChatSession["finished"];
 }
 
 type TUpdateListener = (props: { messages: TMessage[]; finished: number; }) => void;
@@ -110,7 +107,6 @@ export class ChatSession implements IChatSession
         this.chatServiceOptions = props.chatServiceOptions;
         this.systemPrompt = props.systemPrompt;
         this.messages = props.messages || [];
-        this.finished = Math.min(props.finished || 0, this.messages.length);
 
         this.storage = storage;
     }
@@ -121,7 +117,6 @@ export class ChatSession implements IChatSession
             ...props,
             id: props.id || ulid(),
             messages: props.messages || [],
-            finished: props.finished || 0,
         }, storage);
 
         return chatSession;
@@ -149,24 +144,40 @@ export class ChatSession implements IChatSession
         };
     }
 
-    async setMessages(messages: TMessage[], finished: number): Promise<void>
+    async setMessages(messages: TMessage[]): Promise<void>
     {
-        this.messages = messages;
-        this.finished = Math.min(finished, this.messages.length);
+        this.messages = [...messages];
+
+        this._saveOnline();
 
         this.notifyListeners();
     }
 
-    private saveQueue: Promise<any> = Promise.resolve();
+    async toggleConfirmState(messageIndex: number, direction: -1 | 1): Promise<void>
+    {
+        if (ToolProgressMessage.isTypeOf(this.messages[messageIndex]))
+        {
+            const newMessages = [
+                ...this.messages.slice(0, messageIndex),
+                (this.messages[messageIndex] as ToolProgressMessage).toggleConfirmState({ direction }),
+                ...this.messages.slice(messageIndex + 1),
+            ];
 
+            this.setMessages(newMessages);
+        }
+    }
+
+    private _saveQueue: Promise<any> = Promise.resolve();
     async save(): Promise<void>
     {
+        this._saveOnline();
+
         if (!this.storage)
         {
             throw new Error("No storage configured!");
         }
 
-        this.saveQueue = this.saveQueue
+        this._saveQueue = this._saveQueue
             .then(async () =>
             {
                 await this.storage!.saveSession(this);
@@ -176,6 +187,29 @@ export class ChatSession implements IChatSession
                 console.error("ERROR: Session save failed!", error);
             });
 
-        return this.saveQueue;
+        return this._saveQueue;
+    }
+
+    private _saveOnlineQueue: Promise<any> = Promise.resolve();
+    private _saveOnline()
+    {
+        this._saveOnlineQueue = this._saveOnlineQueue
+            .then(async () =>
+            {
+                console.log("SAVE ONLINE?");
+                if (this.messages.find(m => isMessageStreaming(m)))
+                {
+                    return;
+                }
+
+                await chatServerClient?.upsertDocument(this.id, { data: mapSessionToChat(this) });
+                console.log("SAVED ONLINE!");
+            })
+            .catch((error) =>
+            {
+                console.error("ERROR: Session save failed!", error);
+            });
+
+        return this._saveOnlineQueue;
     }
 }

@@ -144,7 +144,7 @@ export class ChatSession implements IChatSession
         };
     }
 
-    async setMessages(messages: TMessage[]): Promise<void>
+    setMessages = async (messages: TMessage[]): Promise<void> =>
     {
         this.messages = [...messages];
 

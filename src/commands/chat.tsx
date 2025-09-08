@@ -67,7 +67,7 @@ async function chat(options: any)
         debug: options.debug,
     };
 
-    await session.save();
+    session.flush();
 
     render(<ChatApp {...props} />, { exitOnCtrlC: false });
 }

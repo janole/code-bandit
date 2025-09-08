@@ -3,21 +3,20 @@ import { concat } from "@langchain/core/utils/stream";
 
 import tryCatch from "../utils/try-catch.js";
 import { ChatService } from "./chat-service.js";
-import { ErrorMessage, TMessage, ToolProgressMessage } from "./custom-messages.js";
-import { IChatSession } from "./session/session.js";
+import { ErrorMessage, setMessageIsStreaming, TMessage, ToolProgressMessage } from "./custom-messages.js";
+import { ChatSession } from "./session/session.js";
 
 interface WorkProps
 {
     chatService: ChatService;
-    session: IChatSession;
-    send?: (messages: TMessage[]) => void;
+    session: ChatSession;
     streaming?: boolean;
     signal?: AbortSignal;
 }
 
 async function work(props: WorkProps)
 {
-    const { session, chatService, send, streaming = true, signal } = props;
+    const { session, chatService, streaming = true, signal } = props;
 
     const messages = await workTools({ ...props, session });
 
@@ -42,10 +41,11 @@ async function work(props: WorkProps)
         for await (const chunk of stream)
         {
             aiMessage = aiMessage !== undefined ? concat(aiMessage, chunk) : chunk;
+            setMessageIsStreaming(aiMessage, true);
 
             if (!aiMessage?.tool_calls?.length && !aiMessage?.tool_call_chunks?.length)
             {
-                send?.([...messages, aiMessage]); // TODO: check for race conditions
+                session.setMessages([...messages, aiMessage]);
             }
             else
             {
@@ -53,7 +53,7 @@ async function work(props: WorkProps)
 
                 if (toolProgressMessages.length)
                 {
-                    send?.([...messages, aiMessage, ...toolProgressMessages]);
+                    session.setMessages([...messages, aiMessage, ...toolProgressMessages]);
                 }
             }
         }
@@ -73,6 +73,7 @@ async function work(props: WorkProps)
 
     if (aiMessage)
     {
+        setMessageIsStreaming(aiMessage, false);
         messages.push(aiMessage);
     }
 
@@ -85,12 +86,14 @@ async function work(props: WorkProps)
     toolProgressMessages = aiMessage.tool_calls.map(toolCall => new ToolProgressMessage(toolCall)) || [];
     messages.push(...toolProgressMessages);
 
-    return work({ ...props, session: { ...session, messages } });
+    session.setMessages(messages);
+
+    return work(props);
 }
 
-async function workTools(props: Pick<WorkProps, "session" | "chatService" | "send" | "signal">)
+async function workTools(props: Pick<WorkProps, "session" | "chatService" | "signal">)
 {
-    const { session: { workDir, messages, toolMode }, chatService, send } = props;
+    const { session: { workDir, messages, toolMode, setMessages }, chatService } = props;
 
     const toolProgressMessages = messages.filter(m => ToolProgressMessage.isTypeOf(m) && (m.status === "pending" || m.status === "confirmed" || m.status === "declined")) as ToolProgressMessage[];
 
@@ -145,7 +148,7 @@ async function workTools(props: Pick<WorkProps, "session" | "chatService" | "sen
             continue;
         }
 
-        send?.([...messages]);
+        setMessages(messages);
 
         const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, { metadata }));
 
@@ -165,12 +168,12 @@ async function workTools(props: Pick<WorkProps, "session" | "chatService" | "sen
         toolProgressMessage.content = error?.message || "Unknown Error";
     }
 
-    send?.([...messages]);
+    setMessages(messages);
 
     return [...messages];
 }
 
-export function needsToolConfirmation(messages: TMessage[])
+function needsToolConfirmation(messages: TMessage[])
 {
     return messages.find(m => ToolProgressMessage.isTypeOf(m) && m.status === "pending-confirmation");
 }

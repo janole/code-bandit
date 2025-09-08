@@ -212,4 +212,19 @@ export class ChatSession implements IChatSession
 
         return this._saveOnlineQueue;
     };
+
+    flush = async (options: { storage?: boolean; online?: boolean } = {}): Promise<void> =>
+    {
+        // Await online queue (for chatServerClient saves)
+        if (options.online !== false)
+        {
+            await this._saveOnlineQueue;
+        }
+
+        // Await storage queue if configured and requested
+        if (options.storage !== false && this.storage)
+        {
+            await this._saveQueue;
+        }
+    };
 }

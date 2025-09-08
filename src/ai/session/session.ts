@@ -144,11 +144,23 @@ export class ChatSession implements IChatSession
         };
     };
 
+    #isStreaming = false;
+
+    get isStreaming()
+    {
+        return this.#isStreaming;
+    }
+
     setMessages = async (messages: TMessage[]): Promise<void> =>
     {
         this.messages = [...messages];
+        this.#isStreaming = !!messages.find(m => isMessageStreaming(m));
 
-        this._saveOnline();
+        if (!this.#isStreaming)
+        {
+            this._save();
+            this._saveOnline();
+        }
 
         this.notifyListeners();
     };
@@ -168,7 +180,7 @@ export class ChatSession implements IChatSession
     };
 
     private _saveQueue: Promise<void> = Promise.resolve();
-    save = async (): Promise<void> =>
+    private _save = async (): Promise<void> =>
     {
         this._saveOnline();
 
@@ -181,6 +193,7 @@ export class ChatSession implements IChatSession
             .then(async () =>
             {
                 await this.storage!.saveSession(this);
+                console.log("SAVED LOCALLY!");
             })
             .catch((error) =>
             {
@@ -196,13 +209,13 @@ export class ChatSession implements IChatSession
         this._saveOnlineQueue = this._saveOnlineQueue
             .then(async () =>
             {
-                console.log("SAVE ONLINE?");
                 if (this.messages.find(m => isMessageStreaming(m)))
                 {
                     return;
                 }
 
                 await chatServerClient?.upsertDocument(this.id, { data: mapSessionToChat(this) });
+
                 console.log("SAVED ONLINE!");
             })
             .catch((error) =>
@@ -215,6 +228,8 @@ export class ChatSession implements IChatSession
 
     flush = async (): Promise<void> =>
     {
+        this._saveOnline();
+        this._save();
         await this._saveOnlineQueue;
         await this._saveQueue;
     };

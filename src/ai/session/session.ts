@@ -167,9 +167,8 @@ export class ChatSession implements IChatSession
         }
     };
 
-
-    private _saveQueue: Promise<any> = Promise.resolve();
-    async save(): Promise<void>
+    private _saveQueue: Promise<void> = Promise.resolve();
+    save = async (): Promise<void> =>
     {
         this._saveOnline();
 
@@ -189,7 +188,7 @@ export class ChatSession implements IChatSession
             });
 
         return this._saveQueue;
-    }
+    };
 
     private _saveOnlineQueue: Promise<any> = Promise.resolve();
     private _saveOnline()

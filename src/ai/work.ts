@@ -99,7 +99,7 @@ async function workTools(props: Pick<WorkProps, "session" | "chatService" | "sig
 
     if (toolProgressMessages.length === 0)
     {
-        return messages;
+        return [...messages];
     }
 
     const metadata = { workDir };

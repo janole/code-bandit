@@ -151,7 +151,7 @@ export class ChatSession implements IChatSession
         this._saveOnline();
 
         this.notifyListeners();
-    }
+    };
 
     async toggleConfirmState(messageIndex: number, direction: -1 | 1): Promise<void>
     {

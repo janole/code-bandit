@@ -134,7 +134,7 @@ export class ChatSession implements IChatSession
         this.onUpdateListeners.forEach(listener => listener(props));
     };
 
-    public onUpdate(listener: TUpdateListener): () => void
+    onUpdate = (listener: TUpdateListener): (() => void) =>
     {
         this.onUpdateListeners.push(listener);
 
@@ -142,7 +142,7 @@ export class ChatSession implements IChatSession
         {
             this.onUpdateListeners = this.onUpdateListeners.filter(l => l !== listener);
         };
-    }
+    };
 
     setMessages = async (messages: TMessage[]): Promise<void> =>
     {

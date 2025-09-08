@@ -153,7 +153,7 @@ export class ChatSession implements IChatSession
         this.notifyListeners();
     };
 
-    async toggleConfirmState(messageIndex: number, direction: -1 | 1): Promise<void>
+    toggleConfirmState = async (messageIndex: number, direction: -1 | 1): Promise<void> =>
     {
         if (ToolProgressMessage.isTypeOf(this.messages[messageIndex]))
         {
@@ -165,7 +165,8 @@ export class ChatSession implements IChatSession
 
             this.setMessages(newMessages);
         }
-    }
+    };
+
 
     private _saveQueue: Promise<any> = Promise.resolve();
     async save(): Promise<void>

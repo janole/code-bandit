@@ -163,7 +163,7 @@ export class ChatSession implements IChatSession
                 ...this.messages.slice(messageIndex + 1),
             ];
 
-            this.setMessages(newMessages);
+            await this.setMessages(newMessages);
         }
     };
 

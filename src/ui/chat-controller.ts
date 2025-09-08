@@ -4,10 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 
 import { ChatService } from "../ai/chat-service.js";
 import { ErrorMessage, TMessage, ToolProgressMessage } from "../ai/custom-messages.js";
+import { chatServerClient } from "../ai/session/chat-server/chat-server-client.js";
 import { ChatSession } from "../ai/session/session.js";
 import { countTokens, lastMessageFromAI, TTokenUsage } from "../ai/tokens.js";
 import { getGitBranch } from "../ai/tools/git-tools.js";
-import { needsToolConfirmation, work } from "../ai/work.js";
+import { work } from "../ai/work.js";
 
 interface UseChatControllerProps
 {
@@ -29,9 +30,8 @@ export function useChatController(props: UseChatControllerProps)
 
     const [_, setToolMode] = useState(session.toolMode);
 
-    const [chatHistory, setChatHistory] = useState<{ messages: TMessage[]; finished: number }>({
+    const [chatHistory, setChatHistory] = useState<{ messages: TMessage[] }>({
         messages: session.messages,
-        finished: session.finished || 0,
     });
 
     const [tokenUsage, setTokenUsage] = useState<TTokenUsage>();
@@ -43,9 +43,9 @@ export function useChatController(props: UseChatControllerProps)
     // This effect subscribes to the session, making it the single source of truth.
     useEffect(() => session.onUpdate(setChatHistory), [session]);
 
-    const handleSendHistory = useCallback((messages: TMessage[], finished?: number) =>
+    const handleSendHistory = useCallback((messages: TMessage[]) =>
     {
-        session.setMessages(messages, Math.max(finished || 0, session.finished));
+        session.setMessages(messages);
         setWorking(true);
 
         const abortController = new AbortController();
@@ -55,20 +55,11 @@ export function useChatController(props: UseChatControllerProps)
             chatService,
             session,
             streaming,
-            send: (messages: TMessage[]) => session.setMessages(messages, session.finished),
             signal: abortController.signal,
         })
             .then(messages =>
             {
-                if (needsToolConfirmation(messages))
-                {
-                    // Update the session, which will trigger the UI update.
-                    session.setMessages(messages, session.finished);
-                }
-                else
-                {
-                    session.setMessages(messages, messages.length);
-                }
+                session.setMessages(messages);
             })
             .catch(error =>
             {
@@ -76,7 +67,7 @@ export function useChatController(props: UseChatControllerProps)
                     ...session.messages,
                     new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`, error),
                 ];
-                session.setMessages(newMessages, newMessages.length);
+                session.setMessages(newMessages);
             })
             .finally(() =>
             {
@@ -120,18 +111,9 @@ export function useChatController(props: UseChatControllerProps)
         {
             if (key.leftArrow || key.rightArrow)
             {
-                const direction = key.leftArrow ? -1 : 1;
-
-                // Instead of setChatHistory, we now update the session directly.
-                const newMessages = [
-                    ...session.messages.slice(0, selectedIndex),
-                    (session.messages[selectedIndex] as ToolProgressMessage).toggleConfirmState({ direction }),
-                    ...session.messages.slice(selectedIndex + 1),
-                ];
-                session.setMessages(newMessages, session.finished);
+                session.toggleConfirmState(selectedIndex, key.leftArrow ? -1 : 1);
             }
-
-            if (key.return)
+            else if (key.return)
             {
                 const confirmState = (session.messages[selectedIndex] as ToolProgressMessage).confirmState;
 
@@ -187,25 +169,20 @@ export function useChatController(props: UseChatControllerProps)
         {
             setAbortController(undefined);
             setCtrlC(false);
-        }
-    }, [
-        working,
-    ]);
 
-    useEffect(() =>
-    {
-        if (!working)
-        {
-            session.save();
-
-            setTokenUsage(countTokens(chatHistory.messages));
+            setTokenUsage(countTokens(session.messages));
 
             getGitBranch().then(branch => setCurrentGitBranch(branch));
+
+            chatServerClient?.setStatus("idle", session.id);
+        }
+        else
+        {
+            chatServerClient?.setStatus("working", session.id);
         }
     }, [
-        working,
-        chatHistory.messages,
         session,
+        working,
     ]);
 
     // TODO: refactor

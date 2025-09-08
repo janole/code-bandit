@@ -84,25 +84,27 @@ async function work(props: WorkProps)
 
     // add pending toolCall(s)
     toolProgressMessages = aiMessage.tool_calls.map(toolCall => new ToolProgressMessage(toolCall)) || [];
-    messages.push(...toolProgressMessages);
+    session.setMessages([...messages, ...toolProgressMessages]);
 
-    session.setMessages(messages);
+    await session.flush();
 
     return work(props);
 }
 
 async function workTools(props: Pick<WorkProps, "session" | "chatService" | "signal">)
 {
-    const { session: { workDir, messages, toolMode, setMessages }, chatService } = props;
+    const { session, chatService } = props;
+
+    const messages = [...session.messages];
 
     const toolProgressMessages = messages.filter(m => ToolProgressMessage.isTypeOf(m) && (m.status === "pending" || m.status === "confirmed" || m.status === "declined")) as ToolProgressMessage[];
 
     if (toolProgressMessages.length === 0)
     {
-        return [...messages];
+        return messages;
     }
 
-    const metadata = { workDir };
+    const metadata = { workDir: session.workDir };
 
     for (const toolProgressMessage of toolProgressMessages)
     {
@@ -121,7 +123,7 @@ async function workTools(props: Pick<WorkProps, "session" | "chatService" | "sig
 
         if (toolProgressMessage.status === "pending" && selectedTool.metadata?.["destructive"])
         {
-            if (toolMode === "read-only")
+            if (session.toolMode === "read-only")
             {
                 toolProgressMessage.status = "error";
                 toolProgressMessage.content = "Tool call denied by security policy";
@@ -130,7 +132,7 @@ async function workTools(props: Pick<WorkProps, "session" | "chatService" | "sig
 
                 continue;
             }
-            else if (toolMode !== "yolo")
+            else if (session.toolMode !== "yolo")
             {
                 toolProgressMessage.status = "pending-confirmation";
 
@@ -148,7 +150,7 @@ async function workTools(props: Pick<WorkProps, "session" | "chatService" | "sig
             continue;
         }
 
-        setMessages(messages);
+        session.setMessages(messages);
 
         const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, { metadata }));
 
@@ -168,9 +170,9 @@ async function workTools(props: Pick<WorkProps, "session" | "chatService" | "sig
         toolProgressMessage.content = error?.message || "Unknown Error";
     }
 
-    setMessages(messages);
+    session.setMessages(messages);
 
-    return [...messages];
+    return messages;
 }
 
 function needsToolConfirmation(messages: TMessage[])

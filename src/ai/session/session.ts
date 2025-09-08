@@ -182,18 +182,15 @@ export class ChatSession implements IChatSession
     private _saveQueue: Promise<void> = Promise.resolve();
     private _save = async (): Promise<void> =>
     {
-        this._saveOnline();
-
         if (!this.storage)
         {
-            throw new Error("No storage configured!");
+            return Promise.resolve();
         }
 
         this._saveQueue = this._saveQueue
             .then(async () =>
             {
                 await this.storage!.saveSession(this);
-                console.log("SAVED LOCALLY!");
             })
             .catch((error) =>
             {
@@ -215,8 +212,6 @@ export class ChatSession implements IChatSession
                 }
 
                 await chatServerClient?.upsertDocument(this.id, { data: mapSessionToChat(this) });
-
-                console.log("SAVED ONLINE!");
             })
             .catch((error) =>
             {

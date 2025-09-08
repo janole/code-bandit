@@ -122,11 +122,11 @@ export class ChatSession implements IChatSession
         return chatSession;
     }
 
-    setStorage(storage: ISessionStorage): ChatSession
+    setStorage = (storage: ISessionStorage): ChatSession =>
     {
         this.storage = storage;
         return this;
-    }
+    };
 
     private notifyListeners(): void
     {

@@ -34,6 +34,8 @@ function mapMessage(message: TMessage): IChatMessage
                 ...toolProgressMessage.toolCall,
                 status: toolProgressMessage.status,
                 confirmState: toolProgressMessage.confirmState,
+                description: toolProgressMessage.info.description,
+                fileName: toolProgressMessage.info.fileName,
             },
         };
     }

@@ -135,6 +135,7 @@ export class ChatSession implements IChatSession, IApiClientCommandListener
         return chatSession;
     }
 
+    // TODO: this should not be in session!
     handleCommand = (payload: any) =>
     {
         if (payload.new)

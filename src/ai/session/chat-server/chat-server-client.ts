@@ -1,7 +1,7 @@
 import { AIMessage, BaseMessage, HumanMessage } from "@langchain/core/messages";
 
-import { ErrorMessage, TMessage, TMessageType, ToolProgressMessage } from "../../custom-messages.js";
-import { IChatSession } from "../session.js";
+import { ErrorMessage, isMessageStreaming, TMessage, TMessageType, ToolProgressMessage } from "../../custom-messages.js";
+import { ChatSession, IChatSession } from "../session.js";
 import { ApiClient } from "./api-client.js";
 import { IChat, IChatMessage } from "./types.js";
 
@@ -116,8 +116,47 @@ function mapSessionToChat(session: IChatSession): IChat
     return chat;
 }
 
+async function pushSessionOnline(session: ChatSession)
+{
+    await chatServerClient?.directUpsertDocument(session.id, { data: mapSessionToChat(session) });
+}
+
+async function pushStreamingMessageOnline(session: ChatSession, content: string)
+{
+    await chatServerClient?.directUpsertDocument(session.id + "/rt", {
+        data: {
+            type: "chunk",
+            external_id: session.id,
+            chat_id: session.id,
+            message_number: session.messages.length,
+            content,
+        },
+    });
+}
+
+async function syncSession(session: ChatSession)
+{
+    const aiMessage = session.messages.find(m => isMessageStreaming(m)) as (BaseMessage | undefined);
+
+    if (aiMessage)
+    {
+        await pushStreamingMessageOnline(session, aiMessage.text);
+
+        console.log("STREAMED ONLINE!");
+
+        return;
+    }
+
+    await pushSessionOnline(session);
+
+    console.log("SAVED ONLINE!", session, session.messages);
+}
+
 export
 {
-    chatServerClient, mapMessage, mapSessionToChat,
+    chatServerClient,
+    mapMessage,
+    mapSessionToChat,
+    syncSession,
 };
 

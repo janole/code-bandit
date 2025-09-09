@@ -161,28 +161,6 @@ export const isCustomMessage = (message: any): message is CustomMessage =>
     );
 };
 
-// const getMessageState = (msg: TMessage): TMessageState =>
-// {
-//     if (isCustomMessage(msg))
-//     {
-//         return msg._state;
-//     }
-
-//     return (msg as BaseMessage).additional_kwargs["_coba_message_state"] as TMessageState;
-// };
-
-// const setMessageState = (msg: TMessage, state: TMessageState) =>
-// {
-//     if (isCustomMessage(msg))
-//     {
-//         msg._state = state;
-//     }
-//     else
-//     {
-//         (msg as BaseMessage).additional_kwargs["_coba_message_state"] = state;
-//     }
-// };
-
 const setMessageIsStreaming = (msg: BaseMessage, isStreaming: boolean) =>
 {
     msg.additional_kwargs["_coba_message_is_streaming"] = isStreaming;

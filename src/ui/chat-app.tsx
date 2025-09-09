@@ -36,7 +36,6 @@ function ChatApp(props: ChatAppProps)
         handleInput,
         action,
         selected,
-        handleSendHistory,
         tokenUsage,
         currentGitBranch,
     } = useChatController({
@@ -47,7 +46,7 @@ function ChatApp(props: ChatAppProps)
     {
         if (startMessage)
         {
-            handleSendHistory([...messages, new HumanMessage(startMessage)]);
+            session.generateResponse([...messages, new HumanMessage(startMessage)]);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -56,7 +55,7 @@ function ChatApp(props: ChatAppProps)
     {
         if (_message.trim() && !working)
         {
-            handleSendHistory([...messages, new HumanMessage(_message)]);
+            session.generateResponse([...messages, new HumanMessage(_message)]);
             setMessage("");
         }
     };

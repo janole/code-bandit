@@ -31,7 +31,7 @@ export abstract class CustomMessage
         }
         else if (obj._type === "tool-progress")
         {
-            return new ToolProgressMessage(obj.toolCall, obj.status, obj.content, obj.confirmState);
+            return new ToolProgressMessage(obj.toolCall, obj.status, obj.content, obj.confirmState, obj.info);
         }
 
         throw new Error(`Unknown custom message type: ${obj._type}`);
@@ -78,12 +78,16 @@ class ToolProgressMessage extends CustomMessage
     status: "pending" | "pending-confirmation" | "confirmed" | "declined" | "success" | "error";
     content?: string;
     confirmState: typeof ToolProgressMessage.CONFIRM_STATES[number];
+    info: {
+        description?: string;
+        fileName?: string;
+    };
 
     static isTypeOf = (m: any) => m instanceof ToolProgressMessage;
 
     clone({ status, confirmState }: Pick<ToolProgressMessage, "status" | "confirmState">)
     {
-        return new ToolProgressMessage(this.toolCall, status, this.content, confirmState);
+        return new ToolProgressMessage(this.toolCall, status, this.content, confirmState, this.info);
     }
 
     toggleConfirmState({ direction }: { direction: -1 | 1 })
@@ -131,7 +135,7 @@ class ToolProgressMessage extends CustomMessage
         return toolCallChunks?.map(i => ToolProgressMessage.createFromChunk(i)).filter(i => !!i) || [];
     }
 
-    constructor(toolCall: ToolCall, status?: ToolProgressMessage["status"], content?: string, confirmState?: ToolProgressMessage["confirmState"])
+    constructor(toolCall: ToolCall, status?: ToolProgressMessage["status"], content?: string, confirmState?: ToolProgressMessage["confirmState"], info?: ToolProgressMessage["info"])
     {
         super("tool-progress");
 
@@ -139,6 +143,7 @@ class ToolProgressMessage extends CustomMessage
         this.status = status || "pending";
         this.content = content;
         this.confirmState = confirmState || "no";
+        this.info = info || {};
     }
 
     override isMessageFinished(): boolean

@@ -254,6 +254,30 @@ export class ChatSession implements IChatSession, IApiClientCommandListener
             await this.setMessages(newMessages);
         }
     };
+
+    confirmToolUse = async (messageIndex: number, confirmState: TConfirmState): Promise<void> =>
+    {
+        if (confirmState === "none")
+        {
+            this.toolMode = "read-only";
+        }
+        else if (confirmState === "all")
+        {
+            this.toolMode = "yolo";
+        }
+
+        // TODO: reset all other pending tools when toolMode changed!
+
+        this.generateResponse([
+            ...this.messages.slice(0, messageIndex),
+            (this.messages[messageIndex] as ToolProgressMessage).clone({
+                status: (confirmState === "yes" || confirmState === "all") ? "confirmed" : "declined",
+                confirmState,
+            }),
+            ...this.messages.slice(messageIndex + 1),
+        ]);
+    };
+
     setToolMode = (toolMode: TToolMode) =>
     {
         this.toolMode = toolMode;

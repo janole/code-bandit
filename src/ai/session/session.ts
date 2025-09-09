@@ -87,7 +87,7 @@ export interface ICreateChatSession extends Omit<IChatSession, "id" | "messages"
     messages?: IChatSession["messages"];
 }
 
-type TUpdateListener = (props: { messages: TMessage[]; working: boolean; }) => void;
+type TUpdateListener = (props: { messages: TMessage[]; working: boolean; toolMode: TToolMode }) => void;
 
 export class ChatSession implements IChatSession, IApiClientCommandListener
 {
@@ -152,6 +152,13 @@ export class ChatSession implements IChatSession, IApiClientCommandListener
                 ]);
             }
         }
+        else if (payload.new?.external_id === `${this.id}/confirm`)
+        {
+            if (!this.#isWorking && payload.new.data?.message_index)
+            {
+                this.confirmToolUse(payload.new.data.message_index, payload.new.data.confirm_state);
+            }
+        }
     };
 
     setChatService = (chatService: ChatService): ChatSession =>
@@ -168,7 +175,7 @@ export class ChatSession implements IChatSession, IApiClientCommandListener
 
     notifyListeners = (): void =>
     {
-        const props = { messages: [...this.messages], working: this.#isWorking };
+        const props = { messages: [...this.messages], working: this.#isWorking, toolMode: this.toolMode };
         this.onUpdateListeners.forEach(listener => listener(props));
     };
 

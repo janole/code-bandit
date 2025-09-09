@@ -2,81 +2,52 @@ import clipboard from "clipboardy";
 import { Key, useApp } from "ink";
 import { useCallback, useEffect, useState } from "react";
 
-import { ChatService } from "../ai/chat-service.js";
-import { ErrorMessage, TMessage, ToolProgressMessage } from "../ai/custom-messages.js";
+import { TMessage, ToolProgressMessage } from "../ai/custom-messages.js";
 import { chatServerClient } from "../ai/session/chat-server/chat-server-client.js";
 import { ChatSession } from "../ai/session/session.js";
 import { countTokens, lastMessageFromAI, TTokenUsage } from "../ai/tokens.js";
 import { getGitBranch } from "../ai/tools/git-tools.js";
-import { work } from "../ai/work.js";
 
 interface UseChatControllerProps
 {
-    chatService: ChatService;
     session: ChatSession;
-    streaming?: boolean;
 }
 
 export function useChatController(props: UseChatControllerProps)
 {
-    const { chatService, session, streaming = true } = props;
+    const { session } = props;
 
     const { exit } = useApp();
-
-    const [working, setWorking] = useState(false);
 
     const [abortController, setAbortController] = useState<AbortController>();
     const [ctrlC, setCtrlC] = useState(false);
 
     const [_, setToolMode] = useState(session.toolMode);
 
-    const [chatHistory, setChatHistory] = useState<{ messages: TMessage[] }>({
+    const [sessionState, setSessionState] = useState<{ messages: TMessage[]; working: boolean; }>({
         messages: session.messages,
+        working: session.isWorking,
     });
 
     const [tokenUsage, setTokenUsage] = useState<TTokenUsage>();
     const [currentGitBranch, setCurrentGitBranch] = useState<string | null>();
 
-    const selectedIndex = chatHistory.messages.findIndex(m => ToolProgressMessage.isTypeOf(m) && m.status === "pending-confirmation");
+    const selectedIndex = sessionState.messages.findIndex(m => ToolProgressMessage.isTypeOf(m) && m.status === "pending-confirmation");
     const confirm = selectedIndex !== -1;
 
     // This effect subscribes to the session, making it the single source of truth.
-    useEffect(() => session.onUpdate(setChatHistory), [session]);
+    useEffect(() => session.onUpdate(setSessionState), [session]);
 
     const handleSendHistory = useCallback((messages: TMessage[]) =>
     {
-        session.setMessages(messages);
-        setWorking(true);
-
         const abortController = new AbortController();
         setAbortController(abortController);
 
-        work({
-            chatService,
-            session,
-            streaming,
-            signal: abortController.signal,
-        })
-            .then(messages =>
-            {
-                session.setMessages(messages);
-            })
-            .catch(error =>
-            {
-                const newMessages = [
-                    ...session.messages,
-                    new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`, error),
-                ];
-                session.setMessages(newMessages);
-            })
-            .finally(() =>
-            {
-                setWorking(false);
-            });
+        session.generateResponse(messages, abortController.signal);
+
+        // TODO: add clean up function, but how?
     }, [
-        chatService,
         session,
-        streaming,
     ]);
 
     const handleInput = useCallback((input: string, key: Key): boolean =>
@@ -165,7 +136,7 @@ export function useChatController(props: UseChatControllerProps)
 
     useEffect(() =>
     {
-        if (!working)
+        if (!sessionState.working)
         {
             setAbortController(undefined);
             setCtrlC(false);
@@ -182,12 +153,12 @@ export function useChatController(props: UseChatControllerProps)
         }
     }, [
         session,
-        working,
+        sessionState.working,
     ]);
 
     // TODO: refactor
     const action = ctrlC
-        ? working
+        ? sessionState.working
             ? abortController === null
                 ? "Cancelled. Please wait ..."
                 : "Cancel? Press Ctrl-C again ..."
@@ -197,12 +168,12 @@ export function useChatController(props: UseChatControllerProps)
             : undefined;
 
     return {
-        working,
+        messages: sessionState.messages,
+        working: sessionState.working,
         handleInput,
         action,
         selected: selectedIndex,
         setToolMode,
-        chatHistory,
         handleSendHistory,
         tokenUsage,
         currentGitBranch,

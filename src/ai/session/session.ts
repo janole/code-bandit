@@ -1,8 +1,9 @@
 import { mapChatMessagesToStoredMessages, mapStoredMessageToChatMessage, StoredMessage } from "@langchain/core/messages";
 import { ulid } from "ulid";
 
-import { IChatServiceOptions } from "../chat-service.js";
-import { CustomMessage, isCustomMessage, isMessageStreaming, TMessage, ToolProgressMessage } from "../custom-messages.js";
+import { ChatService, IChatServiceOptions } from "../chat-service.js";
+import { CustomMessage, ErrorMessage, isCustomMessage, isMessageStreaming, TMessage, ToolProgressMessage } from "../custom-messages.js";
+import { work } from "../work.js";
 import { syncSession } from "./chat-server/chat-server-client.js";
 
 export type TToolMode = "confirm" | "read-only" | "yolo";
@@ -44,6 +45,7 @@ export function mapSessionToSessionData(session: IChatSession)
         id: session.id,
         workDir: session.workDir,
         toolMode: session.toolMode || "confirm",
+        streaming: session.streaming,
         chatServiceOptions: session.chatServiceOptions,
         systemPrompt: session.systemPrompt,
         messages: session.messages.map(mapMessageToObject).filter(m => m),
@@ -56,6 +58,7 @@ export function mapSessionDataToSession(data: any): IChatSession
         id: data.id,
         workDir: data.workDir,
         toolMode: data.toolMode || "confirm",
+        streaming: data.streaming || true,
         chatServiceOptions: data.chatServiceOptions,
         systemPrompt: data.systemPrompt,
         messages: data.messages.map(mapObjectToMessage).filter((m: TMessage | undefined) => m),
@@ -68,6 +71,7 @@ export interface IChatSession
 
     workDir: string;
     toolMode: TToolMode;
+    streaming: boolean;
     chatServiceOptions: IChatServiceOptions;
 
     systemPrompt?: string; // TODO: extend into service or template like "%{DEFAULT}% ..."
@@ -81,7 +85,7 @@ export interface ICreateChatSession extends Omit<IChatSession, "id" | "messages"
     messages?: IChatSession["messages"];
 }
 
-type TUpdateListener = (props: { messages: TMessage[]; finished: number; }) => void;
+type TUpdateListener = (props: { messages: TMessage[]; working: boolean; }) => void;
 
 export class ChatSession implements IChatSession
 {
@@ -90,11 +94,13 @@ export class ChatSession implements IChatSession
     workDir: string;
     toolMode: TToolMode;
     chatServiceOptions: IChatServiceOptions;
+    streaming: boolean;
 
     systemPrompt?: string;
 
     messages: TMessage[] = [];
-    finished: number = 0;
+
+    private chatService?: ChatService;
 
     storage?: ISessionStorage;
     private onUpdateListeners: TUpdateListener[] = [];
@@ -104,6 +110,7 @@ export class ChatSession implements IChatSession
         this.id = props.id;
         this.workDir = props.workDir;
         this.toolMode = props.toolMode || "confirm";
+        this.streaming = props.streaming || true;
         this.chatServiceOptions = props.chatServiceOptions;
         this.systemPrompt = props.systemPrompt;
         this.messages = props.messages || [];
@@ -122,6 +129,12 @@ export class ChatSession implements IChatSession
         return chatSession;
     }
 
+    setChatService = (chatService: ChatService): ChatSession =>
+    {
+        this.chatService = chatService;
+        return this;
+    };
+
     setStorage = (storage: ISessionStorage): ChatSession =>
     {
         this.storage = storage;
@@ -130,7 +143,7 @@ export class ChatSession implements IChatSession
 
     notifyListeners = (): void =>
     {
-        const props = { messages: [...this.messages], finished: this.finished };
+        const props = { messages: [...this.messages], working: this.#isWorking };
         this.onUpdateListeners.forEach(listener => listener(props));
     };
 
@@ -160,6 +173,44 @@ export class ChatSession implements IChatSession
         this._saveOnline();
 
         this.notifyListeners();
+    };
+
+    #isWorking = false;
+
+    get isWorking()
+    {
+        return this.#isWorking;
+    }
+
+    generateResponse = async (messages: TMessage[], signal?: AbortSignal) =>
+    {
+        if (this.#isWorking || !this.chatService)
+        {
+            return;
+        }
+
+        this.#isWorking = true;
+        this.setMessages(messages);
+
+        work({
+            session: this,
+            chatService: this.chatService,  // TODO: 
+            signal,
+        })
+            .then(messages =>
+            {
+                this.#isWorking = false;
+                this.setMessages(messages);
+            })
+            .catch(error =>
+            {
+                this.#isWorking = false;
+                const newMessages = [
+                    ...this.messages,
+                    new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`, error),
+                ];
+                this.setMessages(newMessages);
+            });
     };
 
     toggleConfirmState = async (messageIndex: number, direction: -1 | 1): Promise<void> =>

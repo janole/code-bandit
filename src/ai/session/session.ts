@@ -160,6 +160,13 @@ export class ChatSession implements IChatSession, IApiClientCommandListener
                 this.confirmToolUse(payload.new.data.message_index, payload.new.data.confirm_state);
             }
         }
+        else if (payload.new?.external_id === `${this.id}/abort`)
+        {
+            if (this.#isWorking)
+            {
+                this.abort(payload.new.data?.reason || "User cancelled.");
+            }
+        }
     };
 
     setChatService = (chatService: ChatService): ChatSession =>

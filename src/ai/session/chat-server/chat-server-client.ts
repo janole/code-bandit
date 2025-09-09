@@ -1,7 +1,7 @@
 import { AIMessage, BaseMessage, HumanMessage } from "@langchain/core/messages";
 
 import { ErrorMessage, isMessageStreaming, TMessage, TMessageType, ToolProgressMessage } from "../../custom-messages.js";
-import { ChatSession, IChatSession } from "../session.js";
+import { ChatSession } from "../session.js";
 import { ApiClient } from "./api-client.js";
 import { IChat, IChatMessage } from "./types.js";
 
@@ -91,7 +91,7 @@ function mapMessage(message: TMessage): IChatMessage
     };
 }
 
-function mapSessionToChat(session: IChatSession): IChat
+function mapSessionToChat(session: ChatSession): IChat
 {
     const chat: IChat = {
         id: session.id,
@@ -110,7 +110,7 @@ function mapSessionToChat(session: IChatSession): IChat
         },
         toolMode: session.toolMode,
         messages: session.messages.map(mapMessage),
-        state: "done",
+        state: session.isWorking ? "working" : "done",
     };
 
     return chat;

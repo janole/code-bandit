@@ -187,12 +187,17 @@ const isMessageFinished = (msg: TMessage): boolean =>
     return msg.isMessageFinished();
 };
 
+const resetIsStreamingFlag = (msg: TMessage[]): TMessage[] => 
+{
+    return msg.map(m => (m instanceof BaseMessage) ? setMessageIsStreaming(m, false) : m);
+};
+
 export
 {
     ErrorMessage,
     isMessageFinished,
     isMessageStreaming,
+    resetIsStreamingFlag,
     setMessageIsStreaming,
     ToolProgressMessage,
 };
-

@@ -62,7 +62,10 @@ export interface IApiClientOptions
     token?: string;
 }
 
-type TCommandListenerFunc = (payload: any) => void;
+export interface IApiClientCommandListener
+{
+    handleCommand: (payload: any) => void;
+}
 
 class ApiClient 
 {
@@ -74,7 +77,7 @@ class ApiClient
     private supabase?: SupabaseClient;
     private channel?: RealtimeChannel;
 
-    private commandListeners: TCommandListenerFunc[] = [];
+    private commandListeners: IApiClientCommandListener[] = [];
 
     constructor(options: IApiClientOptions = {}) 
     {
@@ -106,15 +109,15 @@ class ApiClient
     }
 
     // --- ----
-    addCommandListener(f: TCommandListenerFunc)
+    addCommandListener(listener: IApiClientCommandListener)
     {
-        if (!this.commandListeners.includes(f))
+        if (!this.commandListeners.includes(listener))
         {
-            this.commandListeners.push(f);
+            this.commandListeners.push(listener);
         }
     };
 
-    removeCommandListener(f: TCommandListenerFunc)
+    removeCommandListener(f: IApiClientCommandListener)
     {
         const i = this.commandListeners.indexOf(f);
 
@@ -126,16 +129,7 @@ class ApiClient
 
     private pushCommand(payload: any)
     {
-        for (const f of this.commandListeners)
-        {
-            if (payload.args?.event === "command" && payload.args.payload)
-            {
-                f({
-                    external_id: payload.args.payload?.external_id,
-                    message: payload.args.payload?.message,
-                });
-            }
-        }
+        this.commandListeners.forEach(listener => listener.handleCommand(payload));
     }
 
     // --- Auth API ---

@@ -1,10 +1,11 @@
-import { mapChatMessagesToStoredMessages, mapStoredMessageToChatMessage, StoredMessage } from "@langchain/core/messages";
+import { HumanMessage, mapChatMessagesToStoredMessages, mapStoredMessageToChatMessage, StoredMessage } from "@langchain/core/messages";
 import { ulid } from "ulid";
 
 import { ChatService, IChatServiceOptions } from "../chat-service.js";
 import { CustomMessage, ErrorMessage, isCustomMessage, isMessageStreaming, TMessage, ToolProgressMessage } from "../custom-messages.js";
 import { work } from "../work.js";
-import { syncSession } from "./chat-server/chat-server-client.js";
+import { IApiClientCommandListener } from "./chat-server/api-client.js";
+import { chatServerClient, syncSession } from "./chat-server/chat-server-client.js";
 
 export type TToolMode = "confirm" | "read-only" | "yolo";
 
@@ -87,7 +88,7 @@ export interface ICreateChatSession extends Omit<IChatSession, "id" | "messages"
 
 type TUpdateListener = (props: { messages: TMessage[]; working: boolean; }) => void;
 
-export class ChatSession implements IChatSession
+export class ChatSession implements IChatSession, IApiClientCommandListener
 {
     id: string;
 
@@ -116,6 +117,8 @@ export class ChatSession implements IChatSession
         this.messages = props.messages || [];
 
         this.storage = storage;
+
+        chatServerClient?.addCommandListener(this);
     }
 
     static create(props: ICreateChatSession, storage?: ISessionStorage)
@@ -128,6 +131,25 @@ export class ChatSession implements IChatSession
 
         return chatSession;
     }
+
+    handleCommand = (payload: any) =>
+    {
+        if (payload.new)
+        {
+            console.log("PAYLOAD-COMMAND", payload.new.external_id, payload.eventType, JSON.stringify(payload.new.data).length);
+        }
+
+        if (payload.new?.external_id === `${this.id}/cmd`)
+        {
+            if (!this.#isWorking && payload.new.data?.content?.length)
+            {
+                this.generateResponse([
+                    ...this.messages,
+                    new HumanMessage(payload.new.data.content),
+                ]);
+            }
+        }
+    };
 
     setChatService = (chatService: ChatService): ChatSession =>
     {

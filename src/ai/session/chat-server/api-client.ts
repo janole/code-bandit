@@ -187,7 +187,10 @@ class ApiClient
         if (!this._initPromise)
         {
             this._initPromise = this.createSupabaseClient()
-                .then(() => { })
+                .then((_supabase) =>
+                {
+                    // supabase should be ready now!                        
+                })
                 .catch(error =>
                 {
                     console.error("Failed to create supabase client", error);

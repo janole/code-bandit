@@ -2,7 +2,7 @@ import { HumanMessage, mapChatMessagesToStoredMessages, mapStoredMessageToChatMe
 import { ulid } from "ulid";
 
 import { ChatService, IChatServiceOptions } from "../chat-service.js";
-import { CustomMessage, ErrorMessage, isCustomMessage, isMessageStreaming, TMessage, ToolProgressMessage } from "../custom-messages.js";
+import { CustomMessage, ErrorMessage, isCustomMessage, isMessageStreaming, resetIsStreamingFlag, TMessage, ToolProgressMessage } from "../custom-messages.js";
 import { work } from "../work.js";
 import { IApiClientCommandListener } from "./chat-server/api-client.js";
 import { chatServerClient, syncSession } from "./chat-server/chat-server-client.js";
@@ -258,7 +258,7 @@ export class ChatSession implements IChatSession, IApiClientCommandListener
             {
                 this.#isWorking = false;
                 const newMessages = [
-                    ...this.messages,
+                    ...resetIsStreamingFlag(this.messages),
                     new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`, error),
                 ];
                 this.setMessages(newMessages);

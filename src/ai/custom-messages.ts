@@ -169,6 +169,7 @@ export const isCustomMessage = (message: any): message is CustomMessage =>
 const setMessageIsStreaming = (msg: BaseMessage, isStreaming: boolean) =>
 {
     msg.additional_kwargs["_coba_message_is_streaming"] = isStreaming;
+    return msg;
 };
 
 const isMessageStreaming = (msg: TMessage): boolean =>

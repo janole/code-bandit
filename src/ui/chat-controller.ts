@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { TMessage, ToolProgressMessage } from "../ai/custom-messages.js";
 import { chatServerClient } from "../ai/session/chat-server/chat-server-client.js";
-import { ChatSession } from "../ai/session/session.js";
+import { ChatSession, TToolMode } from "../ai/session/session.js";
 import { countTokens, lastMessageFromAI, TTokenUsage } from "../ai/tokens.js";
 import { getGitBranch } from "../ai/tools/git-tools.js";
 
@@ -19,14 +19,12 @@ export function useChatController(props: UseChatControllerProps)
 
     const { exit } = useApp();
 
-    const [abortController, setAbortController] = useState<AbortController>();
     const [ctrlC, setCtrlC] = useState(false);
 
-    const [_, setToolMode] = useState(session.toolMode);
-
-    const [sessionState, setSessionState] = useState<{ messages: TMessage[]; working: boolean; }>({
+    const [sessionState, setSessionState] = useState<{ messages: TMessage[]; working: boolean; toolMode: TToolMode; }>({
         messages: session.messages,
         working: session.isWorking,
+        toolMode: session.toolMode,
     });
 
     const [tokenUsage, setTokenUsage] = useState<TTokenUsage>();
@@ -38,18 +36,6 @@ export function useChatController(props: UseChatControllerProps)
     // This effect subscribes to the session, making it the single source of truth.
     useEffect(() => session.onUpdate(setSessionState), [session]);
 
-    const handleSendHistory = useCallback((messages: TMessage[]) =>
-    {
-        const abortController = new AbortController();
-        setAbortController(abortController);
-
-        session.generateResponse(messages, abortController.signal);
-
-        // TODO: add clean up function, but how?
-    }, [
-        session,
-    ]);
-
     const handleInput = useCallback((input: string, key: Key): boolean =>
     {
         if (key.ctrl && input === "c")
@@ -58,10 +44,9 @@ export function useChatController(props: UseChatControllerProps)
             {
                 setCtrlC(true);
             }
-            else if (abortController)
+            else if (session.isWorking)
             {
-                abortController.abort("Ctrl-C");
-                setAbortController(undefined);
+                session.abort("Ctrl-C");
             }
             else
             {
@@ -88,23 +73,7 @@ export function useChatController(props: UseChatControllerProps)
             {
                 const confirmState = (session.messages[selectedIndex] as ToolProgressMessage).confirmState;
 
-                if (confirmState === "none")
-                {
-                    setToolMode?.(session.toolMode = "read-only");
-                }
-                else if (confirmState === "all")
-                {
-                    setToolMode?.(session.toolMode = "yolo");
-                }
-
-                handleSendHistory([
-                    ...session.messages.slice(0, selectedIndex),
-                    (session.messages[selectedIndex] as ToolProgressMessage).clone({
-                        status: (confirmState === "yes" || confirmState === "all") ? "confirmed" : "declined",
-                        confirmState,
-                    }),
-                    ...session.messages.slice(selectedIndex + 1),
-                ]);
+                session.confirmToolUse(selectedIndex, confirmState);
             }
 
             return true;
@@ -119,17 +88,15 @@ export function useChatController(props: UseChatControllerProps)
 
         if (key.ctrl && input === "w")
         {
-            setToolMode(toolMode => session.toolMode = (toolMode === "confirm" ? "read-only" : toolMode === "read-only" ? "yolo" : "confirm"));
+            session.setToolMode(session.toolMode === "confirm" ? "read-only" : session.toolMode === "read-only" ? "yolo" : "confirm");
             return true;
         }
 
         return !!confirm; // do not allow input as long as tool-confirmation is needed
     }, [
-        abortController,
         confirm,
         ctrlC,
         exit,
-        handleSendHistory,
         selectedIndex,
         session,
     ]);
@@ -138,7 +105,6 @@ export function useChatController(props: UseChatControllerProps)
     {
         if (!sessionState.working)
         {
-            setAbortController(undefined);
             setCtrlC(false);
 
             setTokenUsage(countTokens(session.messages));
@@ -159,7 +125,7 @@ export function useChatController(props: UseChatControllerProps)
     // TODO: refactor
     const action = ctrlC
         ? sessionState.working
-            ? abortController === null
+            ? session.isAborted
                 ? "Cancelled. Please wait ..."
                 : "Cancel? Press Ctrl-C again ..."
             : "Quit? Press Ctrl-C again ..."
@@ -173,8 +139,6 @@ export function useChatController(props: UseChatControllerProps)
         handleInput,
         action,
         selected: selectedIndex,
-        setToolMode,
-        handleSendHistory,
         tokenUsage,
         currentGitBranch,
     };

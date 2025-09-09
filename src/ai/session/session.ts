@@ -262,10 +262,13 @@ export class ChatSession implements IChatSession, IApiClientCommandListener
             });
     };
 
-    abort = (reason: any) =>
+    abort = (reason: string) =>
     {
-        this.abortController?.abort(reason);
-        this.notifyListeners();
+        if (this.abortController && !this.abortController.signal.aborted)
+        {
+            this.abortController?.abort(reason);
+            this.notifyListeners();
+        }
     };
 
     toggleConfirmState = async (messageIndex: number, direction: -1 | 1): Promise<void> =>

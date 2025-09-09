@@ -107,6 +107,8 @@ export class ChatSession implements IChatSession, IApiClientCommandListener
     storage?: ISessionStorage;
     private onUpdateListeners: TUpdateListener[] = [];
 
+    private abortController?: AbortController;
+
     private constructor(props: IChatSession, storage: ISessionStorage | undefined)
     {
         this.id = props.id;
@@ -210,7 +212,12 @@ export class ChatSession implements IChatSession, IApiClientCommandListener
         return this.#isWorking;
     }
 
-    generateResponse = async (messages: TMessage[], signal?: AbortSignal) =>
+    get isAborted(): boolean
+    {
+        return !!this.abortController?.signal?.aborted;
+    }
+
+    generateResponse = async (messages: TMessage[]) =>
     {
         if (this.#isWorking || !this.chatService)
         {
@@ -220,10 +227,12 @@ export class ChatSession implements IChatSession, IApiClientCommandListener
         this.#isWorking = true;
         this.setMessages(messages);
 
+        this.abortController = new AbortController();
+
         work({
             session: this,
-            chatService: this.chatService,  // TODO: 
-            signal,
+            chatService: this.chatService,  // TODO: can't work use session.chatService?
+            signal: this.abortController.signal,
         })
             .then(messages =>
             {
@@ -238,7 +247,17 @@ export class ChatSession implements IChatSession, IApiClientCommandListener
                     new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`, error),
                 ];
                 this.setMessages(newMessages);
+            })
+            .finally(() =>
+            {
+                this.abortController = undefined;
             });
+    };
+
+    abort = (reason: any) =>
+    {
+        this.abortController?.abort(reason);
+        this.notifyListeners();
     };
 
     toggleConfirmState = async (messageIndex: number, direction: -1 | 1): Promise<void> =>

@@ -3,7 +3,7 @@ import { ulid } from "ulid";
 
 import { IChatServiceOptions } from "../chat-service.js";
 import { CustomMessage, isCustomMessage, isMessageStreaming, TMessage, ToolProgressMessage } from "../custom-messages.js";
-import { chatServerClient, mapSessionToChat } from "./chat-server/chat-server-client.js";
+import { syncSession } from "./chat-server/chat-server-client.js";
 
 export type TToolMode = "confirm" | "read-only" | "yolo";
 
@@ -156,11 +156,8 @@ export class ChatSession implements IChatSession
         this.messages = [...messages];
         this.#isStreaming = !!messages.find(m => isMessageStreaming(m));
 
-        if (!this.#isStreaming)
-        {
-            this._save();
-            this._saveOnline();
-        }
+        this._save();
+        this._saveOnline();
 
         this.notifyListeners();
     };
@@ -182,7 +179,7 @@ export class ChatSession implements IChatSession
     private _saveQueue: Promise<void> = Promise.resolve();
     private _save = async (): Promise<void> =>
     {
-        if (!this.storage)
+        if (!this.storage || !this.#isStreaming)
         {
             return Promise.resolve();
         }
@@ -206,12 +203,7 @@ export class ChatSession implements IChatSession
         this._saveOnlineQueue = this._saveOnlineQueue
             .then(async () =>
             {
-                if (this.messages.find(m => isMessageStreaming(m)))
-                {
-                    return;
-                }
-
-                await chatServerClient?.upsertDocument(this.id, { data: mapSessionToChat(this) });
+                await syncSession(this);
             })
             .catch((error) =>
             {

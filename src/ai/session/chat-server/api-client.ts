@@ -1,7 +1,6 @@
 // A simple, configurable client library for the documents and links APIs.
 
 import { createClient, RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
-import { Mutex } from "async-mutex";
 
 export interface IAuthData
 {
@@ -78,6 +77,8 @@ class ApiClient
     private channel?: RealtimeChannel;
 
     private commandListeners: IApiClientCommandListener[] = [];
+
+    private _initPromise?: Promise<void>;
 
     constructor(options: IApiClientOptions = {}) 
     {
@@ -176,26 +177,25 @@ class ApiClient
         return this.supabase;
     }
 
-    private _mutex = new Mutex();
-
     private async ensureSupabaseClient()
     {
-        if (!this.supabase)
+        if (this.supabase)
         {
-            const release = await this._mutex.acquire();
-
-            try
-            {
-                if (!this.supabase)
-                {
-                    this.supabase = await this.createSupabaseClient();
-                }
-            }
-            finally
-            {
-                release();
-            }
+            return;
         }
+
+        if (!this._initPromise)
+        {
+            this._initPromise = this.createSupabaseClient()
+                .then(() => { })
+                .catch(error =>
+                {
+                    console.error("Failed to create supabase client", error);
+                    this._initPromise = undefined;
+                });
+        }
+
+        await this._initPromise;
     }
 
     async start()

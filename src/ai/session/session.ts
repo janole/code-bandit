@@ -6,6 +6,7 @@ import { CustomMessage, ErrorMessage, isCustomMessage, isMessageStreaming, TMess
 import { work } from "../work.js";
 import { IApiClientCommandListener } from "./chat-server/api-client.js";
 import { chatServerClient, syncSession } from "./chat-server/chat-server-client.js";
+import { TConfirmState } from "./chat-server/types.js";
 
 export type TToolMode = "confirm" | "read-only" | "yolo";
 
@@ -252,6 +253,11 @@ export class ChatSession implements IChatSession, IApiClientCommandListener
 
             await this.setMessages(newMessages);
         }
+    };
+    setToolMode = (toolMode: TToolMode) =>
+    {
+        this.toolMode = toolMode;
+        this.notifyListeners();
     };
 
     private _saveQueue: Promise<void> = Promise.resolve();

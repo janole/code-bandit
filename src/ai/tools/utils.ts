@@ -3,6 +3,8 @@ import { tool } from "@langchain/core/tools";
 import { realpathSync } from "fs";
 import path from "path";
 
+import { ToolProgressMessage } from "../custom-messages.js";
+
 export function resolveWithinWorkDir(userPath: string, workDir?: unknown): string
 {
     if (!workDir || typeof workDir !== "string")
@@ -44,4 +46,15 @@ export function formatToolError(f: Function, error: string)
 export function formatEmptyToolOutput(f: Function)
 {
     return `Tool \`${funcName(f)}\` produced no output.`;
+}
+
+export function setToolProgressMessageInfo(props: { config?: RunnableConfig; description?: string; fileName?: string; })
+{
+    const toolProgressMessage = props?.config?.metadata?.["toolProgressMessage"] as (ToolProgressMessage | undefined);
+
+    if (toolProgressMessage)
+    {
+        toolProgressMessage.info.description = props.description;
+        toolProgressMessage.info.fileName = props.fileName;
+    }
 }

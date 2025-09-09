@@ -10,13 +10,12 @@ interface WorkProps
 {
     chatService: ChatService;
     session: ChatSession;
-    streaming?: boolean;
     signal?: AbortSignal;
 }
 
 async function work(props: WorkProps)
 {
-    const { session, chatService, streaming = true, signal } = props;
+    const { session, chatService, signal } = props;
 
     const messages = await workTools({ ...props, session });
 
@@ -28,7 +27,7 @@ async function work(props: WorkProps)
     let aiMessage: AIMessageChunk | undefined = undefined;
     let toolProgressMessages: ToolProgressMessage[] = [];
 
-    if (streaming)
+    if (session.streaming)
     {
         const { result: stream, error } = await tryCatch(chatService.stream(session, signal));
 

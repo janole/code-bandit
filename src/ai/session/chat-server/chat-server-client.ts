@@ -134,22 +134,25 @@ async function pushStreamingMessageOnline(session: ChatSession, content: string)
     });
 }
 
+let lastStreamingSync = Date.now();
+
 async function syncSession(session: ChatSession)
 {
     const aiMessage = session.messages.find(m => isMessageStreaming(m)) as (BaseMessage | undefined);
 
     if (aiMessage)
     {
-        await pushStreamingMessageOnline(session, aiMessage.text);
+        if (Date.now() > lastStreamingSync + 100)
+        {
+            lastStreamingSync = Date.now();
 
-        console.log("STREAMED ONLINE!");
+            await pushStreamingMessageOnline(session, aiMessage.text);
+        }
 
         return;
     }
 
     await pushSessionOnline(session);
-
-    console.log("SAVED ONLINE!", session, session.messages);
 }
 
 export

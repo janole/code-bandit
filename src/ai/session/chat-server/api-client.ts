@@ -1,6 +1,6 @@
 // A simple, configurable client library for the documents and links APIs.
 
-import { createClient, RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
+import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 
 export interface IAuthData
 {
@@ -145,6 +145,8 @@ class ApiClient
     private async createSupabaseClient()
     {
         const authData = await this.getAuthData();
+
+        const { createClient } = await import("@supabase/supabase-js");
 
         const supabase = createClient(authData.api_url, authData.api_key, {
             accessToken: async () => 

@@ -164,23 +164,122 @@ export class ChatSession implements IChatSession
         return this.#isStreaming;
     }
 
+    setMessages = async (messages: TMessage[]): Promise<void> =>
     {
-        this.messages = messages;
-        this.finished = Math.min(finished, this.messages.length);
+        this.messages = [...messages];
+        this.#isStreaming = !!messages.find(m => isMessageStreaming(m));
+
+        this._save();
 
         this.notifyListeners();
+    };
+
+    #isWorking = false;
+
+    private set isWorking(isWorking: boolean) 
+    {
+        this.#isWorking = isWorking;
     }
 
-    private saveQueue: Promise<any> = Promise.resolve();
-
-    async save(): Promise<void>
+    get isWorking(): boolean
     {
-        if (!this.storage)
+        return this.#isWorking;
+    }
+
+    get isAborted(): boolean
+    {
+        return !!this.abortController?.signal?.aborted;
+    }
+
+    generateResponse = async (messages: TMessage[]) =>
+    {
+        if (this.#isWorking || !this.chatService)
         {
-            throw new Error("No storage configured!");
+            return;
         }
 
-        this.saveQueue = this.saveQueue
+        this.#isWorking = true;
+        this.setMessages(messages);
+
+        this.abortController = new AbortController();
+
+        work({
+            session: this,
+            chatService: this.chatService,  // TODO: can't work use session.chatService?
+            signal: this.abortController.signal,
+        })
+            .then(messages =>
+            {
+                this.#isWorking = false;
+                this.setMessages(messages);
+            })
+            .catch(error =>
+            {
+                this.#isWorking = false;
+                const newMessages = [
+                    ...resetIsStreamingFlag(this.messages),
+                    new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`, error),
+                ];
+                this.setMessages(newMessages);
+            })
+            .finally(() =>
+            {
+                this.abortController = undefined;
+            });
+    };
+
+    abort = (reason: string) =>
+    {
+        if (this.abortController && !this.abortController.signal.aborted)
+        {
+            this.abortController?.abort(reason);
+            this.notifyListeners();
+        }
+    };
+
+    toggleConfirmState = async (messageIndex: number, direction: -1 | 1): Promise<void> =>
+    {
+        if (ToolProgressMessage.isTypeOf(this.messages[messageIndex]))
+        {
+            const newMessages = [
+                ...this.messages.slice(0, messageIndex),
+                (this.messages[messageIndex] as ToolProgressMessage).toggleConfirmState({ direction }),
+                ...this.messages.slice(messageIndex + 1),
+            ];
+
+            await this.setMessages(newMessages);
+        }
+    };
+
+    confirmToolUse = async (messageIndex: number, confirmState: TConfirmState): Promise<void> =>
+    {
+        if (confirmState === "none")
+        {
+            this.toolMode = "read-only";
+        }
+        else if (confirmState === "all")
+        {
+            this.toolMode = "yolo";
+        }
+
+        // TODO: reset all other pending tools when toolMode changed!
+
+        this.generateResponse([
+            ...this.messages.slice(0, messageIndex),
+            (this.messages[messageIndex] as ToolProgressMessage).clone({
+                status: (confirmState === "yes" || confirmState === "all") ? "confirmed" : "declined",
+                confirmState,
+            }),
+            ...this.messages.slice(messageIndex + 1),
+        ]);
+    };
+
+    setToolMode = (toolMode: TToolMode) =>
+    {
+        this.toolMode = toolMode;
+        this.notifyListeners();
+    };
+
             .then(async () =>
             {
                 await this.storage!.saveSession(this);

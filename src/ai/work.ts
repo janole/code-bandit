@@ -99,8 +99,6 @@ async function workTools(props: Pick<WorkProps, "session" | "chatService" | "sen
         return messages;
     }
 
-    const metadata = { workDir };
-
     for (const toolProgressMessage of toolProgressMessages)
     {
         const toolCall = toolProgressMessage.toolCall!;
@@ -147,7 +145,12 @@ async function workTools(props: Pick<WorkProps, "session" | "chatService" | "sen
 
         send?.([...messages]);
 
-        const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, { metadata }));
+        const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, {
+            metadata: {
+                workDir,
+                toolProgressMessage,
+            },
+        }));
 
         if (result)
         {

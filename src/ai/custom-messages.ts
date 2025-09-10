@@ -31,7 +31,7 @@ export abstract class CustomMessage
         }
         else if (obj._type === "tool-progress")
         {
-            return new ToolProgressMessage(obj.toolCall, obj.status, obj.content, obj.confirmState);
+            return new ToolProgressMessage(obj.toolCall, obj.status, obj.content, obj.confirmState, obj.info);
         }
 
         throw new Error(`Unknown custom message type: ${obj._type}`);

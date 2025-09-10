@@ -7,7 +7,7 @@ type TCustomMessageType = "error" | "tool-progress";
 
 export type TMessageType = ReturnType<BaseMessage["getType"]> | TCustomMessageType;
 
-export class CustomMessage
+export abstract class CustomMessage
 {
     _type: TCustomMessageType;
 
@@ -20,6 +20,8 @@ export class CustomMessage
     {
         return this._type;
     }
+
+    abstract isMessageFinished(): boolean;
 
     static fromObject(obj: any): CustomMessage
     {
@@ -60,6 +62,11 @@ class ErrorMessage extends CustomMessage
                 stack: error.stack,
             };
         }
+    }
+
+    override isMessageFinished(): boolean
+    {
+        return true;
     }
 }
 
@@ -138,6 +145,11 @@ class ToolProgressMessage extends CustomMessage
         this.confirmState = confirmState || "no";
         this.info = info || {};
     }
+
+    override isMessageFinished(): boolean
+    {
+        return this.status !== "pending" && this.status !== "pending-confirmation";
+    }
 }
 
 /**
@@ -154,9 +166,38 @@ export const isCustomMessage = (message: any): message is CustomMessage =>
     );
 };
 
+const setMessageIsStreaming = (msg: BaseMessage, isStreaming: boolean) =>
+{
+    msg.additional_kwargs["_coba_message_is_streaming"] = isStreaming;
+    return msg;
+};
+
+const isMessageStreaming = (msg: TMessage): boolean =>
+{
+    return (msg instanceof BaseMessage) && (msg as BaseMessage).additional_kwargs["_coba_message_is_streaming"] === true;
+};
+
+const isMessageFinished = (msg: TMessage): boolean =>
+{
+    if (msg instanceof BaseMessage)
+    {
+        return !isMessageStreaming(msg);
+    }
+
+    return msg.isMessageFinished();
+};
+
+const resetIsStreamingFlag = (msg: TMessage[]): TMessage[] => 
+{
+    return msg.map(m => (m instanceof BaseMessage) ? setMessageIsStreaming(m, false) : m);
+};
+
 export
 {
     ErrorMessage,
+    isMessageFinished,
+    isMessageStreaming,
+    resetIsStreamingFlag,
+    setMessageIsStreaming,
     ToolProgressMessage,
 };
-

@@ -304,7 +304,6 @@ export class ChatSession implements IChatSession
     flush = async (): Promise<void> =>
     {
         this._save();
-        await this._saveOnlineQueue;
         await this._saveQueue;
     };
 }

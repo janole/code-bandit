@@ -43,10 +43,10 @@ export function mapSessionToSessionData(session: IChatSession)
         id: session.id,
         workDir: session.workDir,
         toolMode: session.toolMode || "confirm",
+        streaming: session.streaming,
         chatServiceOptions: session.chatServiceOptions,
         systemPrompt: session.systemPrompt,
         messages: session.messages.map(mapMessageToObject).filter(m => m),
-        finished: session.finished,
     };
 }
 
@@ -56,10 +56,10 @@ export function mapSessionDataToSession(data: any): IChatSession
         id: data.id,
         workDir: data.workDir,
         toolMode: data.toolMode || "confirm",
+        streaming: data.streaming || true,
         chatServiceOptions: data.chatServiceOptions,
         systemPrompt: data.systemPrompt,
         messages: data.messages.map(mapObjectToMessage).filter((m: TMessage | undefined) => m),
-        finished: data.finished,
     };
 }
 
@@ -69,19 +69,18 @@ export interface IChatSession
 
     workDir: string;
     toolMode: TToolMode;
+    streaming: boolean;
     chatServiceOptions: IChatServiceOptions;
 
     systemPrompt?: string; // TODO: extend into service or template like "%{DEFAULT}% ..."
 
     messages: TMessage[];
-    finished: number;
 }
 
-export interface ICreateChatSession extends Omit<IChatSession, "id" | "messages" | "finished">
+export interface ICreateChatSession extends Omit<IChatSession, "id" | "messages">
 {
     id?: IChatSession["id"];
     messages?: IChatSession["messages"];
-    finished?: IChatSession["finished"];
 }
 
 type TUpdateListener = (props: { messages: TMessage[]; finished: number; }) => void;
@@ -93,6 +92,7 @@ export class ChatSession implements IChatSession
     workDir: string;
     toolMode: TToolMode;
     chatServiceOptions: IChatServiceOptions;
+    streaming: boolean;
 
     systemPrompt?: string;
 
@@ -107,10 +107,10 @@ export class ChatSession implements IChatSession
         this.id = props.id;
         this.workDir = props.workDir;
         this.toolMode = props.toolMode || "confirm";
+        this.streaming = props.streaming || true;
         this.chatServiceOptions = props.chatServiceOptions;
         this.systemPrompt = props.systemPrompt;
         this.messages = props.messages || [];
-        this.finished = Math.min(props.finished || 0, this.messages.length);
 
         this.storage = storage;
     }
@@ -121,7 +121,6 @@ export class ChatSession implements IChatSession
             ...props,
             id: props.id || ulid(),
             messages: props.messages || [],
-            finished: props.finished || 0,
         }, storage);
 
         return chatSession;
@@ -149,7 +148,13 @@ export class ChatSession implements IChatSession
         };
     }
 
-    async setMessages(messages: TMessage[], finished: number): Promise<void>
+    #isStreaming = false;
+
+    get isStreaming()
+    {
+        return this.#isStreaming;
+    }
+
     {
         this.messages = messages;
         this.finished = Math.min(finished, this.messages.length);

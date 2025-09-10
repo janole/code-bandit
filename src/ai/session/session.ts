@@ -1,8 +1,9 @@
 import { mapChatMessagesToStoredMessages, mapStoredMessageToChatMessage, StoredMessage } from "@langchain/core/messages";
 import { ulid } from "ulid";
 
-import { IChatServiceOptions } from "../chat-service.js";
-import { CustomMessage, isCustomMessage, TMessage } from "../custom-messages.js";
+import { ChatService, IChatServiceOptions } from "../chat-service.js";
+import { CustomMessage, ErrorMessage, isCustomMessage, isMessageStreaming, resetIsStreamingFlag, TMessage, ToolProgressMessage } from "../custom-messages.js";
+import { work } from "../work.js";
 
 export type TToolMode = "confirm" | "read-only" | "yolo";
 

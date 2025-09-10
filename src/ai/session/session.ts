@@ -1,8 +1,9 @@
 import { mapChatMessagesToStoredMessages, mapStoredMessageToChatMessage, StoredMessage } from "@langchain/core/messages";
 import { ulid } from "ulid";
 
-import { IChatServiceOptions } from "../chat-service.js";
-import { CustomMessage, isCustomMessage, TMessage } from "../custom-messages.js";
+import { ChatService, IChatServiceOptions } from "../chat-service.js";
+import { CustomMessage, ErrorMessage, isCustomMessage, isMessageStreaming, resetIsStreamingFlag, TMessage, ToolProgressMessage } from "../custom-messages.js";
+import { work } from "../work.js";
 
 export type TToolMode = "confirm" | "read-only" | "yolo";
 
@@ -43,10 +44,10 @@ export function mapSessionToSessionData(session: IChatSession)
         id: session.id,
         workDir: session.workDir,
         toolMode: session.toolMode || "confirm",
+        streaming: session.streaming,
         chatServiceOptions: session.chatServiceOptions,
         systemPrompt: session.systemPrompt,
         messages: session.messages.map(mapMessageToObject).filter(m => m),
-        finished: session.finished,
     };
 }
 
@@ -56,10 +57,10 @@ export function mapSessionDataToSession(data: any): IChatSession
         id: data.id,
         workDir: data.workDir,
         toolMode: data.toolMode || "confirm",
+        streaming: data.streaming || true,
         chatServiceOptions: data.chatServiceOptions,
         systemPrompt: data.systemPrompt,
         messages: data.messages.map(mapObjectToMessage).filter((m: TMessage | undefined) => m),
-        finished: data.finished,
     };
 }
 
@@ -69,22 +70,21 @@ export interface IChatSession
 
     workDir: string;
     toolMode: TToolMode;
+    streaming: boolean;
     chatServiceOptions: IChatServiceOptions;
 
     systemPrompt?: string; // TODO: extend into service or template like "%{DEFAULT}% ..."
 
     messages: TMessage[];
-    finished: number;
 }
 
-export interface ICreateChatSession extends Omit<IChatSession, "id" | "messages" | "finished">
+export interface ICreateChatSession extends Omit<IChatSession, "id" | "messages">
 {
     id?: IChatSession["id"];
     messages?: IChatSession["messages"];
-    finished?: IChatSession["finished"];
 }
 
-type TUpdateListener = (props: { messages: TMessage[]; finished: number; }) => void;
+type TUpdateListener = (props: { messages: TMessage[]; working: boolean; toolMode: TToolMode }) => void;
 
 export class ChatSession implements IChatSession
 {
@@ -93,24 +93,28 @@ export class ChatSession implements IChatSession
     workDir: string;
     toolMode: TToolMode;
     chatServiceOptions: IChatServiceOptions;
+    streaming: boolean;
 
     systemPrompt?: string;
 
     messages: TMessage[] = [];
-    finished: number = 0;
+
+    private chatService?: ChatService;
 
     storage?: ISessionStorage;
     private onUpdateListeners: TUpdateListener[] = [];
+
+    private abortController?: AbortController;
 
     private constructor(props: IChatSession, storage: ISessionStorage | undefined)
     {
         this.id = props.id;
         this.workDir = props.workDir;
         this.toolMode = props.toolMode || "confirm";
+        this.streaming = props.streaming || true;
         this.chatServiceOptions = props.chatServiceOptions;
         this.systemPrompt = props.systemPrompt;
         this.messages = props.messages || [];
-        this.finished = Math.min(props.finished || 0, this.messages.length);
 
         this.storage = storage;
     }
@@ -121,25 +125,30 @@ export class ChatSession implements IChatSession
             ...props,
             id: props.id || ulid(),
             messages: props.messages || [],
-            finished: props.finished || 0,
         }, storage);
 
         return chatSession;
     }
 
-    setStorage(storage: ISessionStorage): ChatSession
+    setChatService = (chatService: ChatService): ChatSession =>
+    {
+        this.chatService = chatService;
+        return this;
+    };
+
+    setStorage = (storage: ISessionStorage): ChatSession =>
     {
         this.storage = storage;
         return this;
-    }
+    };
 
-    private notifyListeners(): void
+    notifyListeners = (): void =>
     {
-        const props = { messages: [...this.messages], finished: this.finished };
+        const props = { messages: [...this.messages], working: this.#isWorking, toolMode: this.toolMode };
         this.onUpdateListeners.forEach(listener => listener(props));
-    }
+    };
 
-    public onUpdate(listener: TUpdateListener): () => void
+    onUpdate = (listener: TUpdateListener): (() => void) =>
     {
         this.onUpdateListeners.push(listener);
 
@@ -147,26 +156,140 @@ export class ChatSession implements IChatSession
         {
             this.onUpdateListeners = this.onUpdateListeners.filter(l => l !== listener);
         };
+    };
+
+    #isStreaming = false;
+
+    get isStreaming()
+    {
+        return this.#isStreaming;
     }
 
-    async setMessages(messages: TMessage[], finished: number): Promise<void>
+    setMessages = async (messages: TMessage[]): Promise<void> =>
     {
-        this.messages = messages;
-        this.finished = Math.min(finished, this.messages.length);
+        this.messages = [...messages];
+        this.#isStreaming = !!messages.find(m => isMessageStreaming(m));
+
+        this._save();
 
         this.notifyListeners();
+    };
+
+    #isWorking = false;
+
+    private set isWorking(isWorking: boolean) 
+    {
+        this.#isWorking = isWorking;
     }
 
-    private saveQueue: Promise<any> = Promise.resolve();
-
-    async save(): Promise<void>
+    get isWorking(): boolean
     {
-        if (!this.storage)
+        return this.#isWorking;
+    }
+
+    get isAborted(): boolean
+    {
+        return !!this.abortController?.signal?.aborted;
+    }
+
+    generateResponse = async (messages: TMessage[]) =>
+    {
+        if (this.#isWorking || !this.chatService)
         {
-            throw new Error("No storage configured!");
+            return;
         }
 
-        this.saveQueue = this.saveQueue
+        this.#isWorking = true;
+        this.setMessages(messages);
+
+        this.abortController = new AbortController();
+
+        work({
+            session: this,
+            chatService: this.chatService,  // TODO: can't work use session.chatService?
+            signal: this.abortController.signal,
+        })
+            .then(messages =>
+            {
+                this.#isWorking = false;
+                this.setMessages(messages);
+            })
+            .catch(error =>
+            {
+                this.#isWorking = false;
+                const newMessages = [
+                    ...resetIsStreamingFlag(this.messages),
+                    new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`, error),
+                ];
+                this.setMessages(newMessages);
+            })
+            .finally(() =>
+            {
+                this.abortController = undefined;
+            });
+    };
+
+    abort = (reason: string) =>
+    {
+        if (this.abortController && !this.abortController.signal.aborted)
+        {
+            this.abortController?.abort(reason);
+            this.notifyListeners();
+        }
+    };
+
+    toggleConfirmState = async (messageIndex: number, direction: -1 | 1): Promise<void> =>
+    {
+        if (ToolProgressMessage.isTypeOf(this.messages[messageIndex]))
+        {
+            const newMessages = [
+                ...this.messages.slice(0, messageIndex),
+                (this.messages[messageIndex] as ToolProgressMessage).toggleConfirmState({ direction }),
+                ...this.messages.slice(messageIndex + 1),
+            ];
+
+            await this.setMessages(newMessages);
+        }
+    };
+
+    confirmToolUse = async (messageIndex: number, confirmState: ToolProgressMessage["confirmState"]): Promise<void> =>
+    {
+        if (confirmState === "none")
+        {
+            this.toolMode = "read-only";
+        }
+        else if (confirmState === "all")
+        {
+            this.toolMode = "yolo";
+        }
+
+        // TODO: reset all other pending tools when toolMode changed!
+
+        this.generateResponse([
+            ...this.messages.slice(0, messageIndex),
+            (this.messages[messageIndex] as ToolProgressMessage).clone({
+                status: (confirmState === "yes" || confirmState === "all") ? "confirmed" : "declined",
+                confirmState,
+            }),
+            ...this.messages.slice(messageIndex + 1),
+        ]);
+    };
+
+    setToolMode = (toolMode: TToolMode) =>
+    {
+        this.toolMode = toolMode;
+        this.notifyListeners();
+    };
+
+    private _saveQueue: Promise<void> = Promise.resolve();
+    private _save = async (): Promise<void> =>
+    {
+        if (!this.storage || !this.#isStreaming)
+        {
+            return Promise.resolve();
+        }
+
+        this._saveQueue = this._saveQueue
             .then(async () =>
             {
                 await this.storage!.saveSession(this);
@@ -176,6 +299,11 @@ export class ChatSession implements IChatSession
                 console.error("ERROR: Session save failed!", error);
             });
 
-        return this.saveQueue;
-    }
+        return this._saveQueue;
+    };
+    flush = async (): Promise<void> =>
+    {
+        this._save();
+        await this._saveQueue;
+    };
 }

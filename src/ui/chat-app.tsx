@@ -5,6 +5,7 @@ import { homedir } from "os";
 import React, { useEffect, useState } from "react";
 
 import { ChatService } from "../ai/chat-service.js";
+import { isMessageFinished } from "../ai/custom-messages.js";
 import { ChatSession } from "../ai/session/session.js";
 import useTerminalSize from "../utils/use-terminal-size.js";
 import { useChatController } from "./chat-controller.js";
@@ -19,37 +20,33 @@ interface ChatAppProps
     chatService: ChatService;
     session: ChatSession;
     startMessage?: string;
-    streaming?: boolean;
     debug?: boolean;
 }
 
 function ChatApp(props: ChatAppProps)
 {
-    const { chatService, session, startMessage, streaming = true, debug } = props;
+    const { session, startMessage, debug } = props;
     const { chatServiceOptions } = session;
 
     const [_message, setMessage] = useState("");
 
     const {
+        messages,
         working,
         handleInput,
         action,
         selected,
-        chatHistory,
-        handleSendHistory,
         tokenUsage,
         currentGitBranch,
     } = useChatController({
-        chatService,
         session,
-        streaming,
     });
 
     useEffect(() =>
     {
         if (startMessage)
         {
-            handleSendHistory([...chatHistory.messages, new HumanMessage(startMessage)]);
+            session.generateResponse([...messages, new HumanMessage(startMessage)]);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -58,30 +55,32 @@ function ChatApp(props: ChatAppProps)
     {
         if (_message.trim() && !working)
         {
-            const messages = [...chatHistory.messages, new HumanMessage(_message)];
-            handleSendHistory(messages, messages.length);
+            session.generateResponse([...messages, new HumanMessage(_message)]);
             setMessage("");
         }
     };
 
     const terminalSize = useTerminalSize();
 
+    let finished = messages.findIndex(m => !isMessageFinished(m));
+    if (finished === -1) { finished = messages.length; }
+
     return (
         <Box flexDirection="column" width={terminalSize.columns}>
 
             {/* Messages Area */}
             <Box flexDirection="column" paddingRight={1} width={terminalSize.columns}>
-                <Static items={chatHistory.messages.slice(0, chatHistory.finished)}>
+                <Static items={messages.slice(0, finished)}>
                     {(message, index) => (
                         <MemoMessage key={index} msg={message} debug={debug} />
                     )}
                 </Static>
 
-                {chatHistory.messages.slice(chatHistory.finished).map((workingItem, index) => (
+                {messages.slice(finished).map((workingItem, index) => (
                     <Message
                         key={index}
                         msg={workingItem}
-                        selected={selected === index + chatHistory.finished}
+                        selected={selected === index + finished}
                         debug={debug}
                     />
                 ))}

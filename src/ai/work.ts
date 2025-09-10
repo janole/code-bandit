@@ -3,21 +3,19 @@ import { concat } from "@langchain/core/utils/stream";
 
 import tryCatch from "../utils/try-catch.js";
 import { ChatService } from "./chat-service.js";
-import { ErrorMessage, TMessage, ToolProgressMessage } from "./custom-messages.js";
-import { IChatSession } from "./session/session.js";
+import { ErrorMessage, setMessageIsStreaming, TMessage, ToolProgressMessage } from "./custom-messages.js";
+import { ChatSession } from "./session/session.js";
 
 interface WorkProps
 {
     chatService: ChatService;
-    session: IChatSession;
-    send?: (messages: TMessage[]) => void;
-    streaming?: boolean;
+    session: ChatSession;
     signal?: AbortSignal;
 }
 
 async function work(props: WorkProps)
 {
-    const { session, chatService, send, streaming = true, signal } = props;
+    const { session, chatService, signal } = props;
 
     const messages = await workTools({ ...props, session });
 
@@ -29,7 +27,7 @@ async function work(props: WorkProps)
     let aiMessage: AIMessageChunk | undefined = undefined;
     let toolProgressMessages: ToolProgressMessage[] = [];
 
-    if (streaming)
+    if (session.streaming)
     {
         const { result: stream, error } = await tryCatch(chatService.stream(session, signal));
 
@@ -42,10 +40,11 @@ async function work(props: WorkProps)
         for await (const chunk of stream)
         {
             aiMessage = aiMessage !== undefined ? concat(aiMessage, chunk) : chunk;
+            setMessageIsStreaming(aiMessage, true);
 
             if (!aiMessage?.tool_calls?.length && !aiMessage?.tool_call_chunks?.length)
             {
-                send?.([...messages, aiMessage]); // TODO: check for race conditions
+                session.setMessages([...messages, aiMessage]);
             }
             else
             {
@@ -53,7 +52,7 @@ async function work(props: WorkProps)
 
                 if (toolProgressMessages.length)
                 {
-                    send?.([...messages, aiMessage, ...toolProgressMessages]);
+                    session.setMessages([...messages, aiMessage, ...toolProgressMessages]);
                 }
             }
         }
@@ -73,6 +72,7 @@ async function work(props: WorkProps)
 
     if (aiMessage)
     {
+        setMessageIsStreaming(aiMessage, false);
         messages.push(aiMessage);
     }
 
@@ -83,14 +83,18 @@ async function work(props: WorkProps)
 
     // add pending toolCall(s)
     toolProgressMessages = aiMessage.tool_calls.map(toolCall => new ToolProgressMessage(toolCall)) || [];
-    messages.push(...toolProgressMessages);
+    session.setMessages([...messages, ...toolProgressMessages]);
 
-    return work({ ...props, session: { ...session, messages } });
+    await session.flush();
+
+    return work(props);
 }
 
-async function workTools(props: Pick<WorkProps, "session" | "chatService" | "send" | "signal">)
+async function workTools(props: Pick<WorkProps, "session" | "chatService" | "signal">)
 {
-    const { session: { workDir, messages, toolMode }, chatService, send } = props;
+    const { session, chatService } = props;
+
+    const messages = [...session.messages];
 
     const toolProgressMessages = messages.filter(m => ToolProgressMessage.isTypeOf(m) && (m.status === "pending" || m.status === "confirmed" || m.status === "declined")) as ToolProgressMessage[];
 
@@ -116,7 +120,7 @@ async function workTools(props: Pick<WorkProps, "session" | "chatService" | "sen
 
         if (toolProgressMessage.status === "pending" && selectedTool.metadata?.["destructive"])
         {
-            if (toolMode === "read-only")
+            if (session.toolMode === "read-only")
             {
                 toolProgressMessage.status = "error";
                 toolProgressMessage.content = "Tool call denied by security policy";
@@ -125,7 +129,7 @@ async function workTools(props: Pick<WorkProps, "session" | "chatService" | "sen
 
                 continue;
             }
-            else if (toolMode !== "yolo")
+            else if (session.toolMode !== "yolo")
             {
                 toolProgressMessage.status = "pending-confirmation";
 
@@ -143,11 +147,11 @@ async function workTools(props: Pick<WorkProps, "session" | "chatService" | "sen
             continue;
         }
 
-        send?.([...messages]);
+        session.setMessages(messages);
 
         const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, {
             metadata: {
-                workDir,
+                workDir: session.workDir,
                 toolProgressMessage,
             },
         }));
@@ -168,12 +172,12 @@ async function workTools(props: Pick<WorkProps, "session" | "chatService" | "sen
         toolProgressMessage.content = error?.message || "Unknown Error";
     }
 
-    send?.([...messages]);
+    session.setMessages(messages);
 
-    return [...messages];
+    return messages;
 }
 
-export function needsToolConfirmation(messages: TMessage[])
+function needsToolConfirmation(messages: TMessage[])
 {
     return messages.find(m => ToolProgressMessage.isTypeOf(m) && m.status === "pending-confirmation");
 }

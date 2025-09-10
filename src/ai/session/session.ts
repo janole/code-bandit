@@ -83,7 +83,7 @@ export interface ICreateChatSession extends Omit<IChatSession, "id" | "messages"
     messages?: IChatSession["messages"];
 }
 
-type TUpdateListener = (props: { messages: TMessage[]; finished: number; }) => void;
+type TUpdateListener = (props: { messages: TMessage[]; working: boolean; toolMode: TToolMode }) => void;
 
 export class ChatSession implements IChatSession
 {
@@ -97,10 +97,13 @@ export class ChatSession implements IChatSession
     systemPrompt?: string;
 
     messages: TMessage[] = [];
-    finished: number = 0;
+
+    private chatService?: ChatService;
 
     storage?: ISessionStorage;
     private onUpdateListeners: TUpdateListener[] = [];
+
+    private abortController?: AbortController;
 
     private constructor(props: IChatSession, storage: ISessionStorage | undefined)
     {
@@ -126,17 +129,23 @@ export class ChatSession implements IChatSession
         return chatSession;
     }
 
-    setStorage(storage: ISessionStorage): ChatSession
+    setChatService = (chatService: ChatService): ChatSession =>
+    {
+        this.chatService = chatService;
+        return this;
+    };
+
+    setStorage = (storage: ISessionStorage): ChatSession =>
     {
         this.storage = storage;
         return this;
-    }
+    };
 
-    private notifyListeners(): void
+    notifyListeners = (): void =>
     {
-        const props = { messages: [...this.messages], finished: this.finished };
+        const props = { messages: [...this.messages], working: this.#isWorking, toolMode: this.toolMode };
         this.onUpdateListeners.forEach(listener => listener(props));
-    }
+    };
 
     onUpdate = (listener: TUpdateListener): (() => void) =>
     {

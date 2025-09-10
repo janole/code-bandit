@@ -280,6 +280,15 @@ export class ChatSession implements IChatSession
         this.notifyListeners();
     };
 
+    private _saveQueue: Promise<void> = Promise.resolve();
+    private _save = async (): Promise<void> =>
+    {
+        if (!this.storage || !this.#isStreaming)
+        {
+            return Promise.resolve();
+        }
+
+        this._saveQueue = this._saveQueue
             .then(async () =>
             {
                 await this.storage!.saveSession(this);
@@ -289,6 +298,12 @@ export class ChatSession implements IChatSession
                 console.error("ERROR: Session save failed!", error);
             });
 
-        return this.saveQueue;
-    }
+        return this._saveQueue;
+    };
+    flush = async (): Promise<void> =>
+    {
+        this._save();
+        await this._saveOnlineQueue;
+        await this._saveQueue;
+    };
 }

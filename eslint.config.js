@@ -39,6 +39,8 @@ export default [
                 format: ["camelCase", "PascalCase"],
             }],
 
+            "@typescript-eslint/no-invalid-this": ["error"],
+
             "@stylistic/brace-style": ["error", "allman", { allowSingleLine: true }],
             "@stylistic/quotes": ["error", "double"],
             "@stylistic/comma-dangle": ["error", "always-multiline"],

@@ -40,14 +40,18 @@ async function initChatSession(options: any)
 
     const toolMode: TToolMode = options.readOnly ? "read-only" : options.writeMode ? "yolo" : "confirm";
 
+    const streaming = options.stream !== false;
+
     const session = options.continueSession
         ? await FileSessionStorage.createFromFile(options.continueSession)
-        : FileSessionStorage.create({ workDir, toolMode, chatServiceOptions });
+        : FileSessionStorage.create({ workDir, toolMode, streaming, chatServiceOptions });
 
     const chatService = new ChatService({
         promptLoader: await PromptLoader.create(session),
         toolProvider: new NodeToolProvider(),
     });
+
+    session.setChatService(chatService);
 
     return {
         chatService,
@@ -63,23 +67,23 @@ async function chat(options: any)
         chatService,
         session,
         startMessage: options.startMessage,
-        streaming: options.stream !== false,
         debug: options.debug,
     };
+
+    session.flush();
 
     render(<ChatApp {...props} />, { exitOnCtrlC: false });
 }
 
 async function exec(message: string, options: any)
 {
-    const { chatService, session } = await initChatSession(options);
+    const { chatService, session } = await initChatSession({ ...options, stream: false });
 
     session.messages.push(new HumanMessage(message));
 
     const messages = await work({
         chatService,
         session,
-        streaming: false,
     });
 
     const pendingConfirmation = messages.filter(m => ToolProgressMessage.isTypeOf(m)).find(m => m.status === "pending-confirmation");

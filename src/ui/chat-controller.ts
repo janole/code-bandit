@@ -3,7 +3,6 @@ import { Key, useApp } from "ink";
 import { useCallback, useEffect, useState } from "react";
 
 import { TMessage, ToolProgressMessage } from "../ai/custom-messages.js";
-import { ErrorMessage, TMessage, ToolProgressMessage } from "../ai/custom-messages.js";
 import { ChatSession, TToolMode } from "../ai/session/session.js";
 import { countTokens, lastMessageFromAI, TTokenUsage } from "../ai/tokens.js";
 import { getGitBranch } from "../ai/tools/git-tools.js";

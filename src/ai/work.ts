@@ -33,7 +33,7 @@ async function work(props: WorkProps)
 
         if (!stream)
         {
-            messages.push(new ErrorMessage(`ERROR: ${error?.message || error?.toString() || "llm.stream(...) failed."}`, error));
+            messages.push(new ErrorMessage(`ERROR: ${error?.message || error?.toString() || "llm.stream(...) failed."}`, "error", error));
             return messages;
         }
 
@@ -63,7 +63,7 @@ async function work(props: WorkProps)
 
         if (!result || error)
         {
-            messages.push(new ErrorMessage(`ERROR: ${error?.message || error?.toString() || "llm.generate(...) failed."}`, error));
+            messages.push(new ErrorMessage(`ERROR: ${error?.message || error?.toString() || "llm.generate(...) failed."}`, "error", error));
             return messages;
         }
 
@@ -201,7 +201,7 @@ function addFailedToolCallMessage(error: string | Error, toolCall: { id?: string
     }
     else
     {
-        messages.push(new ErrorMessage(content, (error instanceof Error) ? error : undefined));
+        messages.push(new ErrorMessage(content, "error", (error instanceof Error) ? error : undefined));
     }
 }
 

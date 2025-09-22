@@ -22,6 +22,10 @@ function listDirectory({ directory = "." }: { directory: string }, config?: Runn
             followSymbolicLinks: false,
             objectMode: true,
             stats: true,
+            ignore: [
+                "**/.git",
+                "**/node_modules",
+            ],
         });
 
         const output = files
@@ -144,6 +148,10 @@ function findFiles({ pattern, directory = "." }: { pattern: string; directory?: 
             onlyFiles: true,
             followSymbolicLinks: false,
             gitignore: true,
+            ignore: [
+                "**/.git",
+                "**/node_modules",
+            ],
         });
 
         if (files.length === 0)
@@ -177,6 +185,10 @@ function searchInFiles({ pattern, glob: globPattern, directory = ".", isCaseSens
             onlyFiles: true,
             followSymbolicLinks: false,
             gitignore: true,
+            ignore: [
+                "**/.git",
+                "**/node_modules",
+            ],
         });
 
         const searchResults = [];

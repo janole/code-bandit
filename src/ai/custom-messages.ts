@@ -27,7 +27,7 @@ export abstract class CustomMessage
     {
         if (obj._type === "error")
         {
-            return new ErrorMessage(obj.content, obj.error);
+            return new ErrorMessage(obj.content, obj.level, obj.error);
         }
         else if (obj._type === "tool-progress")
         {
@@ -41,6 +41,7 @@ export abstract class CustomMessage
 class ErrorMessage extends CustomMessage
 {
     content: string;
+    level: "debug" | "warn" | "error";
 
     error?: {
         name: string;
@@ -48,11 +49,12 @@ class ErrorMessage extends CustomMessage
         stack?: string;
     };
 
-    constructor(content: string, error?: Error | ErrorMessage["error"])
+    constructor(content: string, level: ErrorMessage["level"] = "error", error?: Error | ErrorMessage["error"])
     {
         super("error");
 
         this.content = content;
+        this.level = level;
 
         if (error)
         {
@@ -201,3 +203,4 @@ export
     setMessageIsStreaming,
     ToolProgressMessage,
 };
+

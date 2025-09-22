@@ -300,7 +300,7 @@ export class ChatSession implements IChatSession
             {
                 this.setMessages([
                     ...this.messages,
-                    new ErrorMessage("Saving session failed", "error", error)
+                    new ErrorMessage("Saving session failed", "error", error),
                 ]);
             });
 

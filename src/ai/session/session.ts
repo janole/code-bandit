@@ -190,7 +190,7 @@ export class ChatSession implements IChatSession
         return !!this.abortController?.signal?.aborted;
     }
 
-    generateResponse = async (messages: TMessage[]) =>
+    generateResponse = (messages: TMessage[]) =>
     {
         if (this.#isWorking || !this.chatService)
         {
@@ -214,12 +214,16 @@ export class ChatSession implements IChatSession
             })
             .catch(error =>
             {
-                this.#isWorking = false;
                 const newMessages = [
                     ...resetIsStreamingFlag(this.messages),
                     new ErrorMessage(`ERROR: running work({...}) failed with: ${error.message || error.toString()}`, error),
                 ];
+                this.#isWorking = false;
                 this.setMessages(newMessages);
+            })
+            .then(async () => 
+            {
+                await this.flush();
             })
             .finally(() =>
             {

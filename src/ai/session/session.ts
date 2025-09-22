@@ -254,7 +254,7 @@ export class ChatSession implements IChatSession
         }
     };
 
-    confirmToolUse = async (messageIndex: number, confirmState: ToolProgressMessage["confirmState"]): Promise<void> =>
+    confirmToolUse = (messageIndex: number, confirmState: ToolProgressMessage["confirmState"]): void =>
     {
         if (confirmState === "none")
         {

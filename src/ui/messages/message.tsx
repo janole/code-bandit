@@ -20,7 +20,7 @@ function Message(props: MessageProps)
 
     if (type === "error")
     {
-        return <ErrorMessageView msg={msg as ErrorMessage} />;
+        return <ErrorMessageView msg={msg as ErrorMessage} debug={debug} />;
     }
 
     return (<>

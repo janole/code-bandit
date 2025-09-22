@@ -173,11 +173,6 @@ export class ChatSession implements IChatSession
         this.notifyListeners();
     };
 
-    addError = (message: string, level: ErrorMessage["level"], error: ErrorMessage["error"]): void =>
-    {
-        this.setMessages([...this.messages, new ErrorMessage(message, level, error)]);
-    };
-
     #isWorking = false;
 
     private set isWorking(isWorking: boolean)
@@ -303,7 +298,10 @@ export class ChatSession implements IChatSession
             })
             .catch((error) =>
             {
-                this.addError("Saving session failed", "error", error);
+                this.setMessages([
+                    ...this.messages,
+                    new ErrorMessage("Saving session failed", "error", error)
+                ]);
             });
 
         return this._saveQueue;

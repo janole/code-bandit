@@ -173,6 +173,11 @@ export class ChatSession implements IChatSession
         this.notifyListeners();
     };
 
+    addError = (message: string, level: ErrorMessage["level"], error: ErrorMessage["error"]): void =>
+    {
+        this.setMessages([...this.messages, new ErrorMessage(message, level, error)]);
+    };
+
     #isWorking = false;
 
     private set isWorking(isWorking: boolean)

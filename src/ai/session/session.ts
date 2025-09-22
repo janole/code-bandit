@@ -284,7 +284,7 @@ export class ChatSession implements IChatSession
     };
 
     private _saveQueue: Promise<void> = Promise.resolve();
-    private _save = async (): Promise<void> =>
+    private _save = (): Promise<void> =>
     {
         if (!this.storage || !this.#isStreaming)
         {

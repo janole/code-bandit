@@ -177,7 +177,7 @@ export class ChatSession implements IChatSession
 
     #isWorking = false;
 
-    private set isWorking(isWorking: boolean) 
+    private set isWorking(isWorking: boolean)
     {
         this.#isWorking = isWorking;
     }

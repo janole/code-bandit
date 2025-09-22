@@ -165,12 +165,10 @@ export class ChatSession implements IChatSession
         return this.#isStreaming;
     }
 
-    setMessages = async (messages: TMessage[]): Promise<void> =>
+    setMessages = (messages: TMessage[]): void =>
     {
         this.messages = [...messages];
         this.#isStreaming = !!messages.find(m => isMessageStreaming(m));
-
-        this._save();
 
         this.notifyListeners();
     };

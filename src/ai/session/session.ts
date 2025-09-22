@@ -303,6 +303,7 @@ export class ChatSession implements IChatSession
 
         return this._saveQueue;
     };
+
     flush = async (): Promise<void> =>
     {
         this._save();

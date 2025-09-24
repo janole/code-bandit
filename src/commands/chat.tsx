@@ -6,6 +6,7 @@ import React from "react";
 
 import { ChatService, IChatServiceOptions } from "../ai/chat-service.js";
 import { ToolProgressMessage } from "../ai/custom-messages.js";
+import { startChatServerClient } from "../ai/session/chat-server/chat-server-client.js";
 import { resolveWithinWorkDir } from "../ai/tools/utils.js";
 import { BaseMessage, FileSessionStorage, HumanMessage, NodeToolProvider, PromptLoader, TToolMode, work } from "../index.node.js";
 import ChatApp from "../ui/chat-app.js";
@@ -70,7 +71,7 @@ async function chat(options: any)
         debug: options.debug,
     };
 
-    session.flush();
+    startChatServerClient(session);
 
     render(<ChatApp {...props} />, { exitOnCtrlC: false });
 }

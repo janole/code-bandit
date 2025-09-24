@@ -42,7 +42,7 @@ export interface IApiClientCommandListener
 {
     handleCommand: (payload: any) => void;
     handleConnection: (connected: boolean) => void;
-    handleError: (error: string, severity?: "debug" | "warn" | "error", params?: any) => void;
+    handleError: (message: string, level?: "debug" | "warn" | "error", error?: Error) => void;
 }
 
 class ApiClient 
@@ -121,9 +121,9 @@ class ApiClient
         this.commandListeners.forEach(listener => tryCatch(() => listener.handleConnection(connected)));
     }
 
-    private pushError(error: string, severity: "debug" | "warn" | "error" = "error", params?: any)
+    private pushError(message: string, level: "debug" | "warn" | "error" = "error", error?: Error)
     {
-        this.commandListeners.forEach(listener => tryCatch(() => listener.handleError(error, severity, params)));
+        this.commandListeners.forEach(listener => tryCatch(() => listener.handleError(message, level, error)));
     }
 
     // --- Auth API ---
@@ -157,7 +157,7 @@ class ApiClient
     {
         this.authData = await this.getAuthData();
 
-        this.pushError("AUTHDATA", "debug", this.authData);
+        this.pushError("AUTHDATA\n\n" + JSON.stringify(this.authData, null, 3), "debug");
 
         const { createClient } = await import("@supabase/supabase-js");
 

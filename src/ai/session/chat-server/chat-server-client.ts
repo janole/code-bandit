@@ -204,7 +204,7 @@ class ChatServerClient implements IApiClientCommandListener
 
     handleError = (message: string, level: "debug" | "warn" | "error" = "error", error?: Error) =>
     {
-        if (level != "debug" || this.debug)
+        if (level !== "debug" || this.debug)
         {
             this.session.setMessages([
                 ...this.session.messages,
@@ -294,6 +294,5 @@ async function startChatServerClient(session: ChatSession, options?: { debug?: b
 export
 {
     ChatServerClient,
-    startChatServerClient
+    startChatServerClient,
 };
-

@@ -71,7 +71,7 @@ async function chat(options: any)
         debug: options.debug,
     };
 
-    startChatServerClient(session);
+    startChatServerClient(session, { debug: options.debug });
 
     render(<ChatApp {...props} />, { exitOnCtrlC: false });
 }
@@ -180,5 +180,6 @@ function addChatCommands(program: Command)
 
 export
 {
-    addChatCommands,
+    addChatCommands
 };
+

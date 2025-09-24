@@ -5,7 +5,7 @@ import { globbySync } from "globby";
 import path from "path";
 import { z } from "zod";
 
-import { createTool, resolveWithinWorkDir, setToolProgressMessageInfo } from "./utils.js";
+import { createTool, resolveWithinWorkDir } from "./utils.js";
 
 function listDirectory({ directory = "." }: { directory: string }, config?: RunnableConfig): string
 {
@@ -13,8 +13,6 @@ function listDirectory({ directory = "." }: { directory: string }, config?: Runn
     {
         const resolvedPath = resolveWithinWorkDir(directory, config?.metadata?.["workDir"]);
         const combinedPath = path.join(resolvedPath, "*");
-
-        setToolProgressMessageInfo({ config, fileName: directory });
 
         const files = globbySync(combinedPath, {
             dot: true,
@@ -47,8 +45,6 @@ function readFile({ fileName, maxLength }: { fileName: string; maxLength?: numbe
     {
         const resolvedPath = resolveWithinWorkDir(fileName, config?.metadata?.["workDir"]);
 
-        setToolProgressMessageInfo({ config, fileName });
-
         const content = readFileSync(resolvedPath).toString().slice(0, maxLength);
 
         return content || `The file "${fileName}" is empty.`;
@@ -64,8 +60,6 @@ function writeFile({ fileName, fileData }: { fileName: string; fileData: string 
     try
     {
         const resolvedPath = resolveWithinWorkDir(fileName, config?.metadata?.["workDir"]);
-
-        setToolProgressMessageInfo({ config, fileName });
 
         mkdirSync(path.dirname(resolvedPath), { recursive: true });
 
@@ -86,8 +80,6 @@ function moveFile({ sourceFileName, destinationFileName }: { sourceFileName: str
         const resolvedSourcePath = resolveWithinWorkDir(sourceFileName, config?.metadata?.["workDir"]);
         const resolvedDestinationPath = resolveWithinWorkDir(destinationFileName, config?.metadata?.["workDir"]);
 
-        setToolProgressMessageInfo({ config, description: `Rename ${sourceFileName} to ${destinationFileName}` });
-
         renameSync(resolvedSourcePath, resolvedDestinationPath);
 
         return `${sourceFileName} moved to ${destinationFileName}.`;
@@ -103,8 +95,6 @@ function deleteFile({ fileName }: { fileName: string }, config: RunnableConfig):
     try
     {
         const resolvedPath = resolveWithinWorkDir(fileName, config?.metadata?.["workDir"]);
-
-        setToolProgressMessageInfo({ config, fileName });
 
         unlinkSync(resolvedPath);
 
@@ -122,8 +112,6 @@ function createDirectory({ fileName }: { fileName: string }, config: RunnableCon
     {
         const resolvedPath = resolveWithinWorkDir(fileName, config?.metadata?.["workDir"]);
 
-        setToolProgressMessageInfo({ config, fileName });
-
         mkdirSync(resolvedPath, { recursive: true });
 
         return `${fileName} created.`;
@@ -140,8 +128,6 @@ function findFiles({ pattern, directory = "." }: { pattern: string; directory?: 
     {
         const resolvedPath = resolveWithinWorkDir(directory, config?.metadata?.["workDir"]);
         const combinedPattern = path.join(resolvedPath, pattern);
-
-        setToolProgressMessageInfo({ config, fileName: path.join(directory, pattern) });
 
         const files = globbySync(combinedPattern, {
             dot: true,
@@ -177,8 +163,6 @@ function searchInFiles({ pattern, glob: globPattern, directory = ".", isCaseSens
         const workDir = config?.metadata?.["workDir"] as string || ".";
         const resolvedPath = resolveWithinWorkDir(directory, workDir);
         const combinedGlob = path.join(resolvedPath, globPattern);
-
-        setToolProgressMessageInfo({ config, description: `Search for ${pattern} in ${path.join(directory, globPattern)}` });
 
         const files = globbySync(combinedGlob, {
             dot: true,

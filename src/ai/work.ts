@@ -152,7 +152,6 @@ async function workTools(props: Pick<WorkProps, "session" | "chatService" | "sig
         const { result, error } = await tryCatch<ToolMessage>(selectedTool.invoke(toolCall, {
             metadata: {
                 workDir: session.workDir,
-                toolProgressMessage,
             },
         }));
 

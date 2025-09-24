@@ -178,17 +178,10 @@ export class ChatSession implements IChatSession
         this.notifyListeners();
     };
 
-    // addError = (error: string, level: "debug" | "warn" | "error", params: any): void =>
-    // {
-    //     if (level !== "debug")
-    //     {
-    //         const errorMessage = new ErrorMessage(
-    //             error + (params ? `\n\`\`\`json\n${JSON.stringify(params, null, 4)}\n\`\`\`` : ""),
-    //         );
-
-    //         this.setMessages([...this.messages, errorMessage]);
-    //     }
-    // };
+    addError = (message: string, level: "debug" | "warn" | "error" = "error", error?: Error): void =>
+    {
+        this.setMessages([...this.messages, new ErrorMessage(message, level, error)]);
+    };
 
     #isWorking = false;
 

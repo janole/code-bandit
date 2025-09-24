@@ -33,6 +33,7 @@ function ChatApp(props: ChatAppProps)
     const {
         messages,
         working,
+        onlineMode,
         handleInput,
         action,
         selected,
@@ -123,6 +124,11 @@ function ChatApp(props: ChatAppProps)
                     <Text color="blackBright">
                         [{session.workDir.replace(homedir(), "~")}]
                     </Text>
+                    {onlineMode?.length &&
+                        <Text color="blue">
+                            {` ${onlineMode}`}
+                        </Text>
+                    }
                     {currentGitBranch &&
                         <Text color="black">
                             {` ${currentGitBranch}`}

@@ -73,6 +73,8 @@ export interface IChatSession
     streaming: boolean;
     chatServiceOptions: IChatServiceOptions;
 
+    onlineMode?: string;
+
     systemPrompt?: string; // TODO: extend into service or template like "%{DEFAULT}% ..."
 
     messages: TMessage[];
@@ -95,6 +97,8 @@ export class ChatSession implements IChatSession
     chatServiceOptions: IChatServiceOptions;
     streaming: boolean;
 
+    onlineMode?: string;
+
     systemPrompt?: string;
 
     messages: TMessage[] = [];
@@ -113,6 +117,7 @@ export class ChatSession implements IChatSession
         this.toolMode = props.toolMode || "confirm";
         this.streaming = props.streaming || true;
         this.chatServiceOptions = props.chatServiceOptions;
+        this.onlineMode = props.onlineMode;
         this.systemPrompt = props.systemPrompt;
         this.messages = props.messages || [];
 
@@ -144,7 +149,7 @@ export class ChatSession implements IChatSession
 
     notifyListeners = (): void =>
     {
-        const props = { messages: [...this.messages], working: this.#isWorking, toolMode: this.toolMode };
+        const props = { messages: [...this.messages], working: this.#isWorking, toolMode: this.toolMode, onlineMode: this.onlineMode };
         this.onUpdateListeners.forEach(listener => listener(props));
     };
 
@@ -172,6 +177,18 @@ export class ChatSession implements IChatSession
 
         this.notifyListeners();
     };
+
+    // addError = (error: string, level: "debug" | "warn" | "error", params: any): void =>
+    // {
+    //     if (level !== "debug")
+    //     {
+    //         const errorMessage = new ErrorMessage(
+    //             error + (params ? `\n\`\`\`json\n${JSON.stringify(params, null, 4)}\n\`\`\`` : ""),
+    //         );
+
+    //         this.setMessages([...this.messages, errorMessage]);
+    //     }
+    // };
 
     #isWorking = false;
 

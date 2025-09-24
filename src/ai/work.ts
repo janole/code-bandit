@@ -86,8 +86,6 @@ async function work(props: WorkProps)
         // add pending toolCall(s)
         toolProgressMessages = aiMessage.tool_calls.map(toolCall => new ToolProgressMessage(toolCall)) || [];
         session.setMessages([...messages, ...toolProgressMessages]);
-
-        // await session.flush();
     }
 }
 

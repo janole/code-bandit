@@ -199,9 +199,12 @@ class ChatServerClient implements IApiClientCommandListener
         }
     };
 
-    handleError = (error: string, severity: "debug" | "warn" | "error" = "error", params?: any) =>
+    handleError = (message: string, level: "debug" | "warn" | "error" = "error", error?: Error) =>
     {
-        this.session.addError(error, severity, params);
+        this.session.setMessages([
+            ...this.session.messages,
+            new ErrorMessage(message, level, error),
+        ]);
     };
 
     private handleSessionUpdate = (_props: { messages: TMessage[]; working: boolean; toolMode: TToolMode }) =>
@@ -287,3 +290,4 @@ export
     ChatServerClient,
     startChatServerClient,
 };
+

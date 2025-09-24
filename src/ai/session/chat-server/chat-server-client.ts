@@ -126,6 +126,8 @@ class ChatServerClient implements IApiClientCommandListener
     private lastStreamingSync = Date.now();
     private isWorking: boolean | undefined = undefined;
 
+    private debug: boolean = false;
+
     private constructor(apiClient: ApiClient, session: ChatSession)
     {
         this.apiClient = apiClient;
@@ -135,7 +137,7 @@ class ChatServerClient implements IApiClientCommandListener
         session.onUpdate(props => this.handleSessionUpdate(props));
     }
 
-    static create(session: ChatSession): ChatServerClient | undefined
+    static create(session: ChatSession, options?: { debug?: boolean }): ChatServerClient | undefined
     {
         const URL = process.env["CODE_BANDIT_SERVER_URL"];
         const PAT = process.env["CODE_BANDIT_SERVER_PAT"];
@@ -148,6 +150,7 @@ class ChatServerClient implements IApiClientCommandListener
         }
 
         const chatServerClient = new ChatServerClient(apiClient, session);
+        chatServerClient.debug = !!options?.debug;
 
         apiClient.start().then(() => chatServerClient.syncSession());
 
@@ -201,10 +204,13 @@ class ChatServerClient implements IApiClientCommandListener
 
     handleError = (message: string, level: "debug" | "warn" | "error" = "error", error?: Error) =>
     {
-        this.session.setMessages([
-            ...this.session.messages,
-            new ErrorMessage(message, level, error),
-        ]);
+        if (level != "debug" || this.debug)
+        {
+            this.session.setMessages([
+                ...this.session.messages,
+                new ErrorMessage(message, level, error),
+            ]);
+        }
     };
 
     private handleSessionUpdate = (_props: { messages: TMessage[]; working: boolean; toolMode: TToolMode }) =>
@@ -280,14 +286,14 @@ class ChatServerClient implements IApiClientCommandListener
     };
 }
 
-async function startChatServerClient(session: ChatSession)
+async function startChatServerClient(session: ChatSession, options?: { debug?: boolean })
 {
-    ChatServerClient.create(session);
+    ChatServerClient.create(session, options);
 }
 
 export
 {
     ChatServerClient,
-    startChatServerClient,
+    startChatServerClient
 };
 

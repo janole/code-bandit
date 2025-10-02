@@ -20,10 +20,11 @@ export function useChatController(props: UseChatControllerProps)
 
     const [ctrlC, setCtrlC] = useState(false);
 
-    const [sessionState, setSessionState] = useState<{ messages: TMessage[]; working: boolean; toolMode: TToolMode; }>({
+    const [sessionState, setSessionState] = useState<{ messages: TMessage[]; working: boolean; toolMode: TToolMode; onlineMode?: string; }>({
         messages: session.messages,
         working: session.isWorking,
         toolMode: session.toolMode,
+        onlineMode: session.onlineMode,
     });
 
     const [tokenUsage, setTokenUsage] = useState<TTokenUsage>();
@@ -129,6 +130,7 @@ export function useChatController(props: UseChatControllerProps)
     return {
         messages: sessionState.messages,
         working: sessionState.working,
+        onlineMode: sessionState.onlineMode,
         handleInput,
         action,
         selected: selectedIndex,

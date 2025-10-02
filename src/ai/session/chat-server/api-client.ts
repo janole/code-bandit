@@ -187,7 +187,7 @@ class ApiClient
 
         let closed = false;
 
-        await this.channel.subscribe((status: REALTIME_SUBSCRIBE_STATES, err) =>
+        this.channel.subscribe((status: REALTIME_SUBSCRIBE_STATES, err) =>
         {
             if (closed)
             {

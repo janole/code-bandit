@@ -57,7 +57,17 @@ async function getActiveRepository(props: { git?: API; sourceControl?: vscode.So
         return undefined;
     }
 
-    return git.repositories[0];
+    for (const repo of git.repositories)
+    {
+        if (repo.state.indexChanges.length > 0)
+        {
+            return repo;
+        }
+    }
+
+    vscode.window.showWarningMessage("No staged changes found.");
+
+    return undefined;
 }
 
 async function getStagedInfo(repository: Repository)

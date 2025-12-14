@@ -1,7 +1,7 @@
 {
     "name": "@janole/code-bandit",
     "description": "Your AI-powered codebase companion that speaks your language",
-    "version": "0.3.17",
+    "version": "0.3.18",
     "author": "Jan Ole Suhr <ole@janole.com> (https://janole.com)",
     "homepage": "https://github.com/janole/code-bandit?#readme",
     "repository": {

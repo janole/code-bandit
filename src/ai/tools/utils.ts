@@ -3,7 +3,6 @@ import { tool } from "@langchain/core/tools";
 import { realpathSync } from "fs";
 import path from "path";
 
-
 export function resolveWithinWorkDir(userPath: string, workDir?: unknown): string
 {
     if (!workDir || typeof workDir !== "string")

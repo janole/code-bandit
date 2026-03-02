@@ -1,5 +1,5 @@
 import { RunnableConfig } from "@langchain/core/runnables";
-import { tool } from "@langchain/core/tools";
+import { DynamicStructuredTool, tool } from "@langchain/core/tools";
 import { realpathSync } from "fs";
 import path from "path";
 
@@ -32,7 +32,7 @@ export function funcName(f: Function): string
 }
 
 /** create tool and automatically infer tool name from function */
-export function createTool(f: (p: any, config: RunnableConfig) => unknown, fields: Omit<Parameters<typeof tool>[1], "name">)
+export function createTool(f: (p: any, config: RunnableConfig) => unknown, fields: Omit<Parameters<typeof tool>[1], "name">): DynamicStructuredTool
 {
     return tool(f, { ...fields, name: funcName(f) });
 }

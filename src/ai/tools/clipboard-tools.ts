@@ -1,6 +1,7 @@
 import clipboard from "clipboardy";
 import { z } from "zod";
 
+import { TTools } from "./types.js";
 import { createTool } from "./utils.js";
 
 /**
@@ -29,9 +30,9 @@ const _tools = [
     }),
 ];
 
-function getTools()
+function getTools(): TTools
 {
-    return _tools.reduce((tools, t) => ({ ...tools, [t.name]: t }), {});
+    return _tools.reduce<TTools>((tools, t) => ({ ...tools, [t.name]: t }), {});
 }
 
 export { getTools };

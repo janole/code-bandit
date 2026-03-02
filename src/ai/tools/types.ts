@@ -1,4 +1,4 @@
-import { DynamicStructuredTool } from "langchain/tools";
+import { DynamicStructuredTool } from "@langchain/core/tools";
 
 import { IChatSession } from "../session/session.js";
 

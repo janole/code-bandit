@@ -3,6 +3,7 @@ import { execa } from "execa";
 import { z } from "zod";
 
 import tryCatch from "../../utils/try-catch.js";
+import { TTools } from "./types.js";
 import { createTool, formatEmptyToolOutput } from "./utils.js";
 
 async function execGit(args: string[] = [], options: { cwd?: string; timeout?: number; } = {}): Promise<string | null>
@@ -75,11 +76,11 @@ const _tools = [
     }),
 ];
 
-function getTools(props: { includeDestructiveTools?: boolean })
+function getTools(props: { includeDestructiveTools?: boolean }): TTools
 {
     return _tools
         .filter(t => props.includeDestructiveTools || !t.metadata?.["destructive"])
-        .reduce((tools, t) => ({ ...tools, [t.name]: t }), {});
+        .reduce<TTools>((tools, t) => ({ ...tools, [t.name]: t }), {});
 }
 
 export

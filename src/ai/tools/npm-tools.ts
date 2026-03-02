@@ -3,6 +3,7 @@ import { execa } from "execa";
 import { z } from "zod";
 
 import tryCatch from "../../utils/try-catch.js";
+import { TTools } from "./types.js";
 import { createTool, resolveWithinWorkDir } from "./utils.js";
 
 async function runNpm(args: string[] = [], config?: RunnableConfig, opts: { timeout?: number } = {}): Promise<string>
@@ -211,11 +212,11 @@ const _tools = [
     }),
 ];
 
-function getTools(props: { includeDestructiveTools?: boolean })
+function getTools(props: { includeDestructiveTools?: boolean }): TTools
 {
     return _tools
         .filter(t => props.includeDestructiveTools || !t.metadata?.["destructive"])
-        .reduce((tools, t) => ({ ...tools, [t.name]: t }), {} as Record<string, ReturnType<typeof createTool>>);
+        .reduce((tools, t) => ({ ...tools, [t.name]: t }), {});
 }
 
 export { getTools };

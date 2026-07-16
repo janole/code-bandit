@@ -1,9 +1,9 @@
 {
     "name": "@janole/code-bandit",
-    "description": "Your AI-powered codebase companion that speaks your language",
-    "version": "0.5.20",
+    "version": "2.0.0",
+    "description": "Code Bandit — a coding-focused entry point for the Boba agent CLI",
     "author": "Jan Ole Suhr <ole@janole.com> (https://janole.com)",
-    "homepage": "https://github.com/janole/code-bandit?#readme",
+    "homepage": "https://github.com/janole/code-bandit#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/janole/code-bandit.git"
@@ -12,88 +12,38 @@
         "url": "https://github.com/janole/code-bandit/issues"
     },
     "license": "MIT",
-    "main": "dist/index.js",
-    "types": "dist/index.node.d.ts",
+    "type": "module",
     "bin": {
         "coba": "dist/coba.js"
     },
-    "exports": {
-        ".": {
-            "types": "./dist/index.node.d.ts",
-            "import": "./dist/index.js",
-            "default": "./dist/index.js"
-        },
-        "./vscode": {
-            "types": "./dist/index.vscode.d.ts",
-            "import": "./dist/index.vscode.js",
-            "default": "./dist/index.vscode.js"
-        }
-    },
-    "typesVersions": {
-        "*": {
-            "vscode": [
-                "dist/index.vscode.d.ts"
-            ]
-        }
-    },
-    "type": "module",
     "engines": {
-        "node": ">=18"
+        "node": ">=20"
     },
     "scripts": {
-        "dev": "node --import @swc-node/register/esm-register ./src/coba.tsx",
-        "watch": "tsc --watch",
-        "typecheck": "npx tsc --noEmit -p tsconfig.json",
+        "build": "rimraf dist && tsc -p tsconfig.json",
+        "dev": "npm run build && node dist/coba.js",
         "lint": "eslint .",
-        "lint:fix": "eslint --fix .",
-        "ok": "npm run lint:fix && npm run typecheck",
-        "prebuild": "npm run genversion && npm run ok",
-        "build": "rimraf dist && tsc -p tsconfig.dts.json && node esbuild.js",
-        "genversion": "COMMIT_HASH=$(git rev-parse --short HEAD) && echo \"export const VERSION = \\\"${npm_package_version}\\\";\\nexport const COMMIT_HASH = \\\"${COMMIT_HASH}\\\";\" > src/.version.ts",
-        "prepack": "npm run build"
+        "lint:fix": "eslint . --fix",
+        "typecheck": "tsc --noEmit",
+        "test": "node --test test/*.test.mjs",
+        "ok": "npm run lint:fix && npm run build && npm run test",
+        "qa": "npm run lint && npm run build && npm run test",
+        "prepack": "npm run ok"
     },
     "files": [
         "dist",
-        "LICENSE"
+        "LICENSE",
+        "README.md"
     ],
     "dependencies": {
-        "@langchain/anthropic": "^1.3.21",
-        "@langchain/core": "^1.1.29",
-        "@langchain/google-genai": "^2.1.22",
-        "@langchain/groq": "^1.1.3",
-        "@langchain/ollama": "^1.2.5",
-        "@langchain/openai": "^1.2.11",
-        "chalk": "^5.4.1",
-        "clipboardy": "^4.0.0",
-        "commander": "^14.0.0",
-        "execa": "^9.6.0",
-        "fast-glob": "^3.3.3",
-        "globby": "^14.1.0",
-        "ink": "^6.0.1",
-        "langchain": "^1.2.28",
-        "marked": "^15.0.12",
-        "marked-terminal": "^7.3.0",
-        "react": "^19.1.0",
-        "ulid": "^3.0.1",
-        "write-file-atomic": "^6.0.0"
+        "@janole/boba": "0.0.19"
     },
     "devDependencies": {
-        "@sindresorhus/tsconfig": "^7.0.0",
         "@stylistic/eslint-plugin": "^5.1.0",
-        "@swc-node/register": "^1.10.10",
-        "@swc/core": "^1.13.3",
-        "@types/marked": "^5.0.2",
-        "@types/marked-terminal": "^6.1.1",
         "@types/node": "^24.0.10",
-        "@types/react": "^19.1.8",
-        "@types/write-file-atomic": "^4.0.3",
         "@typescript-eslint/eslint-plugin": "^8.36.0",
-        "esbuild": "^0.25.6",
-        "esbuild-node-externals": "^1.18.0",
+        "@typescript-eslint/parser": "^8.36.0",
         "eslint": "^9.32.0",
-        "eslint-plugin-import": "^2.32.0",
-        "eslint-plugin-jsonc": "^2.20.1",
-        "eslint-plugin-react-hooks": "^5.2.0",
         "eslint-plugin-simple-import-sort": "^12.1.1",
         "eslint-plugin-unicorn": "^61.0.1",
         "globals": "^16.3.0",

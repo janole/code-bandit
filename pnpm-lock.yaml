@@ -51,8 +51,8 @@ importers:
   packages/cli:
     dependencies:
       '@janole/boba':
-        specifier: 0.0.19
-        version: 0.0.19
+        specifier: 0.0.21
+        version: 0.0.21
     devDependencies:
       '@code-bandit/core':
         specifier: workspace:*
@@ -445,45 +445,45 @@ packages:
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
 
-  '@janole/boba-darwin-arm64@0.0.19':
-    resolution: {integrity: sha512-twWvibVoJm8891M+IKwyUIjDn1t5wfU9j/ZsXzI5yByGTaL4IW4GZrs1G3zSUxiYxWbHVv+oyU57dxbZqcXU5w==}
+  '@janole/boba-darwin-arm64@0.0.21':
+    resolution: {integrity: sha512-UtMnndU6frSbC0aanEZ/zTChdz/KKxxGXuuqfMVSMru/lNvsJpr4Mmx8CKuEtaPV93jmqWokmHaGWDzmxSBLmQ==}
     cpu: [arm64]
     os: [darwin]
 
-  '@janole/boba-darwin-x64@0.0.19':
-    resolution: {integrity: sha512-zaci0dGkBx2Mdyc3Rdjuy/cr/hMjOCbGzIQx0rN4AXpmEsDQHo09PL4P4p7er/mBgddhqpu4Watle7FRe1EbxQ==}
+  '@janole/boba-darwin-x64@0.0.21':
+    resolution: {integrity: sha512-R3IGnnfGjchRAzbwSVBB9vD9oy8kcbTTzwhLsOLlMTP9dCm5RS8OthzzEX/vh19nfA9BBnfmUiR7OXhBfYBbqQ==}
     cpu: [x64]
     os: [darwin]
 
-  '@janole/boba-linux-arm64-musl@0.0.19':
-    resolution: {integrity: sha512-JPoUkCTioUBjb98Ek0fa1dV+hENjNh5TFNQaSeP0BmGKrCe1HdezsCPhoG+BeD9RTIJx+KZiwvcG6Ks3nsDojg==}
+  '@janole/boba-linux-arm64-musl@0.0.21':
+    resolution: {integrity: sha512-+Cc+Kpd5kJvC9CJbhHBB5YDZcwZzlzh/lZgBzZ8BdUPiEojDmgwMOGtgOhcIiCKVMN/ItSmB1VFZfY2U8oFWcA==}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@janole/boba-linux-arm64@0.0.19':
-    resolution: {integrity: sha512-T8GxNnEbuAmNrchVKT2IZnWuQ5WoUabYWFX9VAI1pJKevmQ933q9hmQkgMymdPcK54pEx+/UjrrEN6LLBsdPVQ==}
+  '@janole/boba-linux-arm64@0.0.21':
+    resolution: {integrity: sha512-iJbSAJON6T2152lDn2MwFCEEiCSWyGx2fdasgzYh36Ecubdl9cEiDpn9F6Xjt4qEZutOqe6bopGpHM7sslofYQ==}
     cpu: [arm64]
     os: [linux]
 
-  '@janole/boba-linux-x64-musl@0.0.19':
-    resolution: {integrity: sha512-RnEHC3LhruZBXROJwMrTRiHygEvDGHHnNL1tTAR/bK3oNDQGV86tq3PGNBUFFDjJw3ZCApMM0y9UqvzuKNwtbg==}
+  '@janole/boba-linux-x64-musl@0.0.21':
+    resolution: {integrity: sha512-skd3f3O3nvV6Iqaf0nP3IGKhJAL41hMHaIBqvgp3XoqFNhZAnX76+PFNS3rRlcXxDRofnPfZlumlySCaQXUYxQ==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@janole/boba-linux-x64@0.0.19':
-    resolution: {integrity: sha512-Ry9ytyPSbCABVOp9HrxwiSoJYafhYpa8c2A+wGIP5vldT2ykP6zsF+DthkEbuEfPYpwUYHwfLYEvMucNGp/YbA==}
+  '@janole/boba-linux-x64@0.0.21':
+    resolution: {integrity: sha512-L8NdgQZ7wxR9fDwFPmR2r2sMrbyR0oEYaps2n2JNi946qisAZQ4PYcwUGAnS4qQ3iRASN4oC7kQA6I/FY2icjQ==}
     cpu: [x64]
     os: [linux]
 
-  '@janole/boba-win32-x64@0.0.19':
-    resolution: {integrity: sha512-OcFKXNzfWPI6YvTP7ssN8k1U23J3m/4mlnGVIc5PozsqbchXqTuINZ3QfQL6bTojxM7ZJI68usTQJ3mXuDrUeA==}
+  '@janole/boba-win32-x64@0.0.21':
+    resolution: {integrity: sha512-rIDMmNcUxhSkHlH9QT4Lxc/hUegoCFWvBiDLksIJcKbJaNs1ttQuGlzVZvIIVYSxfO+1QGsnh5AP86tTDd4xtg==}
     cpu: [x64]
     os: [win32]
 
-  '@janole/boba@0.0.19':
-    resolution: {integrity: sha512-j2CctYUeyHGJi5BgN9lAA+qKJECm93j47TGs53HbPKf/K930ytZMuZmwsthwxK6z3S8K/RIFLAn5rXzqypwsdQ==}
+  '@janole/boba@0.0.21':
+    resolution: {integrity: sha512-K7Wl0XKlBpBHNDJAlv0Q36tGO/yKKUpny6W0kcsMa+s2Xpsa5n0iyhepiQDIPwne65CZth+5YJZSgPIPwh1wEA==}
     hasBin: true
 
   '@jridgewell/gen-mapping@0.3.13':
@@ -1930,36 +1930,36 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@janole/boba-darwin-arm64@0.0.19':
+  '@janole/boba-darwin-arm64@0.0.21':
     optional: true
 
-  '@janole/boba-darwin-x64@0.0.19':
+  '@janole/boba-darwin-x64@0.0.21':
     optional: true
 
-  '@janole/boba-linux-arm64-musl@0.0.19':
+  '@janole/boba-linux-arm64-musl@0.0.21':
     optional: true
 
-  '@janole/boba-linux-arm64@0.0.19':
+  '@janole/boba-linux-arm64@0.0.21':
     optional: true
 
-  '@janole/boba-linux-x64-musl@0.0.19':
+  '@janole/boba-linux-x64-musl@0.0.21':
     optional: true
 
-  '@janole/boba-linux-x64@0.0.19':
+  '@janole/boba-linux-x64@0.0.21':
     optional: true
 
-  '@janole/boba-win32-x64@0.0.19':
+  '@janole/boba-win32-x64@0.0.21':
     optional: true
 
-  '@janole/boba@0.0.19':
+  '@janole/boba@0.0.21':
     optionalDependencies:
-      '@janole/boba-darwin-arm64': 0.0.19
-      '@janole/boba-darwin-x64': 0.0.19
-      '@janole/boba-linux-arm64': 0.0.19
-      '@janole/boba-linux-arm64-musl': 0.0.19
-      '@janole/boba-linux-x64': 0.0.19
-      '@janole/boba-linux-x64-musl': 0.0.19
-      '@janole/boba-win32-x64': 0.0.19
+      '@janole/boba-darwin-arm64': 0.0.21
+      '@janole/boba-darwin-x64': 0.0.21
+      '@janole/boba-linux-arm64': 0.0.21
+      '@janole/boba-linux-arm64-musl': 0.0.21
+      '@janole/boba-linux-x64': 0.0.21
+      '@janole/boba-linux-x64-musl': 0.0.21
+      '@janole/boba-win32-x64': 0.0.21
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:

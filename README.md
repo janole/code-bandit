@@ -14,17 +14,24 @@ coba
 ```
 
 On first run, Code Bandit shows the minimal Boba profile and authentication
-steps. The current wrapper still uses the same configuration and sessions as
+steps. Code Bandit owns an application home that is fully independent from
 Boba:
 
-- `./botbandit.config.yaml` or `./botbandit.config.yml`
-- `~/.botbandit/botbandit.config.yaml` or `~/.botbandit/botbandit.config.yml`
-- `~/.botbandit/sessions/`
+- config: `~/.code-bandit/config.yaml`
+- sessions: `~/.code-bandit/sessions/`
+- auth, docs, extensions, skills, generated images, and state:
+  `~/.code-bandit/`
+- daemon socket: `~/.code-bandit/daemon.sock`
+- tmux session namespace: `coba-`
+
+Code Bandit never discovers project-local Boba configs and never reads or
+writes `~/.botbandit`.
 
 ## Commands
 
 ```bash
 coba                         # interactive terminal UI
+coba daemon                  # start the Code Bandit daemon
 coba run "Explain this repo" # one prompt
 coba resume <session-id>     # continue a session
 coba auth login openai-codex # authenticate a provider
@@ -34,16 +41,25 @@ coba --help                  # Code Bandit quick reference
 
 All commands not owned by the onboarding layer are passed directly to Boba.
 
-> **2.0 development status:** the release target is a fully independent
-> `~/.code-bandit` home. That requires a generic app-home contract in Boba and
-> is intentionally not simulated in this wrapper. Do not publish Code Bandit
-> 2.0 until that contract and the legacy-state migration gate are complete.
+To use daemon mode, add this to `~/.code-bandit/config.yaml`:
+
+```yaml
+service:
+  enabled: true
+```
+
+Then run `coba daemon`. Other Code Bandit commands wait briefly for that daemon
+and fail clearly when it is unavailable; they never fall back to a local
+runtime against the same session store.
 
 ## Migrating from 1.x
 
 - `coba run "…"` replaces `coba exec "…"`.
 - `-p` selects a Boba profile, not a provider.
-- Provider and model selection live in `botbandit.config.yaml` and the TUI.
+- Provider and model selection live in `~/.code-bandit/config.yaml` and the TUI.
+- Code Bandit 2.0 cannot read the old `~/.code-bandit/sessions/*.json` format.
+  When legacy sessions are detected, startup stops with a non-destructive
+  archive command. Nothing is moved or deleted automatically.
 - The old LangChain library exports and VS Code extension are not part of Code
   Bandit 2.0. They remain available from the 1.x Git tags.
 

@@ -2,25 +2,28 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { findBobaConfig, runCodeBanditCli } from "../src/index.js";
+import { resolveCodeBanditPaths, runCodeBanditCli } from "../src/index.js";
 
-function createHarness(existingPaths: string[] = [])
+const HOME_DIR = "/home/code-bandit";
+const PATHS = resolveCodeBanditPaths(HOME_DIR);
+
+function createHarness(existingPaths: string[] = [], sessionFiles: string[] = [])
 {
     const output: string[] = [];
-    const delegated: string[][] = [];
+    const delegated: Array<{ args: string[]; options: unknown }> = [];
     const existing = new Set(existingPaths);
 
     return {
         delegated,
         dependencies: {
-            cwd: "/work/project",
-            delegate: (args: readonly string[]) =>
+            delegate: (args: readonly string[], options: unknown) =>
             {
-                delegated.push([...args]);
+                delegated.push({ args: [...args], options });
                 return 23;
             },
             exists: (path: string) => existing.has(path),
-            homeDir: "/home/code-bandit",
+            homeDir: HOME_DIR,
+            readDirectory: (path: string) => path === PATHS.sessionsPath ? sessionFiles : [],
             version: "2.0.0-test",
             write: (text: string) => output.push(text),
         },
@@ -30,16 +33,13 @@ function createHarness(existingPaths: string[] = [])
 
 describe("Code Bandit CLI", () =>
 {
-    it("gives project config precedence over the home config", () =>
+    it("resolves every owned path beneath the isolated Code Bandit home", () =>
     {
-        const projectConfig = join("/work/project", "botbandit.config.yml");
-        const homeConfig = join("/home/code-bandit", ".botbandit", "botbandit.config.yaml");
-        const config = findBobaConfig("/work/project", "/home/code-bandit", (path) =>
-        {
-            return path === projectConfig || path === homeConfig;
+        expect(PATHS).toEqual({
+            appHome: join(HOME_DIR, ".code-bandit"),
+            configPath: join(HOME_DIR, ".code-bandit", "config.yaml"),
+            sessionsPath: join(HOME_DIR, ".code-bandit", "sessions"),
         });
-
-        expect(config).toBe(projectConfig);
     });
 
     it("owns help", () =>
@@ -59,7 +59,7 @@ describe("Code Bandit CLI", () =>
 
         expect(status).toBe(0);
         expect(harness.output.join("")).toMatch(/Welcome to Code Bandit 2\.0/);
-        expect(harness.output.join("")).toMatch(/botbandit\.config\.yaml/);
+        expect(harness.output.join("")).toContain(PATHS.configPath);
         expect(harness.delegated).toEqual([]);
     });
 
@@ -69,29 +69,67 @@ describe("Code Bandit CLI", () =>
         const status = runCodeBanditCli(["--api-key", "do-not-echo"], harness.dependencies);
 
         expect(status).toBe(1);
-        expect(harness.output.join("")).toMatch(/profile is required/);
+        expect(harness.output.join("")).toMatch(/Code Bandit profile is required/);
         expect(harness.output.join("")).not.toMatch(/do-not-echo/);
         expect(harness.delegated).toEqual([]);
     });
 
     it("delegates configured commands unchanged and preserves the exit status", () =>
     {
-        const config = join("/work/project", "botbandit.config.yaml");
-        const harness = createHarness([config]);
+        const harness = createHarness([PATHS.configPath]);
         const status = runCodeBanditCli(["run", "hello world", "--profile", "coder"], harness.dependencies);
 
         expect(status).toBe(23);
-        expect(harness.delegated).toEqual([["run", "hello world", "--profile", "coder"]]);
+        expect(harness.delegated).toEqual([{
+            args: ["run", "hello world", "--profile", "coder"],
+            options: {
+                appHome: PATHS.appHome,
+                configPath: PATHS.configPath,
+                namespace: "coba",
+                commandName: "coba",
+            },
+        }]);
     });
 
     it("reports an existing config during onboarding without delegating", () =>
     {
-        const config = join("/home/code-bandit", ".botbandit", "botbandit.config.yml");
-        const harness = createHarness([config]);
+        const harness = createHarness([PATHS.configPath]);
         const status = runCodeBanditCli(["onboard"], harness.dependencies);
 
         expect(status).toBe(0);
-        expect(harness.output.join("")).toMatch(new RegExp(config));
+        expect(harness.output.join("")).toContain(PATHS.configPath);
         expect(harness.delegated).toEqual([]);
+    });
+
+    it("ignores project and Boba home configs", () =>
+    {
+        const harness = createHarness([
+            "/work/project/botbandit.config.yaml",
+            join(HOME_DIR, ".botbandit", "botbandit.config.yaml"),
+        ]);
+        const status = runCodeBanditCli(["run", "hello"], harness.dependencies);
+
+        expect(status).toBe(1);
+        expect(harness.delegated).toEqual([]);
+    });
+
+    it("blocks incompatible legacy JSON sessions without modifying them", () =>
+    {
+        const harness = createHarness([PATHS.configPath], ["old-one.json", "old-two.json", "new-session.jsonl"]);
+        const status = runCodeBanditCli([], harness.dependencies);
+
+        expect(status).toBe(1);
+        expect(harness.output.join("")).toContain(`mv "${PATHS.sessionsPath}" "${PATHS.sessionsPath}.legacy"`);
+        expect(harness.output.join("")).toMatch(/Detected 2 legacy \.json session files/);
+        expect(harness.delegated).toEqual([]);
+    });
+
+    it("allows Boba JSONL sessions", () =>
+    {
+        const harness = createHarness([PATHS.configPath], ["01ABC.jsonl"]);
+        const status = runCodeBanditCli(["resume", "01ABC"], harness.dependencies);
+
+        expect(status).toBe(23);
+        expect(harness.delegated).toHaveLength(1);
     });
 });

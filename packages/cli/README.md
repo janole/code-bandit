@@ -9,8 +9,13 @@ npm install -g @janole/code-bandit
 coba
 ```
 
-Until the independent Code Bandit home contract lands in Boba, this development
-version uses Boba's current configuration and state paths. Do not publish it as
-Code Bandit 2.0 with that temporary behavior.
+Code Bandit uses its own `~/.code-bandit` application home, including an
+explicit `~/.code-bandit/config.yaml`, sessions, authentication, daemon socket,
+documents, extensions, and generated state. It does not share `~/.botbandit`
+with a regular Boba installation.
+
+Legacy Code Bandit 1.x `sessions/*.json` files are detected before Boba starts.
+The CLI prints a non-destructive archive command rather than mixing incompatible
+session formats.
 
 See the repository README for commands and migration details.

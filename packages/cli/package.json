@@ -33,7 +33,7 @@
     "prepack": "pnpm -r build"
   },
   "dependencies": {
-    "@janole/boba": "0.0.19"
+    "@janole/boba": "0.0.21"
   },
   "devDependencies": {
     "@code-bandit/core": "workspace:*"

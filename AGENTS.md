@@ -1,37 +1,51 @@
 # AGENTS.md
 
-## Quality gate
+## Quality Gate
 
-Before finishing any change, run:
+Before finishing any code, package metadata, fixture, or behavior-affecting
+change, run:
 
 ```bash
-npm run ok
+pnpm run ok  # => build + typecheck + lint:fix + test
 ```
 
-## Project overview
+For documentation-only changes, do not run the full gate by default.
 
-Code Bandit is a small Node wrapper around the published `@janole/boba` CLI.
-It owns the `coba` command, Code Bandit onboarding, and migration-oriented help.
-Boba owns the agent runtime, providers, tools, approvals, sessions, configuration,
-and OpenTUI interface.
+## Package Overview
 
-## Architecture guardrails
+- `packages/core` - Code Bandit onboarding and Boba delegation routing.
+- `packages/cli` - The published `@janole/code-bandit` package and `coba`
+  executable over `@code-bandit/core` and `@janole/boba`.
 
-- Keep this package a facade. Do not recreate Boba runtime, tool, provider, or TUI logic here.
-- Delegate through the supported `runBoba()` API from `@janole/boba`; do not resolve its platform packages directly.
-- Preserve the real terminal streams. Capturing or proxying Boba output breaks interactive TUI behavior.
-- Use Boba's existing `botbandit.config.yaml` and `~/.botbandit` state. Do not add parallel Code Bandit configuration or session storage.
-- Keep onboarding safe: never overwrite an existing config automatically.
+## Architecture Guardrails
 
-## Structure
-
-- `src/coba.ts` — executable entrypoint and error boundary.
-- `src/cli.ts` — pure onboarding/help/delegation routing.
-- `test/cli.test.mjs` — black-box tests against the compiled router.
+- Keep this package a facade. Do not recreate Boba runtime, tool, provider, or
+  TUI logic here.
+- Delegate through the supported `runBoba()` API from `@janole/boba`; do not
+  resolve its platform packages directly.
+- Preserve the real terminal streams. Capturing or proxying Boba output breaks
+  interactive TUI behavior.
+- Code Bandit's persistence target is exclusively `~/.code-bandit`. Select all
+  Boba-owned paths through a supported launcher option; do not emulate Boba
+  storage or patch its internals in this repository.
+- Keep onboarding safe: never overwrite an existing config or delete legacy
+  state automatically.
+- Keep the CLI thin. Behavior belongs in `packages/core`; `packages/cli` should
+  only wire core to Boba and provide the executable error boundary.
+- Prefer additive linear commits; no rebases or amends unless explicitly asked.
 
 ## Style
 
 - TypeScript strict mode is authoritative.
-- Follow ESLint: Allman braces, 4-space indentation, double quotes, semicolons, and sorted imports.
-- Add concise JSDoc to exported functions and types unless the name is fully self-explanatory.
+- Follow ESLint: Allman braces, sorted single-line imports, 4-space indentation,
+  double quotes, and semicolons.
+- Add or update tests when behavior changes.
+- Add concise one-line JSDoc to exported functions, types, and classes unless
+  the name is fully self-explanatory.
 - Keep modules small and explicit; avoid speculative compatibility layers.
+- Do not remove unrelated code or TODO comments.
+
+## Documentation
+
+- Keep committed documentation self-contained.
+- When CLI flags or output behavior change, update the root and package README.

@@ -1,8 +1,5 @@
-#!/usr/bin/env node
-
+import { runCodeBanditCli } from "@code-bandit/core";
 import { runBoba } from "@janole/boba";
-
-import { runCodeBanditCli } from "./cli.js";
 
 try
 {

@@ -14,7 +14,8 @@ coba
 ```
 
 On first run, Code Bandit shows the minimal Boba profile and authentication
-steps. It uses the same configuration and sessions as Boba:
+steps. The current wrapper still uses the same configuration and sessions as
+Boba:
 
 - `./botbandit.config.yaml` or `./botbandit.config.yml`
 - `~/.botbandit/botbandit.config.yaml` or `~/.botbandit/botbandit.config.yml`
@@ -33,6 +34,11 @@ coba --help                  # Code Bandit quick reference
 
 All commands not owned by the onboarding layer are passed directly to Boba.
 
+> **2.0 development status:** the release target is a fully independent
+> `~/.code-bandit` home. That requires a generic app-home contract in Boba and
+> is intentionally not simulated in this wrapper. Do not publish Code Bandit
+> 2.0 until that contract and the legacy-state migration gate are complete.
+
 ## Migrating from 1.x
 
 - `coba run "…"` replaces `coba exec "…"`.
@@ -45,3 +51,19 @@ All commands not owned by the onboarding layer are passed directly to Boba.
 
 The Code Bandit wrapper is MIT licensed. Its Boba dependency is distributed
 under FSL-1.1-ALv2; see the Boba package for its license terms.
+
+## Publishing the CLI
+
+The private workspace root and `@code-bandit/core` are not published. The
+publishable, self-contained package lives in `packages/cli`; tsup bundles the
+workspace core while keeping `@janole/boba` as its single runtime dependency.
+
+```bash
+pnpm run ok
+cd packages/cli
+npm pack --dry-run
+npm publish
+```
+
+Both `prepack` and `prepublishOnly` rebuild the workspace to prevent stale
+artifacts from being published.

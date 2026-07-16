@@ -1,4 +1,9 @@
-node_modules
-dist
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+coverage/
+.eslintcache
+.env*.local
 *.tgz
 **/.*.swp

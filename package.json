@@ -1,53 +1,37 @@
 {
-    "name": "@janole/code-bandit",
-    "version": "2.0.0",
-    "description": "Code Bandit — a coding-focused entry point for the Boba agent CLI",
-    "author": "Jan Ole Suhr <ole@janole.com> (https://janole.com)",
-    "homepage": "https://github.com/janole/code-bandit#readme",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/janole/code-bandit.git"
-    },
-    "bugs": {
-        "url": "https://github.com/janole/code-bandit/issues"
-    },
-    "license": "MIT",
-    "type": "module",
-    "bin": {
-        "coba": "dist/coba.js"
-    },
-    "engines": {
-        "node": ">=20"
-    },
-    "scripts": {
-        "build": "rimraf dist && tsc -p tsconfig.json",
-        "dev": "npm run build && node dist/coba.js",
-        "lint": "eslint .",
-        "lint:fix": "eslint . --fix",
-        "typecheck": "tsc --noEmit",
-        "test": "node --test test/*.test.mjs",
-        "ok": "npm run lint:fix && npm run build && npm run test",
-        "qa": "npm run lint && npm run build && npm run test",
-        "prepack": "npm run ok"
-    },
-    "files": [
-        "dist",
-        "LICENSE",
-        "README.md"
-    ],
-    "dependencies": {
-        "@janole/boba": "0.0.19"
-    },
-    "devDependencies": {
-        "@stylistic/eslint-plugin": "^5.1.0",
-        "@types/node": "^24.0.10",
-        "@typescript-eslint/eslint-plugin": "^8.36.0",
-        "@typescript-eslint/parser": "^8.36.0",
-        "eslint": "^9.32.0",
-        "eslint-plugin-simple-import-sort": "^12.1.1",
-        "eslint-plugin-unicorn": "^61.0.1",
-        "globals": "^16.3.0",
-        "rimraf": "^6.0.1",
-        "typescript": "^5.8.3"
-    }
+  "name": "code-bandit",
+  "private": true,
+  "version": "2.0.0",
+  "description": "Code Bandit — a coding-focused entry point for the Boba agent CLI",
+  "license": "MIT",
+  "author": "Jan Ole Suhr",
+  "packageManager": "pnpm@10.33.3",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "tsx packages/cli/src/bin.ts",
+    "lint": "eslint . --cache --cache-strategy content",
+    "lint:fix": "eslint . --cache --cache-strategy content --fix",
+    "ok": "pnpm run build && pnpm run typecheck && pnpm run lint:fix && pnpm run test",
+    "qa": "pnpm run build && pnpm run typecheck && pnpm run lint && pnpm run test",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.2",
+    "@typescript-eslint/parser": "^8.59.2",
+    "eslint": "^9.39.4",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "eslint-plugin-unicorn": "^63.0.0",
+    "globals": "^16.0.0",
+    "tsup": "^8.5.0",
+    "tsx": "^4.22.4",
+    "typescript": "^5.9.0",
+    "vitest": "^4.1.5"
+  }
 }

@@ -1,0 +1,41 @@
+{
+  "name": "@janole/code-bandit",
+  "version": "2.0.0",
+  "description": "Code Bandit — a coding-focused entry point for the Boba agent CLI",
+  "license": "MIT",
+  "author": "Jan Ole Suhr <ole@janole.com> (https://janole.com)",
+  "type": "module",
+  "bin": {
+    "coba": "./dist/bin.js"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/janole/code-bandit.git"
+  },
+  "homepage": "https://github.com/janole/code-bandit#readme",
+  "bugs": {
+    "url": "https://github.com/janole/code-bandit/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm -r build",
+    "prepack": "pnpm -r build"
+  },
+  "dependencies": {
+    "@janole/boba": "0.0.19"
+  },
+  "devDependencies": {
+    "@code-bandit/core": "workspace:*"
+  }
+}

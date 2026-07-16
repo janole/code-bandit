@@ -1,0 +1,8 @@
+minimumReleaseAge: 5760
+minimumReleaseAgeExclude:
+  - "@code-bandit/*"
+  - "@janole/*"
+savePrefix: ""
+
+packages:
+  - "packages/*"
